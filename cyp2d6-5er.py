@@ -1,11 +1,6 @@
+
 import sys,os,re,fileinput,argparse
 import vcf
-#Argument = []
-#Argument = sys.argv[1:]
-
-#filename = Argument[0] #Reference fasta
-#snpfile = Argument[1] #SNP file
-#strain = Argument[2]
 
 parser = argparse.ArgumentParser(description="identify potential *5s")
 parser.add_argument("--vcf",help="fullvcf file, or, just chr22 would be better but both work")
@@ -17,28 +12,13 @@ threshold = args.t
 #special load for vcffi? (vcffi,"r")
 
 vcf_full = vcf.Reader(open(vcffi,'r'))
+hom_total = 0;
+het_total = 0;
+#use fetch to cut region:chr22:42522502-42540575
+for cut_var in vcf_full.fetch('chr22',42522502,42540575):
+    hom_total += cut_var.num_hom_alt
+    het_total += cut_var.num_het
 
+if het_total/(het_total + hom_total) < threshold:
+    print "chr22\tNULL\tNULL\tFBGenoType=*5\tEFF_HGVS=*5\tRSID=NULL\tVAPOR_URL=http://vapor.veritasgenetics.com/?q=node/905420"
 
-
-
-
-
-
-#def insert_newlines(string, every=60):
-#	return '\n'.join(string[i:i+every] for i in xrange(0, len(string), every))
-#
-#
-#def substitute_snp(header,genome,SNP):
-#	name = ""
-#	name = header
-#	genomearray = []
-#	genomearray = list(genome.rstrip(" "))
-#
-#	for snp in SNP:
-#		#print snp
-#		#print genomearray[int(snp)-1]
-#		#print SNP[snp][0]
-#
-#		if (genomearray[int(snp)-1]).lower() == (SNP[snp][0]).lower():
-#                    genomearray[int(snp)-1] = SNP[snp][1]
-#	return  header+"\n"+insert_newlines("".join(genomearray))+"\n"
