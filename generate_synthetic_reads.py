@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-#!/usr/bin/python
-=======
->>>>>>> 71f828c9f87d1ab081582b46c298a9673a8c68bb
 from __future__ import print_function
 
 import argparse
@@ -55,11 +51,7 @@ for mutations_line in mutations_lines:
 	#mchrom = "chr" + mutations_data[1].strip()
 	mchrom = mutations_data[0].strip()
        # print(mchrom)
-<<<<<<< HEAD
-	mleft = int(mutations_data[1].strip()) - 1
-=======
 	mleft = int(mutations_data[1].strip())
->>>>>>> 71f828c9f87d1ab081582b46c298a9673a8c68bb
 	#mright = int(mutations_data[2].strip())
 	moperator = mutations_data[3].strip()
 	malteration = mutations_data[4].strip()
@@ -75,15 +67,8 @@ for mutations_line in mutations_lines:
                     new_seq = old_seq[0:(int(mleft))]+old_seq[int(mleft)+(len(malteration)):len(old_seq)]
                     new_seq = new_seq[0:mleft]+malteration2+new_seq[int(mleft):len(old_seq)]
                 else:
-<<<<<<< HEAD
-                    end = (int(mleft) + int(len(malteration)))
-                    #print(mleft)
-                    #print(len(malteration))
-                    new_seq = str(old_seq[0:(int(mleft))]) + str(old_seq[(int(mleft) + int(len(malteration))):])
-=======
         #           print("OOHH NOOOEESS")
                     new_seq = old_seq[0:(int(mleft))]+old_seq[int(mleft)+(len(malteration)):len(old_seq)]
->>>>>>> 71f828c9f87d1ab081582b46c298a9673a8c68bb
                 #print("INDEED . TREEEEUUUOOEEE")
                 #print(new_seq)
 
@@ -103,13 +88,8 @@ for mutations_line in mutations_lines:
 #	#amp_seq[NAME] = new_seq
         #print(new_seq)
         re = re
-<<<<<<< HEAD
-        new_seq_write = re.sub("(.{60})", "\\1\n", str(new_seq), 0,re.DOTALL)
-        OUT.write(">" + mchrom + "\n" + str(new_seq_write) + "\n")
-=======
         new_seq_write = re.sub("(.{50})", "\\1\n", str(new_seq), 0,re.DOTALL)
         OUT.write(">" + new_id + "\n" + str(new_seq_write) + "\n")
->>>>>>> 71f828c9f87d1ab081582b46c298a9673a8c68bb
         #SeqIO.write(str(new_seq),OUT,"fasta")
 
 
