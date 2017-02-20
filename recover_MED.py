@@ -20,6 +20,7 @@ sample = args.sample
 omicia = vcf.Reader(open(vcf1fi,'r'))
 vcf_full = vcf.Reader(open(vcffi,'r'))
 #vcf_writer = vcf.Writer(open('redo.Merged.vcf', 'w'), vcf_full)
+newres = open('NEW.' + sample + '.RESULTS.txt',"w")
 res = open(resfi,'r')
 results = {}#stores the results lines;
 #parse results in a map or dict, or what??
@@ -36,18 +37,20 @@ def AddOmicia(vcf,results,reskey):
     
       
     
-def LoserReRun(record,rsid,name):#prot:
+def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"         
     vcf_writer = vcf.Writer(open(filename, 'w'), vcf_full)
     vcf_writer.write_record(record)
     print rsid
+
+def LoserReRun(record,rsid,name):
   #  command = "/vbin/GoPipeRUN/goVarAnnotateAndID.sh" + rsid
     #call(["/vbin/GoPipeRUN/goVarAnnotateAndID.sh",rsid])
-    effout = open(rsid + 'efd.vcf',"w")
-    call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19' + rsid + '.Merged.vcf'],shell=True,stdout=effout)
+    effout = open(rsid + '.efd.vcf',"w")
+    call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout)
 
-    call(['/vbin/ensembl-tools-release-78/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' +rsid + '.VEP.vcf --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'),shell=True]
-    complete = open(rsid + 'COMPLETE.txt',"w")
+    call(['/vbin/ensembl-tools-release-78/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' +rsid + '.VEP.vcf --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
+    complete = open(rsid + '.COMPLETE.txt',"w")
     call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn /ref/WG_good_genes.lst  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete)
 
 #####----------------MAIN--------------####
@@ -67,27 +70,30 @@ for o_vcf in omicia:
     loserneeded = 0
     reskey = o_vcf.CHROM + ":" + str(o_vcf.POS)
     if reskey in results.keys():#OK, it matches, so everything is good. add the values to the RECORD, and print out.
-         
-         
+        correctedvar = AddOmicia(o_vcf,results,reskey) 
+        newres.write(correctedvar + "\n") 
         #print qual_replaced
     else:#Send to loser bracket, this is where magic happens and rerun the vcf line.
-        print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
+        #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
         vcfregion = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
         for orig_vcf in vcfregion:#loop through region
             #print orig_vcf
             if orig_vcf.POS == o_vcf.POS:#matches exact, get into new file and redo
-                print "success"
+                #print "success"
                 #vcf_writer.write_record(orig_vcf)
                 losermatch = 1
                 #losersuccess = LoserReRun(orig_vcf,o_vcf.ID) 
+                LoserWrite(orig_vcf,o_vcf.ID,sample)
                 LoserReRun(orig_vcf,o_vcf.ID,sample) 
+                
                 #write the executor for the missing record.
 
         if losermatch == 0: #only enter if there is not exact match. start with full region
             for oneoff in vcfregion:#BTW this is merely for tracking one offs.    
                 if oneoff.POS == o_vcf.POS:
-                    print "offbyone"
+                   # print "offbyone"
                     #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
+                    LoserWrite(orig_vcf,o_vcf.ID,sample)
                     LoserReRun(oneoff,o_vcf.ID,sample) 
 
 
