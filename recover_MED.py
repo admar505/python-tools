@@ -25,6 +25,16 @@ res = open(resfi,'r')
 results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 #----------------------here by DEFSgONS!!------------------*
+def LoserRecover(omiciavcfline,rsid):
+    newres = open(rsid + '.COMPLETE.txt',"r")
+        for lines in newres.readlines():
+            if not lines.isspace()
+                newcols = lines.split("\t")    
+                        
+                newresults[newcols[0] + "" + newcols[1]] = lines
+                formattedlines = AddOmicia(omiciavcfline,rsid)
+##I AM HERE!!!                
+
 
 def AddOmicia(vcf,results,reskey):
     m = re.search("(FBReferenceAlleleQ=\w+).*?(EFF_HGVS=\S+)",results[reskey])		
@@ -85,7 +95,10 @@ for o_vcf in omicia:
                 #losersuccess = LoserReRun(orig_vcf,o_vcf.ID) 
                 LoserWrite(orig_vcf,o_vcf.ID,sample)
                 LoserReRun(orig_vcf,o_vcf.ID,sample) 
-                
+                line_2_add = LoserRecover(o_vcf)
+
+                        
+                    
                 #write the executor for the missing record.
 
         if losermatch == 0: #only enter if there is not exact match. start with full region
@@ -95,7 +108,7 @@ for o_vcf in omicia:
                     #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
                     LoserWrite(orig_vcf,o_vcf.ID,sample)
                     LoserReRun(oneoff,o_vcf.ID,sample) 
-
+                    
 
 
                 #send to varmatch subroutine 
