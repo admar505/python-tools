@@ -113,7 +113,7 @@ for o_vcf in omicia:
             #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
             vcfregion = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
             for orig_vcf in vcfregion:#loop through region FIRST CHECKING FOR EXACT MATCH
-                print orig_vcf
+                #print orig_vcf
                 if orig_vcf.POS == o_vcf.POS:#matches exact, get into new file and redo
                 #print "success"
                 #vcf_writer.write_record(orig_vcf)
@@ -125,10 +125,9 @@ for o_vcf in omicia:
                     newres.write(line_2_add)
                     recovered += 1
                     #write the executor for the missing record.
-            print str(losermatch)
             if losermatch == 0: #only enter if NO EXACT MATCH. start with full region
                 
-                vcfoneoff = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
+                vcfoneoff = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)#HAD to repull which is fucking retarded
                 for oneoff in vcfoneoff:#BTW this is merely for tracking one offs.    
                     #print oneoff
 
