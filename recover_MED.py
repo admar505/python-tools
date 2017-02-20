@@ -22,19 +22,27 @@ vcf_full = vcf.Reader(open(vcffi,'r'))
 #vcf_writer = vcf.Writer(open('redo.Merged.vcf', 'w'), vcf_full)
 newres = open('NEW.' + sample + '.RESULTS.txt',"w")
 res = open(resfi,'r')
+reporter = open(sample + ".REPORT.txt","w")
 results = {}#stores the results lines;
+omiciain = 0
+recovered = 0
+oneoffed = 0
 #parse results in a map or dict, or what??
-#----------------------here by DEFSgONS!!------------------*
-def LoserRecover(omiciavcfline,rsid):
-    newres = open(rsid + '.COMPLETE.txt',"r")
-        for lines in newres.readlines():
-            if not lines.isspace()
-                newcols = lines.split("\t")    
-                        
-                newresults[newcols[0] + "" + newcols[1]] = lines
-                formattedlines = AddOmicia(omiciavcfline,rsid)
-##I AM HERE!!!                
 
+#----------------------here by DEFSgONS!!------------------*
+
+def LoserRecover(ovcf,rsid):
+    newres = open(rsid + '.COMPLETE.txt',"r")
+    for lines in newres.readlines():
+        if not lines.isspace():
+            newcols = lines.split("\t")    
+                    
+            newresults[newcols[0] + "" + newcols[1]] = lines
+            formattedlines = AddOmicia(omiciavcfline,rsid)
+            if not formattedlines.isspace():
+                return formattedlines
+            else:
+                failreturn = ovcf.CHROM + "\t" + ovcf.POS + "\t" + ovcf.REF + "\t" + ovcf.ALT + "FBRefAlleleCount=0\tFBReferenceAlleleQ=" + ovcf.QUAL + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID 
 
 def AddOmicia(vcf,results,reskey):
     m = re.search("(FBReferenceAlleleQ=\w+).*?(EFF_HGVS=\S+)",results[reskey])		
@@ -44,8 +52,6 @@ def AddOmicia(vcf,results,reskey):
     qual_fixed = re.sub("FBReferenceAlleleQ=\w+", qualreplace, results[reskey])
     qual_replaced = re.sub("EFF_HGVS=\S+",rsidreplace,qual_fixed)    
     return qual_replaced 
-    
-      
     
 def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"         
@@ -65,10 +71,6 @@ def LoserReRun(record,rsid,name):
 
 #####----------------MAIN--------------####
 #####----------------MAIN--------------####
-
-
-
-
 
 
 for resln in res.readlines():#LOAD results hash.
@@ -95,40 +97,24 @@ for o_vcf in omicia:
                 #losersuccess = LoserReRun(orig_vcf,o_vcf.ID) 
                 LoserWrite(orig_vcf,o_vcf.ID,sample)
                 LoserReRun(orig_vcf,o_vcf.ID,sample) 
-                line_2_add = LoserRecover(o_vcf)
-
-                        
-                    
+                line_2_add = LoserRecover(o_vcf,o_vcf.ID)
+                newres.write(line_2_add + "\n")
                 #write the executor for the missing record.
 
         if losermatch == 0: #only enter if there is not exact match. start with full region
             for oneoff in vcfregion:#BTW this is merely for tracking one offs.    
                 if oneoff.POS == o_vcf.POS:
-                   # print "offbyone"
+                    print "offbyone"
                     #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
-                    LoserWrite(orig_vcf,o_vcf.ID,sample)
+                    LoserWrite(oneoff,o_vcf.ID,sample)
                     LoserReRun(oneoff,o_vcf.ID,sample) 
-                    
-
-
-                #send to varmatch subroutine 
-                     
-                     
-    #print results[key[0]]
-
-
+                    line_oneoff = LoserRecover(o_vcf,o_vcf.ID)#This wil pich the file backup 
+                    newres.write(line_oneoff + "\n")
+report = "omicia\trecovered\toneoff\n"
+reporter.write(report)
+reported = omiciain + "\t" + recovered + "\t" + oneoffed + "\n"
+reporter.write(reported)
 
 
 
-
-
-
-            
-#use fetch to cut region:chr22:42522502-42540575
-#for cut_var in vcf_full.fetch('chr22',42522502,42540575):
-#    hom_total += cut_var.num_hom_alt
-#    het_total += cut_var.num_het
-
-#if het_total/(het_total + hom_total) < threshold:
-#    print "chr22\tNULL\tNULL\tFBGenoType=*5\tEFF_HGVS=*5\tRSID=NULL\tVAPOR_URL=http://vapor.veritasgenetics.com/?q=node/905420"
 
