@@ -70,7 +70,7 @@ def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"         
     vcf_writer = vcf.Writer(open(filename, 'w'), vcf_full)
     vcf_writer.write_record(record)
-    print rsid
+    #print rsid
 
 def LoserReRun(record,rsid,name):
   #  command = "/vbin/GoPipeRUN/goVarAnnotateAndID.sh" + rsid
