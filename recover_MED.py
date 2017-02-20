@@ -32,13 +32,14 @@ oneoffed = 0
 #----------------------here by DEFSgONS!!------------------*
 
 def LoserRecover(ovcf,rsid):
-    newres = open(rsid + '.COMPLETE.txt',"r")
-    for lines in newres.readlines():
+    newr= {}
+    newresults = open(rsid + '.COMPLETE.txt',"r")
+    for lines in newresults.readlines():
         if not lines.isspace():
             newcols = lines.split("\t")    
-                    
-            newresults[newcols[0] + "" + newcols[1]] = lines
-            formattedlines = AddOmicia(omiciavcfline,rsid)
+            goodkey =  newcols[0] + "" + newcols[1]
+            newr[goodkey] = lines
+            formattedlines = AddOmicia(ovcf,newr,goodkey)
             if not formattedlines.isspace():
                 return formattedlines
             else:
@@ -72,49 +73,51 @@ def LoserReRun(record,rsid,name):
 #####----------------MAIN--------------####
 #####----------------MAIN--------------####
 
-
 for resln in res.readlines():#LOAD results hash.
     key = resln.split("\t")
-    if key not in results.keys():
-        results[key[0]] = resln.rstrip()
-
+    results[key[0]] = resln.rstrip()
+ocount = {}#For the purpose of making the omicia unique and removing chrM
 for o_vcf in omicia:
     loserneeded = 0
     reskey = o_vcf.CHROM + ":" + str(o_vcf.POS)
-    if reskey in results.keys():#OK, it matches, so everything is good. add the values to the RECORD, and print out.
-        correctedvar = AddOmicia(o_vcf,results,reskey) 
-        newres.write(correctedvar + "\n") 
+    if not reskey in ocount.keys() and o_vcf != 'chrM':
+        omiciain += 1
+        ocount[reskey] = o_vcf
+        if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
+            correctedvar = AddOmicia(o_vcf,results,reskey) 
+            newres.write(correctedvar + "\n")
+            recovered += 1 
         #print qual_replaced
-    else:#Send to loser bracket, this is where magic happens and rerun the vcf line.
-        #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
-        vcfregion = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
-        for orig_vcf in vcfregion:#loop through region
-            #print orig_vcf
-            if orig_vcf.POS == o_vcf.POS:#matches exact, get into new file and redo
+        else:#Send to loser bracket, this is where magic happens and rerun the vcf line.
+            #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
+            vcfregion = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
+            for orig_vcf in vcfregion:#loop through region
+                #print orig_vcf
+                if orig_vcf.POS == o_vcf.POS:#matches exact, get into new file and redo
                 #print "success"
                 #vcf_writer.write_record(orig_vcf)
-                losermatch = 1
+                    losermatch = 1
                 #losersuccess = LoserReRun(orig_vcf,o_vcf.ID) 
-                LoserWrite(orig_vcf,o_vcf.ID,sample)
-                LoserReRun(orig_vcf,o_vcf.ID,sample) 
-                line_2_add = LoserRecover(o_vcf,o_vcf.ID)
-                newres.write(line_2_add + "\n")
-                #write the executor for the missing record.
+                    LoserWrite(orig_vcf,o_vcf.ID,sample)
+                    LoserReRun(orig_vcf,o_vcf.ID,sample) 
+                    line_2_add = LoserRecover(o_vcf,o_vcf.ID)
+                    newres.write(line_2_add + "\n")
+                    recovered += 1
+                    #write the executor for the missing record.
 
-        if losermatch == 0: #only enter if there is not exact match. start with full region
-            for oneoff in vcfregion:#BTW this is merely for tracking one offs.    
-                if oneoff.POS == o_vcf.POS:
-                    print "offbyone"
-                    #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
-                    LoserWrite(oneoff,o_vcf.ID,sample)
-                    LoserReRun(oneoff,o_vcf.ID,sample) 
-                    line_oneoff = LoserRecover(o_vcf,o_vcf.ID)#This wil pich the file backup 
-                    newres.write(line_oneoff + "\n")
+            if losermatch == 0: #only enter if there is not exact match. start with full region
+                for oneoff in vcfregion:#BTW this is merely for tracking one offs.    
+                    if oneoff.POS == o_vcf.POS:
+                        print "offbyone"
+                        #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
+                        LoserWrite(oneoff,o_vcf.ID,sample)
+                        LoserReRun(oneoff,o_vcf.ID,sample) 
+                        line_oneoff = LoserRecover(o_vcf,o_vcf.ID)#This wil pich the file backup 
+                        newres.write(line_oneoff + "\n")
+                        oneoffed += 1
 report = "omicia\trecovered\toneoff\n"
 reporter.write(report)
-reported = omiciain + "\t" + recovered + "\t" + oneoffed + "\n"
+reported = str(omiciain) + "\t" + str(recovered) + "\t" + str(oneoffed) + "\n"
 reporter.write(reported)
-
-
 
 
