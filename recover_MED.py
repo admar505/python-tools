@@ -40,6 +40,7 @@ skipct = 0
 def LoserRecover(ovcf,rsid):
     newr= {}
     newresults = open(rsid + '.COMPLETE.txt',"r")
+    success = 0
     for lines in newresults.readlines():
         if not lines.isspace():
             lines.rstrip()
@@ -49,10 +50,17 @@ def LoserRecover(ovcf,rsid):
             formattedlines = AddOmicia(ovcf,newr,goodkey)
             if not formattedlines.isspace():
                 formattedlines = goodkey + "\t" + formattedlines
+                success += 1
                 return formattedlines
-            else:
-                failreturn = goodkey +  "\t" +  ovcf.CHROM + "\t" + ovcf.POS + "\t" + ovcf.REF + "\t" + ovcf.ALT + "FBRefAlleleCount=0\tFBReferenceAlleleQ=" + ovcf.QUAL + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID 
-                return failreturn
+
+               # print formattedlines
+            #else:#neh, put this at the end in case of empty file;
+    if success == 0:
+        #print ovcf.ALT
+        failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\n"
+               # print failreturn
+        return failreturn
+  
 
 
 def AddOmicia(vcf,results,reskey):
@@ -142,7 +150,7 @@ for o_vcf in omicia:
 
 report = "omicia\trecovered\toneoff\tfilteredout\n"
 reporter.write(report)
-reported = str(omiciain) + "\t" + str(recovered) + "\t" + str(oneoffed) + "\t" + str(skipct)
+reported = str(omiciain) + "\t" + str(recovered) + "\t" + str(oneoffed) + "\t" + str(skipct) + "\n"
 reporter.write(reported)
 
 
