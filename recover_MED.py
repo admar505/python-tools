@@ -69,9 +69,8 @@ def AddOmicia(vcf,results,reskey):
     #print str(m.group(0)) + "WAS THIS FOUND"
     #qualreplace = m.group(1) + "(" + str(vcf.QUAL) + ")"
     rsidreplace = m.group(1) + "(" + str(vcf.ID) + ")|(" + str(vcf.QUAL) + ")"
-
     #qual_fixed = re.sub("FBReferenceAlleleQ=\w+", qualreplace, results[reskey])
-    qual_replaced = re.sub("VEP_HGVS=\S+",rsidreplace,results[reskey])    
+    qual_replaced = re.sub("EFF_EFFECT=\S+",rsidreplace,results[reskey])    
     return qual_replaced 
     
 def LoserWrite(record,rsid,name):#prot:
