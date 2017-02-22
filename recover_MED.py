@@ -109,6 +109,7 @@ for o_vcf in omicia:
     reskey = o_vcf.CHROM + ":" + str(o_vcf.POS)
     if reskey in skipvar.keys():
         skipct +=1
+        omiciain +=1
     if not reskey in ocount.keys() and o_vcf != 'chrM' and reskey not in skipvar.keys():
         omiciain += 1
         ocount[reskey] = o_vcf
