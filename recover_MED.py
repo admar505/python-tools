@@ -57,7 +57,7 @@ def LoserRecover(ovcf,rsid):
             #else:#neh, put this at the end in case of empty file;
     if success == 0:
         #print ovcf.ALT
-        failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\n"
+        failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "QUAL=" + str(ovcf.QUAL) + "\t" + "RSID=" + str(ovcf.ID) +  "\n"
                # print failreturn
         return failreturn
   
@@ -71,7 +71,10 @@ def AddOmicia(vcf,results,reskey):
     rsidreplace = m.group(1) + "(" + str(vcf.ID) + ")|(" + str(vcf.QUAL) + ")"
     #qual_fixed = re.sub("FBReferenceAlleleQ=\w+", qualreplace, results[reskey])
     qual_replaced = re.sub("EFF_EFFECT=\S+",rsidreplace,results[reskey])    
-    return qual_replaced 
+    rsidadd = "\tRSID=" + str(vcf.ID) + "\t" + "QUAL=" + str(vcf.QUAL)
+    qual_rsid_added = qual_replaced + rsidadd    
+    
+    return qual_rsid_added 
     
 def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"         
