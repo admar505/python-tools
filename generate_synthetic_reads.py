@@ -89,7 +89,7 @@ for mutations_line in mutations_lines:
         #print(new_seq)
         re = re
         new_seq_write = re.sub("(.{50})", "\\1\n", str(new_seq), 0,re.DOTALL)
-        OUT.write(">" + new_id + "\n" + str(new_seq_write) + "\n")
+        OUT.write(">" + mchrom + "\n" + str(new_seq_write) + "\n")
         #SeqIO.write(str(new_seq),OUT,"fasta")
 
 
