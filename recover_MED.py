@@ -41,40 +41,42 @@ def LoserRecover(ovcf,rsid):
     newr= {}
     newresults = open(rsid + '.COMPLETE.txt',"r")
     success = 0
+    return_value = ""
     for lines in newresults.readlines():
         if not lines.isspace():
             lines.rstrip()
             newcols = lines.split("\t")    
             goodkey =  newcols[0] + ":" + newcols[1]
-            newr[goodkey] = lines
+            newr[goodkey] = lines.rstrip()#THIS is the line that carried the \n
             formattedlines = AddOmicia(ovcf,newr,goodkey)
             if not formattedlines.isspace():
+		formattedlines.rstrip("\n")
                 formattedlines = goodkey + "\t" + formattedlines
                 success += 1
-                return formattedlines
+                return_value = formattedlines
 
                # print formattedlines
             #else:#neh, put this at the end in case of empty file;
     if success == 0:
         #print ovcf.ALT
         failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\t" + "QUAL=" + str(ovcf.QUAL) + "\t" + "RSID=" + str(ovcf.ID) +  "\n"
-               # print failreturn
-        return failreturn
-  
+        return_value =  failreturn
+    return return_value 
 
 
 def AddOmicia(vcf,results,reskey):
-    #m = re.search("(FBReferenceAlleleQ=\w+).*?(EFF_EFFECT=\S+)",results[reskey])		
+    results[reskey].rstrip()
+    m = re.search("(FBReferenceAlleleQ=\w+).*?(EFF_EFFECT=\S+)",results[reskey])		
     m = re.search("(EFF_EFFECT=\S+)",results[reskey])		
     #print str(m.group(0)) + "WAS THIS FOUND"
     #qualreplace = m.group(1) + "(" + str(vcf.QUAL) + ")"
     rsidreplace = m.group(1) + "(" + str(vcf.ID) + ")|(" + str(vcf.QUAL) + ")"
     #qual_fixed = re.sub("FBReferenceAlleleQ=\w+", qualreplace, results[reskey])
     qual_replaced = re.sub("EFF_EFFECT=\S+",rsidreplace,results[reskey])    
-    rsidadd = "\tRSID=" + str(vcf.ID) + "\t" + "QUAL=" + str(vcf.QUAL) + "\n"
+    rsidadd = "\tRSID=" + str(vcf.ID) + "\t" + "QUAL=" + str(vcf.QUAL)
     qual_rsid_added = qual_replaced + rsidadd    
-    
-    return qual_rsid_added 
+    stripped = qual_rsid_added.rstrip()
+    return stripped
     
 def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"         
@@ -117,6 +119,7 @@ for o_vcf in omicia:
         ocount[reskey] = o_vcf
         if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
             correctedvar = AddOmicia(o_vcf,results,reskey) 
+            correctedvar.rstrip()
             newres.write(correctedvar + "\n")
             recovered += 1 
         #print qual_replaced
@@ -124,16 +127,12 @@ for o_vcf in omicia:
             #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
             vcfregion = vcf_full.fetch(o_vcf.CHROM,o_vcf.POS - 2,o_vcf.POS + 2)
             for orig_vcf in vcfregion:#loop through region FIRST CHECKING FOR EXACT MATCH
-                #print orig_vcf
                 if orig_vcf.POS == o_vcf.POS:#matches exact, get into new file and redo
-                #print "success"
-                #vcf_writer.write_record(orig_vcf)
                     losermatch = 1
-                #losersuccess = LoserReRun(orig_vcf,o_vcf.ID) 
                     LoserWrite(orig_vcf,o_vcf.ID,sample)
                     LoserReRun(orig_vcf,o_vcf.ID,sample) 
                     line_2_add = LoserRecover(o_vcf,o_vcf.ID)
-                    newres.write(line_2_add)
+                    newres.write(line_2_add + "\n")
                     recovered += 1
                     #write the executor for the missing record.
             if losermatch == 0: #only enter if NO EXACT MATCH. start with full region
@@ -146,9 +145,9 @@ for o_vcf in omicia:
                         #print "offbyone" + str(losermatch)
                         #oneoffsuccess = LoserReRun(orig_vcf,o_vcf.ID) 
                         LoserWrite(oneoff,o_vcf.ID,sample)
-                        LoserReRun(oneoff,o_vcf.ID,sample) 
+                        LoserReRun(oneoff,o_vcf.ID,sample)
                         line_oneoff = LoserRecover(o_vcf,o_vcf.ID)#This wil pich the file backup 
-                        newres.write(line_oneoff)
+                        newres.write(line_oneoff + "\n")
                         oneoffed += 1
 
 report = "omicia\trecovered\toneoff\tfilteredout\n"
