@@ -278,7 +278,6 @@ class Reader(object):
         self._alt_pattern = re.compile('[\[\]]')
 
         self.reader = (line.strip() for line in self._reader if line.strip())
-
         #: metadata fields from header (string or hash, depending)
         self.metadata = None
         #: INFO fields from header
@@ -297,7 +296,7 @@ class Reader(object):
         self._column_headers = []
         self._tabix = None
         self._prepend_chr = prepend_chr
-        self._parse_metainfo()
+        #self._parse_metainfo()
         self._format_cache = {}
         self.encoding = encoding
 
@@ -359,7 +358,7 @@ class Reader(object):
         return [func(x) if x not in bad else None
                 for x in iterable]
 
-    def _parse_filter(self, filt_str):
+    """def _parse_filter(self, filt_str):
         '''Parse the FILTER field of a VCF entry into a Python list
 
         NOTE: this method has a cython equivalent and care must be taken
@@ -370,61 +369,26 @@ class Reader(object):
         elif filt_str == 'PASS':
             return []
         else:
-            return filt_str.split(';')
+            return filt_str.split(';')    ADM --> I dont need this, I dont have this """
 
-    def _parse_info(self, info_str):
+    def _parse_info(self, info_str = []):#ADM--> I will use, but need to pass multiple cols in, like 5-> inf
         '''Parse the INFO field of a VCF entry into a dictionary of Python
         types.
-
+        #BUT ,ADM , this is way to complicated for me to use I think
         '''
         if info_str == '.':
             return {}
 
-        entries = info_str.split(';')
+        #entries = info_str
         retdict = {}
 
-        for entry in entries:
-            entry = entry.split('=', 1)
-            ID = entry[0]
-            try:
-                entry_type = self.infos[ID].type
-            except KeyError:
-                try:
-                    entry_type = RESERVED_INFO[ID]
-                except KeyError:
-                    if entry[1:]:
-                        entry_type = 'String'
-                    else:
-                        entry_type = 'Flag'
+        for entry in info_str:
+            if entry.find('=') != -1:
+                entry = entry.split('=')
+                ID = entry[0]
+                val = entry[1:-1]
 
-            if entry_type == 'Integer':
-                vals = entry[1].split(',')
-                try:
-                    val = self._map(int, vals)
-                # Allow specified integers to be flexibly parsed as floats.
-                # Handles cases with incorrectly specified header types.
-                except ValueError:
-                    val = self._map(float, vals)
-            elif entry_type == 'Float':
-                vals = entry[1].split(',')
-                val = self._map(float, vals)
-            elif entry_type == 'Flag':
-                val = True
-            elif entry_type in ('String', 'Character'):
-                try:
-                    vals = entry[1].split(',') # commas are reserved characters indicating multiple values
-                    val = self._map(str, vals)
-                except IndexError:
-                    entry_type = 'Flag'
-                    val = True
-
-            try:
-                if self.infos[ID].num == 1 and entry_type not in ( 'Flag', ):
-                    val = val[0]
-            except KeyError:
-                pass
-
-            retdict[ID] = val
+                retdict[ID] = val
 
         return retdict
 
@@ -520,7 +484,8 @@ class Reader(object):
 
         return samp_data
 
-    def _parse_alt(self, str):
+    def _parse_alt(self, str):#simplify, the alt is not that hard.
+        print "SELF-STR\t" +  str
         if self._alt_pattern.search(str) is not None:
             # Paired breakend
             items = self._alt_pattern.split(str)
@@ -539,12 +504,12 @@ class Reader(object):
             else:
                 connectingSequence = items[0]
             return _Breakend(chr, pos, orientation, remoteOrientation, connectingSequence, withinMainAssembly)
-        elif str[0] == '.' and len(str) > 1:
-            return _SingleBreakend(True, str[1:])
-        elif str[-1] == '.' and len(str) > 1:
-            return _SingleBreakend(False, str[:-1])
-        elif str[0] == "<" and str[-1] == ">":
-            return _SV(str[1:-1])
+        #elif str[0] == '.' and len(str) > 1:
+        #    return _SingleBreakend(True, str[1:])
+        #elif str[-1] == '.' and len(str) > 1:
+        #    return _SingleBreakend(False, str[:-1])
+        #elif str[0] == "<" and str[-1] == ">":
+           # return _SV(str[1:-1])
         else:
             return _Substitution(str)
 
@@ -552,20 +517,22 @@ class Reader(object):
         '''Return the next record in the file.'''
         line = next(self.reader)
         row = self._row_pattern.split(line.rstrip())
+        row = line.split('\t')
         chrom = row[0]
         if self._prepend_chr:
             chrom = 'chr' + chrom
-        pos = int(row[1])
-
-        if row[2] != '.':
+        pos = row[1]
+        #taking out the ID col:
+        """if row[2] != '.':
             ID = row[2]
         else:
-            ID = None
+            ID = None"""
 
-        ref = row[3]
-        alt = self._map(self._parse_alt, row[4].split(','))
-
-        try:
+        ref = row[2]
+        #print "value\t" + ref
+        #alt = self._map(self._parse_alt, row[3].split(','))
+        alt = row[3]
+        """try:
             qual = int(row[5])
         except ValueError:
             try:
@@ -573,23 +540,24 @@ class Reader(object):
             except ValueError:
                 qual = None
 
-        filt = self._parse_filter(row[6])
-        info = self._parse_info(row[7])
+        filt = self._parse_filter(row[6])"""
+        info = self._parse_info(row[4:-1])
 
-        try:
+        """try:
             fmt = row[8]
         except IndexError:
             fmt = None
         else:
             if fmt == '.':
-                fmt = None
+                fmt = None"""
 
-        record = _Record(chrom, pos, ID, ref, alt, qual, filt,
-                info, fmt, self._sample_indexes)
+        record = _Record(chrom, pos, ref, alt,
+                info)
 
-        if fmt is not None:
+        """if fmt is not None:
             samples = self._parse_samples(row[9:], fmt, record)
-            record.samples = samples
+            record.samples = samples"""
+
 
         return record
 
@@ -638,7 +606,7 @@ class Reader(object):
 
 
 class Writer(object):
-    """VCF Writer. On Windows Python 2, open stream with 'wb'."""
+    """VCF Writer. On Windows Python 2, open stream with 'wb'.COOL! I can write easier maybe?"""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v,k) for k,v in field_counts.iteritems())
@@ -775,10 +743,10 @@ class Writer(object):
 
 
 def __update_readme():
-    import sys, vcf
-    file('README.rst', 'w').write(vcf.__doc__)
+    import sys, vgr
+    file('README.rst', 'w').write(vgr.__doc__)
 
 
 # backwards compatibility
-VCFReader = Reader
-VCFWriter = Writer
+VGReader = Reader
+VGWriter = Writer
