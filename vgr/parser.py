@@ -551,8 +551,7 @@ class Reader(object):
             if fmt == '.':
                 fmt = None"""
 
-        record = _Record(chrom, pos, ref, alt,
-                info)
+        record = _Record(chrom, pos, ref, alt, info)
 
         """if fmt is not None:
             samples = self._parse_samples(row[9:], fmt, record)

@@ -172,28 +172,24 @@ class _Record(object):
             Neither the upstream nor downstream flanking bases are
             included in the region.
     """
-    def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
-            sample_indexes, samples=None):
+    def __init__(self, CHROM, POS, REF, ALT, INFO):
+    #def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT, sample_indexes, samples=None):
         self.CHROM = CHROM
         #: the one-based coordinate of the first nucleotide in ``REF``
         self.POS = POS
-        self.ID = ID
         self.REF = REF
         self.ALT = ALT
-        self.QUAL = QUAL
-        self.FILTER = FILTER
         self.INFO = INFO
-        self.FORMAT = FORMAT
         #: zero-based, half-open start coordinate of ``REF``
-        self.start = self.POS - 1
+        self.start = int(self.POS) - 1
         #: zero-based, half-open end coordinate of ``REF``
         self.end = self.start + len(self.REF)
         #: list of alleles. [0] = REF, [1:] = ALTS
         self.alleles = [self.REF]
         self.alleles.extend(self.ALT)
         #: list of ``_Calls`` for each sample ordered as in source VCF
-        self.samples = samples or []
-        self._sample_indexes = sample_indexes
+        #self.samples = samples or []
+        #self._sample_indexes = sample_indexes
 
         # Setting affected_start and affected_end here for Sphinx
         # autodoc purposes...
@@ -209,9 +205,11 @@ class _Record(object):
         for alt in self.ALT:
             if alt is None:
                 start, end = self._compute_coordinates_for_none_alt()
-            elif alt.type == 'SNV':
+            #elif alt.type == 'SNV':
+            elif alt == 'SNV':
                 start, end = self._compute_coordinates_for_snp()
-            elif alt.type == 'MNV':
+            #elif alt.type == 'MNV':
+            elif alt == 'MNV':
                 start, end = self._compute_coordinates_for_indel()
             else:
                 start, end = self._compute_coordinates_for_sv()
@@ -220,7 +218,7 @@ class _Record(object):
 
 
     def _compute_coordinates_for_none_alt(self):
-        start = self.POS - 1
+        start = int(self.POS) - 1
         end = start + len(self.REF)
         return (start, end)
 
@@ -230,7 +228,7 @@ class _Record(object):
             start = self.POS
             end = start + (len(self.REF) - 1)
         else:
-            start = self.POS - 1
+            start = int(self.POS) - 1
             end = self.POS
         return (start, end)
 
@@ -245,7 +243,7 @@ class _Record(object):
 
 
     def _compute_coordinates_for_sv(self):
-        start = self.POS - 1
+        start = int(self.POS) - 1
         end = start + len(self.REF)
         return (start, end)
 
