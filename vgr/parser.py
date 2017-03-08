@@ -386,7 +386,7 @@ class Reader(object):
             if entry.find('=') != -1:
                 entry = entry.split('=')
                 ID = entry[0]
-                val = entry[1:-1]
+                val = entry[1]
 
                 retdict[ID] = val
 
