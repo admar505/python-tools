@@ -610,17 +610,18 @@ class Writer(object):
     # Reverse keys and values in header field count dictionary
     counts = dict((v,k) for k,v in field_counts.iteritems())
 
-    def __init__(self, stream, template, lineterminator="\n"):
+    #def __init__(self, stream, template, lineterminator="\n"):
+    def __init__(self, stream, lineterminator="\n"):#Taking out the template for header. I dont need it.
         self.writer = csv.writer(stream, delimiter="\t",
                                  lineterminator=lineterminator,
                                  quotechar='', quoting=csv.QUOTE_NONE)
-        self.template = template
+       # self.template = template
         self.stream = stream
 
         # Order keys for INFO fields defined in the header (undefined fields
         # get a maximum key).
-        self.info_order = collections.defaultdict(
-            lambda: len(template.infos),
+        """self.info_order = collections.defaultdict(
+            #lambda: len(template.infos),
             dict(zip(template.infos.iterkeys(), itertools.count())))
 
         two = '##{key}=<ID={0},Description="{1}">\n'
@@ -650,23 +651,25 @@ class Writer(object):
             else:
                 stream.write('##contig=<ID={0}>\n'.format(*line))
 
-        self._write_header()
+        self._write_header()"""
 
-    def _write_header(self):
+    """def _write_header(self):
         # TODO: write INFO, etc
         self.stream.write('#' + '\t'.join(self.template._column_headers
-                                          + self.template.samples) + '\n')
+                                          + self.template.samples) + '\n')"""
 
     def write_record(self, record):
         """ write a record to the file """
-        ffs = self._map(str, [record.CHROM, record.POS, record.ID, record.REF]) \
-              + [self._format_alt(record.ALT), record.QUAL or '.', self._format_filter(record.FILTER),
-                 self._format_info(record.INFO)]
-        if record.FORMAT:
-            ffs.append(record.FORMAT)
+        #ffs = self._map(str, [record.CHROM, record.POS, record.ID, record.REF]) \
+        #      + [self._format_alt(record.ALT), record.QUAL or '.', self._format_filter(record.FILTER),
+        #         self._format_info(record.INFO)]
+        ffs = self._map(str, [record.CHROM, record.POS, record.REF]) + [self._format_alt(record.ALT),  self._format_info(record.INFO)]
+        #may have to tweak the _format_alt() and for sure the self._format_info()
+        #if record.FORMAT:
+        #    ffs.append(record.FORMAT)
 
-        samples = [self._format_sample(record.FORMAT, sample)
-            for sample in record.samples]
+        #samples = [self._format_sample(sample)
+        #    for sample in record.samples]
         self.writer.writerow(ffs + samples)
 
     def flush(self):
@@ -693,21 +696,17 @@ class Writer(object):
     def _format_alt(self, alt):
         return ','.join(self._map(str, alt))
 
-    def _format_filter(self, flt):
-        if flt == []:
-            return 'PASS'
-        return self._stringify(flt, none='.', delim=';')
-
+    """the info hacked writer"""
     def _format_info(self, info):
         if not info:
             return '.'
         def order_key(field):
             # Order by header definition first, alphabetically second.
-            return self.info_order[field], field
-        return ';'.join(self._stringify_pair(f, info[f]) for f in
+            return  field
+        return '\t'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
 
-    def _format_sample(self, fmt, sample):
+    """def _format_sample(self, fmt, sample):
         if hasattr(sample.data, 'GT'):
             gt = sample.data.GT
         else:
@@ -723,7 +722,7 @@ class Writer(object):
                 result.append(self._format_filter(value))
             else:
                 result.append(self._stringify(value))
-        return ':'.join(result)
+        return ':'.join(result)"""
 
     def _stringify(self, x, none='.', delim=','):
         if type(x) == type([]):
