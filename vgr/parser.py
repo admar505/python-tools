@@ -611,47 +611,15 @@ class Writer(object):
     counts = dict((v,k) for k,v in field_counts.iteritems())
 
     #def __init__(self, stream, template, lineterminator="\n"):
-    def __init__(self, stream, lineterminator="\n"):#Taking out the template for header. I dont need it.
-        self.writer = csv.writer(stream, delimiter="\t",
+    def __init__(self, stream, lineterminator='\n'):#Taking out the template for header. I dont need it.
+        self.writer = csv.writer(stream, delimiter='\t',
                                  lineterminator=lineterminator,
-                                 quotechar='', quoting=csv.QUOTE_NONE)
+                                 quotechar='', quoting=csv.QUOTE_NONE,escapechar='\t')
        # self.template = template
         self.stream = stream
 
         # Order keys for INFO fields defined in the header (undefined fields
         # get a maximum key).
-        """self.info_order = collections.defaultdict(
-            #lambda: len(template.infos),
-            dict(zip(template.infos.iterkeys(), itertools.count())))
-
-        two = '##{key}=<ID={0},Description="{1}">\n'
-        four = '##{key}=<ID={0},Number={num},Type={2},Description="{3}">\n'
-        _num = self._fix_field_count
-        for (key, vals) in template.metadata.iteritems():
-            if key in SINGULAR_METADATA:
-                vals = [vals]
-            for val in vals:
-                if isinstance(val, dict):
-                    values = ','.join('{0}={1}'.format(key, value)
-                                      for key, value in val.items())
-                    stream.write('##{0}=<{1}>\n'.format(key, values))
-                else:
-                    stream.write('##{0}={1}\n'.format(key, val))
-        for line in template.infos.itervalues():
-            stream.write(four.format(key="INFO", *line, num=_num(line.num)))
-        for line in template.formats.itervalues():
-            stream.write(four.format(key="FORMAT", *line, num=_num(line.num)))
-        for line in template.filters.itervalues():
-            stream.write(two.format(key="FILTER", *line))
-        for line in template.alts.itervalues():
-            stream.write(two.format(key="ALT", *line))
-        for line in template.contigs.itervalues():
-            if line.length:
-                stream.write('##contig=<ID={0},length={1}>\n'.format(*line))
-            else:
-                stream.write('##contig=<ID={0}>\n'.format(*line))
-
-        self._write_header()"""
 
     """def _write_header(self):
         # TODO: write INFO, etc
@@ -668,9 +636,9 @@ class Writer(object):
         #if record.FORMAT:
         #    ffs.append(record.FORMAT)
 
-        #samples = [self._format_sample(sample)
-        #    for sample in record.samples]
-        self.writer.writerow(ffs + samples)
+        #samples = [self._format_sample(sample) for sample in record.samples]
+        #self.writer.writerow(ffs + samples)
+        self.writer.writerow(ffs)
 
     def flush(self):
         """Flush the writer"""
@@ -694,7 +662,7 @@ class Writer(object):
             return self.counts[num_str]
 
     def _format_alt(self, alt):
-        return ','.join(self._map(str, alt))
+        return ''.join(self._map(str, alt))
 
     """the info hacked writer"""
     def _format_info(self, info):
@@ -703,33 +671,19 @@ class Writer(object):
         def order_key(field):
             # Order by header definition first, alphabetically second.
             return  field
-        return '\t'.join(self._stringify_pair(f, info[f]) for f in
+
+        #return '\t'.join(self._stringify_pair(f, info[f]) for f in
+        return  '\t'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
 
-    """def _format_sample(self, fmt, sample):
-        if hasattr(sample.data, 'GT'):
-            gt = sample.data.GT
-        else:
-            gt = './.' if 'GT' in fmt else ''
 
-        result = [gt] if gt else []
-        # Following the VCF spec, GT is always the first item whenever it is present.
-        for field in sample.data._fields:
-            value = getattr(sample.data,field)
-            if field == 'GT':
-                continue
-            if field == 'FT':
-                result.append(self._format_filter(value))
-            else:
-                result.append(self._stringify(value))
-        return ':'.join(result)"""
 
-    def _stringify(self, x, none='.', delim=','):
+    def _stringify(self, x, none='.', delim='|',escapechar=''):
         if type(x) == type([]):
             return delim.join(self._map(str, x, none))
         return str(x) if x is not None else none
 
-    def _stringify_pair(self, x, y, none='.', delim=','):
+    def _stringify_pair(self, x, y, none='.', delim='|',escapechar=''):
         if isinstance(y, bool):
             return str(x) if y else ""
         return "%s=%s" % (str(x), self._stringify(y, none=none, delim=delim))
