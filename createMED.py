@@ -25,9 +25,9 @@ resfi = args.res
 sample = args.sample
 skipfi = args.skip
 bedfi = args.bed
-bed = pybedtools.bedtool.BedTool(open(bedfi,"r"))
+product_bed = pybedtools.bedtool.BedTool(open(bedfi,"r"))
 #special load for vcffi? (vcffi,"r")
-omicia = csv.reader(open(vcf1fi,'r'))
+omicia = csv.DictReader(open(vcf1fi,'r'))
 vcf_full = vcf.Reader(open(vcffi,'r'))
 #vcf_writer = vcf.Writer(open('redo.Merged.vcf', 'w'), vcf_full)
 newres = open('NEW.' + sample + '.RESULTS.txt',"w")
@@ -106,32 +106,32 @@ def LoserReRun(record,rsid,name):
 #####----------------MAIN--------------####
 
 #convert the skiplist to bed here, allow for readthrough.
-
-skipbed = pybedtools.bedtool.BedTool()
+skipbed = []# pybedtools.bedtool.BedTool()
 for skiprow in skiplist:
     start = int(skiprow['pos']) - 1
     stop = int(skiprow['pos']) + 1
-    enterstring = skiprow['chr'] + "\t" + str(start)  + "\t" + str(stop)
-    skipbed = pybedtools.bedtool.BedTool(enterstring,from_string = True)
+    skipbed.append(skiprow['chr'] + "\t" + str(start)  + "\t" + str(stop))
 
-print skipbed
+skipvars_bed = pybedtools.bedtool.BedTool('\n'.join(skipbed),from_string = True)
 
-#ocount = {}#For the purpose of making the omicia unique and removing chrM
+ocount = {}#For the purpose of making the omicia unique and removing chrM
 #
-#'''for oline in omicia:
+for oline in omicia:
 #    losermatch = 0
-#    print oline[1] + "\t"  + oline[16] +  "\t" + str(oline) '''
-
-
-
-
-"""if reskey in skipvar.keys():
+#    print oline[1] + "\t"  + oline[16] +  "\t" + str(oline)
+    om_st = int(oline['customer_id']) - 1
+    om_sp = int(oline['customer_id']) + 1
+    omicia_interval = pybedtools.bedtool.BedTool(oline['chromosome'] + '\t' + str(om_st) + '\t'+ str(om_sp),from_string=True)
+    #print omicia_interval
+    if not skipvars_bed.intersect(omicia_interval) and product_bed.intersect(omicia_interval):
         skipct +=1
         omiciain +=1
-    if not reskey in ocount.keys() and o_vcf != 'chrM' and reskey not in skipvar.keys():
-        omiciain += 1
-        ocount[reskey] = o_vcf
-        if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
+        print "good" + oline
+    #if not reskey in ocount.keys() and o_vcf != 'chrM' and reskey not in skipvar.keys():
+    #    omiciain += 1
+    #    ocount[reskey] = o_vcf
+
+"""if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
             correctedvar = AddOmicia(o_vcf,results,reskey)
             correctedvar.rstrip()
             newres.write(correctedvar + "\n")
