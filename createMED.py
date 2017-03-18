@@ -25,7 +25,7 @@ resfi = args.res
 sample = args.sample
 skipfi = args.skip
 bedfi = args.bed
-product_bed = pybedtools.bedtool.BedTool(open(bedfi,"r"))
+
 #special load for vcffi? (vcffi,"r")
 omicia = csv.DictReader(open(vcf1fi,'r'))
 vcf_full = vcf.Reader(open(vcffi,'r'))
@@ -102,31 +102,57 @@ def LoserReRun(record,rsid,name):
     complete = open(rsid + '.COMPLETE.txt',"w")
     call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn /ref/WG_good_genes.lst  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete)
 
+def rsornone(rsid):
+    if rsid:
+        return rsid
+    else:
+        return "."
+
+def tempFileWriter(tmp_handle,name):
+    handle = open(name,'w')
+    handle.write('\n'.join(tmp_handle))
+
+
 #####----------------MAIN--------------####
 #####----------------MAIN--------------####
 
+product_bed = pybedtools.bedtool.BedTool(open(bedfi,"r"))
 #convert the skiplist to bed here, allow for readthrough.
-skipbed = []# pybedtools.bedtool.BedTool()
+
+skipper = []# pybedtools.bedtool.BedTool()
 for skiprow in skiplist:
     start = int(skiprow['pos']) - 1
     stop = int(skiprow['pos']) + 1
-    skipbed.append(skiprow['chr'] + "\t" + str(start)  + "\t" + str(stop))
+    skipper.append(skiprow['chr'] + "\t" + str(start)  + "\t" + str(stop))
 
-skipvars_bed = pybedtools.bedtool.BedTool('\n'.join(skipbed),from_string = True)
+tempFileWriter(skipper,'skip.tmp')
 
+skip_vars_bed = pybedtools.bedtool.BedTool(open('skip.tmp','r'))
+#print skip_vars_bed
+#convert the omicia csv to annotated bed here:
+omiciastring = []
 ocount = {}#For the purpose of making the omicia unique and removing chrM
-#
 for oline in omicia:
-#    losermatch = 0
-#    print oline[1] + "\t"  + oline[16] +  "\t" + str(oline)
-    om_st = int(oline['customer_id']) - 1
-    om_sp = int(oline['customer_id']) + 1
-    omicia_interval = pybedtools.bedtool.BedTool(oline['chromosome'] + '\t' + str(om_st) + '\t'+ str(om_sp),from_string=True)
-    #print omicia_interval
-    if not skipvars_bed.intersect(omicia_interval) and product_bed.intersect(omicia_interval):
-        skipct +=1
-        omiciain +=1
-        print "good" + oline
+    keycheck = oline['chromosome'] + oline['customer_id']
+    if not keycheck in ocount.keys():
+        ocount[oline['chromosome'] + oline['customer_id']] = 1
+        om_st = int(oline['customer_id']) - 1
+        om_sp = int(oline['customer_id']) +1
+        line =  oline['chromosome'] + '\t' + str(om_st) + '\t'+ str(om_sp) + "\t" + rsornone(oline['rs_id']) +  "\t" + rsornone(oline['quality'])
+        omiciastring.append(line)
+
+tempFileWriter(omiciastring,'omicia.tmp')
+omiciabed = pybedtools.bedtool.BedTool(open('omicia.tmp','r'))
+#print omiciabed
+#omicia_in_product = omiciabed.intersect(product_bed)
+omicia_in_product = omiciabed.intersect(product_bed)
+omicia_in_product = omicia_in_product.subtract(skip_vars_bed)
+#print omicia_in_product
+
+
+     #   skipct +=1
+     #   omiciain +=1
+     #   print "good\t\t" + oline
     #if not reskey in ocount.keys() and o_vcf != 'chrM' and reskey not in skipvar.keys():
     #    omiciain += 1
     #    ocount[reskey] = o_vcf
