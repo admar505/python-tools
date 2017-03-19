@@ -31,7 +31,7 @@ omicia = csv.DictReader(open(vcf1fi,'r'))
 vcf_full = vcf.Reader(open(vcffi,'r'))
 #vcf_writer = vcf.Writer(open('redo.Merged.vcf', 'w'), vcf_full)
 newres = open('NEW.' + sample + '.RESULTS.txt',"w")
-res = vgr.Reader(resfi,'r')
+res = vgr.Reader(open(resfi,'r'))
 reporter = open(sample + ".REPORT.txt","w")
 skiplist = csv.DictReader(open(skipfi,"r"))
 
@@ -148,15 +148,13 @@ omiciabed = pybedtools.bedtool.BedTool(open('omicia.tmp','r'))
 omicia_in_product = omiciabed.intersect(product_bed)
 omicia_in_product = omicia_in_product.subtract(skip_vars_bed)
 #print omicia_in_product
-
-
-     #   skipct +=1
-     #   omiciain +=1
-     #   print "good\t\t" + oline
-    #if not reskey in ocount.keys() and o_vcf != 'chrM' and reskey not in skipvar.keys():
-    #    omiciain += 1
-    #    ocount[reskey] = o_vcf
-
+for omicia in omicia_in_product:
+     #skipct +=1
+     omiciain +=1
+     print "good\t\t" + str(omicia)
+     omicia_line = str(omicia).split('\t')
+     line_for_med = res.fetch(omicia_line[0],int(omicia_line[1]) + 1,int(omicia_line[2]) + 1)   #pull the line from RESULTS.txt
+     print line_for_med #NEXT,  figure out how to make this read correctly Z``ZZ
 """if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
             correctedvar = AddOmicia(o_vcf,results,reskey)
             correctedvar.rstrip()
