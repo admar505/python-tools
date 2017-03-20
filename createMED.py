@@ -30,7 +30,7 @@ bedfi = args.bed
 omicia = csv.DictReader(open(vcf1fi,'r'))
 vcf_full = vcf.Reader(open(vcffi,'r'))
 #vcf_writer = vcf.Writer(open('redo.Merged.vcf', 'w'), vcf_full)
-newres = open('NEW.' + sample + '.RESULTS.txt',"w")
+newres = vgr.Writer(open('NEW.' + sample + '.RESULTS.txt',"w"))
 res = vgr.Reader(open(resfi,'r'))
 reporter = open(sample + ".REPORT.txt","w")
 skiplist = csv.DictReader(open(skipfi,"r"))
@@ -72,19 +72,17 @@ def LoserRecover(ovcf,rsid):
     return return_value
 
 
-def AddOmicia(vcf,results,reskey):
-    results[reskey].rstrip()
-    m = re.search("(FBReferenceAlleleQ=\w+).*?(EFF_EFFECT=\S+)",results[reskey])
-    m = re.search("(EFF_EFFECT=\S+)",results[reskey])
-    #print str(m.group(0)) + "WAS THIS FOUND"
-    #qualreplace = m.group(1) + "(" + str(vcf.QUAL) + ")"
-    rsidreplace = m.group(1) + "(" + str(vcf.ID) + ")|(" + str(vcf.QUAL) + ")"
+def AddOmicia(vcf,results):
     #qual_fixed = re.sub("FBReferenceAlleleQ=\w+", qualreplace, results[reskey])
-    qual_replaced = re.sub("EFF_EFFECT=\S+",rsidreplace,results[reskey])
-    rsidadd = "\tRSID=" + str(vcf.ID) + "\t" + "QUAL=" + str(vcf.QUAL)
-    qual_rsid_added = qual_replaced + rsidadd
-    stripped = qual_rsid_added.rstrip()
-    return stripped
+    if 'VEP_EFFECT' in results.INFO.keys():
+        results.INFO['VEP_EFFECT'] = results.INFO['VEP_EFFECT'] + "(" + vcf[3] + ")|(" + vcf[4] + ")"
+    elif 'EFF_EFFECT' in results.INFO.keys():
+        results.INFO['EFF_EFFECT'] = results.INFO['EFF_EFFECT'] + "(" + vcf[3] + ")|(" + vcf[4] + ")"
+    else:
+        results.INFO['VEP_EFFECT'] = "(" + vcf[3] + ")|(" + vcf[4] + ")"
+    results.INFO['RSID'] = vcf[3]
+    results.INFO['QUAL'] = vcf[4]
+    return results
 
 def LoserWrite(record,rsid,name):#prot:
     filename = str(rsid) + ".Merged.vcf"
@@ -111,6 +109,9 @@ def rsornone(rsid):
 def tempFileWriter(tmp_handle,name):
     handle = open(name,'w')
     handle.write('\n'.join(tmp_handle))
+
+
+
 
 
 #####----------------MAIN--------------####
@@ -146,20 +147,29 @@ omiciabed = pybedtools.bedtool.BedTool(open('omicia.tmp','r'))
 #print omiciabed
 #omicia_in_product = omiciabed.intersect(product_bed)
 omicia_in_product = omiciabed.intersect(product_bed)
+inproductct = len(omicia_in_product)
 omicia_in_product = omicia_in_product.subtract(skip_vars_bed)
-#print omicia_in_product
+skipct =  inproductct - int(len(omicia_in_product))#vars that were removed from load
+
+
 for omicia in omicia_in_product:
-     #skipct +=1
-     omiciain +=1
-     print "good\t\t" + str(omicia)
-     omicia_line = str(omicia).split('\t')
-     line_for_med = res.fetch(omicia_line[0],int(omicia_line[1]) + 1,int(omicia_line[2]) + 1)   #pull the line from RESULTS.txt
-     print line_for_med #NEXT,  figure out how to make this read correctly Z``ZZ
+    omiciain +=1
+    #print "good\t\t" + str(omicia)
+    omicia_line = str(omicia).split('\t')
+    line_for_med = res.fetch(omicia_line[0],int(omicia_line[1]),int(omicia_line[2]))#pulline fr RESULTS.txt
+    resrecord = ""
+    for record in line_for_med:
+        resrecord = record
+    if resrecord.CHROM is not None:#NEXT, add info to res line
+        res_to_write = AddOmicia(omicia_line,resrecord)
+        print res_to_write
+        newres.write_record(res_to_write)
+        recovered += 1
+
+
+
 """if reskey in results.keys():        #OK, it matches add the values to the RES, and print out.
-            correctedvar = AddOmicia(o_vcf,results,reskey)
-            correctedvar.rstrip()
-            newres.write(correctedvar + "\n")
-            recovered += 1
+
         #print qual_replaced
         else:#Send to loser bracket, this is where magic happens and rerun the vcf line.
             #print "FIND:" + str(o_vcf)#first, find link in the full_vcf.
