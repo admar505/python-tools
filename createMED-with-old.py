@@ -155,12 +155,14 @@ for omicia in omicia_in_product:
         recovered += 1
     else: #Send to loser bracket, this is where magic happens and rerun the vcf line.
         vcfelements = vcf_full.fetch(omicia_line[0],int(omicia_line[1]),int(omicia_line[2]))
-        vcfregion = ""
-        for vcftypes in vcfelements:
+        vcfregion = None
+        for vcftypes in vcfelements:#pull out each one in area:
+            print str(vcftypes) + "sTUFF"
             vcfregion = vcftypes
         if vcfregion is not None:#matches exact, get into new file and redo
             losermatch = 1
             rsid_holder = rsornone(omicia_line[3])
+            print str(vcfregion)
             LoserWrite(vcfregion,rsid_holder,sample)
             LoserReRun(vcfregion,rsid_holder,sample)
             line_2_add = LoserRecover(omicia_line,rsid_holder)

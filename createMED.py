@@ -155,7 +155,7 @@ for omicia in omicia_in_product:
         recovered += 1
     else: #Send to loser bracket, this is where magic happens and rerun the vcf line.
         vcfelements = vcf_full.fetch(omicia_line[0],int(omicia_line[1]),int(omicia_line[2]))
-        vcfregion = ""
+        vcfregion = None
         for vcftypes in vcfelements:
             vcfregion = vcftypes
         if vcfregion is not None:#matches exact, get into new file and redo
