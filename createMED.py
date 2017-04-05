@@ -47,6 +47,7 @@ skipct = 0
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 
 def LoserRecover(ovcf,rsid):
+    failreturn = vgr.Reader("10")#instanciate empty record
     newresults = vgr.Reader(open(rsid + '.COMPLETE.txt',"r"))
     success = 0
     return_value = ""
@@ -59,7 +60,17 @@ def LoserRecover(ovcf,rsid):
 
     if success == 0:
         #print ovcf.ALT
-        failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\t" + "QUAL=" + str(ovcf.QUAL) + "\t" + "RSID=" + str(ovcf.ID) +  "\n"
+        #failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\t" + "QUAL=" + str(ovcf.QUAL) + "\t" + "RSID=" + str(ovcf.ID) +  "\n"
+        failreturn.CHROM = ovcf[0]
+        failreturn.POS = str(ovcf[1])
+        failreturn.REF = 'FABRICated'
+        failreturn.ALT = 'VAR'
+        failreturn.INFO = {}
+        failreturn.INFO['VEP_EFFECT'] = "FABRIC_HARD_TO_MAP(" + ovcf[3].rstrip() + ")|(" + ovcf[4].rstrip() + ")"
+        failreturn.INFO['FBRefAlleleCount'] = 0
+        failreturn.INFO['FBReferenceAlleleQ'] = 0
+        failreturn.INFO['QUAL'] = ovcf[4].rstrip()
+        failreturn.INFO['RSID'] = ovcf[3].rstrip()
         return_value =  failreturn
     return return_value
 
@@ -96,6 +107,11 @@ def rsornone(rsid):
         return rsid
     else:
         return "rnd" + str(random.randrange(10000,999999))
+def qualornone(qual):
+    if qual:
+        return qual
+    else:
+        return "0.0"
 
 def tempFileWriter(tmp_handle,name):
     handle = open(name,'w')
@@ -130,7 +146,7 @@ for oline in omicia:
         ocount[oline['chromosome'] + oline['customer_id']] = 1
         om_st = int(oline['customer_id']) - 1
         om_sp = int(oline['customer_id']) +1
-        line =  oline['chromosome'] + '\t' + str(om_st) + '\t'+ str(om_sp) + "\t" + rsornone(oline['rs_id']) +  "\t" + rsornone(oline['quality'])
+        line =  oline['chromosome'] + '\t' + str(om_st) + '\t'+ str(om_sp) + "\t" + rsornone(oline['rs_id']) +  "\t" + qualornone(oline['quality'])
         omiciastring.append(line)
 
 tempFileWriter(omiciastring,'omicia.tmp')
@@ -160,7 +176,7 @@ for omicia in omicia_in_product:
             vcfregion = vcftypes
         if vcfregion is not None:#matches exact, get into new file and redo
             losermatch = 1
-            rsid_holder = rsornone(omicia_line[3])
+            rsid_holder = omicia_line[3]
             LoserWrite(vcfregion,rsid_holder,sample)
             LoserReRun(vcfregion,rsid_holder,sample)
             line_2_add = LoserRecover(omicia_line,rsid_holder)
