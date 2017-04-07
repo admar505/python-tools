@@ -358,18 +358,7 @@ class Reader(object):
         return [func(x) if x not in bad else None
                 for x in iterable]
 
-    """def _parse_filter(self, filt_str):
-        '''Parse the FILTER field of a VCF entry into a Python list
-
-        NOTE: this method has a cython equivalent and care must be taken
-        to keep the two methods equivalent
-        '''
-        if filt_str == '.':
-            return None
-        elif filt_str == 'PASS':
-            return []
-        else:
-            return filt_str.split(';')    ADM --> I dont need this, I dont have this """
+            #return filt_str.split(';')    ADM --> I dont need this, I dont have this
 
     def _parse_info(self, info_str = []):#ADM--> I will use, but need to pass multiple cols in, like 5-> inf
         '''Parse the INFO field of a VCF entry into a dictionary of Python
@@ -386,7 +375,7 @@ class Reader(object):
             if entry.find('=') != -1:
                 entry = entry.split('=')
                 ID = entry[0]
-                val = entry[1]
+                val = "=".join(entry[1:])
 
                 retdict[ID] = val
 
