@@ -47,6 +47,7 @@ skipct = 0
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 
 def LoserRecover(ovcf,rsid):
+    failreturn = vgr.Reader("10")#instanciate empty record
     newresults = vgr.Reader(open(rsid + '.COMPLETE.txt',"r"))
     success = 0
     return_value = ""
@@ -59,9 +60,19 @@ def LoserRecover(ovcf,rsid):
 
     if success == 0:
         #print ovcf.ALT
-        failreturn = ovcf.CHROM + ":"  + str(ovcf.POS) +  "\t" +  ovcf.CHROM + "\t" + str(ovcf.POS) + "\t" + str(ovcf.REF) + "\t" + str(ovcf.ALT[0]) + "\tFBRefAlleleCount=0\tFBReferenceAlleleQ=" + str(ovcf.QUAL) + "\tEFF_HGVS=OMICIAUNMAPPABLE:" + ovcf.ID + "\t" + "QUAL=" + str(ovcf.QUAL) + "\t" + "RSID=" + str(ovcf.ID) +  "\n"
+        failreturn.CHROM = ovcf[0]
+        failreturn.POS = str(ovcf[1])
+        failreturn.REF = 'FABRICated'
+        failreturn.ALT = 'VAR'
+        failreturn.INFO = {}
+        failreturn.INFO['VEP_EFFECT'] = "FABRIC_HARD_TO_MAP(" + ovcf[3].rstrip() + ")|(" + ovcf[4].rstrip() + ")"
+        failreturn.INFO['FBRefAlleleCount'] = 0
+        failreturn.INFO['FBReferenceAlleleQ'] = 0
+        failreturn.INFO['QUAL'] = ovcf[4].rstrip()
+        failreturn.INFO['RSID'] = ovcf[3].rstrip()
         return_value =  failreturn
     return return_value
+
 
 
 def AddOmicia(vcf,results):
@@ -157,12 +168,11 @@ for omicia in omicia_in_product:
         vcfelements = vcf_full.fetch(omicia_line[0],int(omicia_line[1]),int(omicia_line[2]))
         vcfregion = None
         for vcftypes in vcfelements:#pull out each one in area:
-            print str(vcftypes) + "sTUFF"
             vcfregion = vcftypes
         if vcfregion is not None:#matches exact, get into new file and redo
             losermatch = 1
             rsid_holder = rsornone(omicia_line[3])
-            print str(vcfregion)
+            #print str(vcfregion)
             LoserWrite(vcfregion,rsid_holder,sample)
             LoserReRun(vcfregion,rsid_holder,sample)
             line_2_add = LoserRecover(omicia_line,rsid_holder)
@@ -170,7 +180,7 @@ for omicia in omicia_in_product:
             newres.write_record(line_2_add)
             recovered += 1
         else:
-            print "CANT FIND VAR"
+            print "CANT FIND VAR\t" + str(omicia)
     #write the executor for the missing record.
         #if losermatch == 0: #only enter if NO EXACT MATCH. start with full region
 
