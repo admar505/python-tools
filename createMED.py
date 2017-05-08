@@ -68,6 +68,7 @@ def LoserRecover(ovcf,rsid):
         failreturn.INFO = {}
         failreturn.INFO['VEP_EFFECT'] = "FABRIC_HARD_TO_MAP(" + ovcf[3].rstrip() + ")|(" + ovcf[4].rstrip() + ")"
         failreturn.INFO['FBRefAlleleCount'] = 0
+        failreturn.INFO['VEP_HGVS'] = 'UNKNOWN'
         failreturn.INFO['FBReferenceAlleleQ'] = 0
         failreturn.INFO['QUAL'] = ovcf[4].rstrip()
         failreturn.INFO['RSID'] = ovcf[3].rstrip()
