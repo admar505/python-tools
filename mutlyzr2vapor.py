@@ -21,7 +21,16 @@ trans = csv.DictReader(open(transfi,'r'))
 
 
 #------------main--------##
+rsids = {}
+for rsid in targetrs.next():
+    rsids[rsid] = rsid
 
+goodtrans = {}
+for tr in trans.next():
+    goodtrans[tr] = tr
+
+for rsid in muts:
+    print rsid.strip()
 
 
 
