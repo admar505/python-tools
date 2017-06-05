@@ -14,10 +14,16 @@ mutfi = args.mut
 muts = open(mutfi,'r')
 transfi = args.tr
 rsidsfi = args.rs
-targetrs = csv.DictReader(open(rsidsfi,'r'))
-trans = csv.DictReader(open(transfi,'r'))
+targetrs = open(rsidsfi,'r')
+trans = open(transfi,'r')
 ##-----------defs--------##
-#de:
+def nmCheck(ids,trans):
+    arr=[]
+    ncid = re.match('(NM_\d+)\.\d+:(.*)',ids)
+    if ncid.group(1) in trans.keys():
+        arr.append(ncid.group(1))
+        arr.append(ncid.group(2))
+        return arr
 
 
 #------------main--------##
@@ -27,25 +33,32 @@ for rsid in targetrs.next():
     rsids[rsid] = rsid
 
 goodtrans = {}
-for tr in trans.next():
-    goodtrans[tr] = tr
+for tr in trans:
+    m = re.match('(NM_\d+)\.(\d+)',tr)
+    goodtrans[m.group(1)] = m.group(2)
 
 for rsid in muts:
-    
-    print rsid.strip()
     onerow = rsid.split()
     seentit[onerow[0]] = onerow
     ncbi_ids = onerow[1]
-    storelocale = {}
+    storelocale = {}#hash, key = version, val = position
     localeprint = ""
-    for ncbi in ncbi_ids.split('|'):   
+    transhgvs = []
+    for ncbi in ncbi_ids.split('|'):
         #print ncbi
         if re.match('NC_',ncbi):
             m = re.match('NC_0{1,6}(\d+)\.(\d+):g.(\d+)',ncbi)
-            print m.group(2)
-            print ncbi
             storelocale[int(m.group(2))] = m.group(3)
             if len(storelocale) == 2:
-                storekeys =  storelocale.keys()
-                
-                print sorted(storekeys)
+                storek =  storelocale.keys()
+
+                localeprint = m.group(1) +"," + storelocale[storek[0]] +"," + m.group(1) + "," + storelocale[storek[1]]
+        elif re.match('NM_',ncbi):
+            if nmCheck(ncbi,goodtrans) is not None:
+                transhgvs.append(nmCheck(ncbi,goodtrans))
+#what if no NMIDS? figure that out::
+    for positions in transhgvs:
+        print onerow[0] +","+ positions[1] + "," + positions[0] + "," +   localeprint + "," + positions[0] + "||"+ positions[1]
+
+#loser bracket: ensure the rsids are all there.
+
