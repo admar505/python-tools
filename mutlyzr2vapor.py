@@ -11,6 +11,7 @@ parser.add_argument("--rs", help="The rsids you were looking for")
 parser.add_argument("--vg", help="the number to start with for VG transcripts, as in 301 or something")
 args = parser.parse_args()
 
+newtrans = open('NEW.vapor.transcripts.txt','w+')
 vgTransID = args.vg
 mutfi = args.mut
 muts = open(mutfi,'r')
@@ -19,14 +20,66 @@ rsidsfi = args.rs
 targetrs = open(rsidsfi,'r')
 trans = open(transfi,'r')
 ##-----------defs--------##
-def selectAlt(choices,vgTransID):#array NR > XR > XM
+
+
+def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
+                   #(het, homovar, wt+)
+
+    print row1[0] +","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[0] + "||"+ pos[1]
+    return "NULL"
+
+
+def newTrans(vgid,rs,newtrans):#title,trans,version,gene
+    print "should WRITE HERE"
+    newid = "VG_000" + vgid
+    vgid += 1
+    newtrans.write('\"' + rs + " " + newid + '\"\,\"' + newid + '\"\,\"1\"\,\"' + rs + '\"')
+
+    return vgid
+
+
+
+def bestXX(trarr):#pick closest TR
+    toreturn = {}
+    for tr in trarr:
+        pos = re.match('n.(\d+)',tr[1])
+        toreturn[pos.group(1)] = tr
+    keyssorted = sorted(toreturn.keys())
+    #print str(keyssorted)
+    return toreturn[keyssorted[0]]
+
+def selectAlt(choices,vgTransID,rsid_current,transfile):#array NR > XR > XM
     goodalts = []
+    NR = []
+    XR = []
+    XM = []
     #print str(choices) + "   in select"
-    for vrsion in choices:
-        if vrsion[0]
+    for ind in choices:
         #print vgTransID NEXT:: get the tacos into this space here.
         #ok. lets do this, scan through, take best, and send it back, in best arrray version order.
+        if re.match('NR',ind[0]):
+            NR.append(ind)
+            #print ind
+        elif re.match('XR',ind[0]):
+            XR.append(ind)
+            #print ind
+        elif re.match('XM',ind[0]):
+            XM.append(ind)
+            #print ind
+
+    #now, sort through the stuff.
+    if len(NR) > 0:
+        goodalts = NR
+    elif len(XR) > 0:
+        goodalts = bestXX(XR)
+    elif len(XM) > 0:
+        goodalts = bestXX(XM)
+    else:
+        vgTransID = newTrans(vgTransID,rsid_current,transfile)
+        goodalts.append(vgTransID)
+
     return goodalts
+
 
 def nmCheck(ids,trans):
     arr=[]
@@ -84,20 +137,18 @@ for rsid in muts:
     #if transhgvs is not None and len(transhgvs) > 0:
     if transhgvs:
         for positions in transhgvs:##This is valid, as thare T>G and T>C or A type mutations.
-            #print onerow[0] +","+ positions[1] + "," + positions[0] + "," +   localeprint + "," + positions[0] + "||"+ positions[1]
-            print ""
+            varPrint(onerow,positions,localeprint)
 
     elif althgvs:
-        print str(althgvs) + "\tSTF"
         altID = []
-        altID = selectAlt(althgvs,vgTransID)
-        print altID
+        altID = selectAlt(althgvs,vgTransID,onerow[0],newtrans)
         if altID is not None:
             for alt in altID:
-                print altID + ",CATCH NON-NM here"
+                varPrint(onerow,positions,localeprint)
+                #print str(altID) + ",CATCH NON-NM here"
 
-    else:
-        print "NEW TRANS HRERE"
+    #else:NOW: this is working correctly here.
+    #    print "NEW TRANS HRERE"
 #loser bracket: ensure the rsids are all there.
 
 
