@@ -23,10 +23,12 @@ trans = open(transfi,'r')
 
 
 def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
-                   #(het, homovar, wt+)
-
+                             #(het, homovar, wt+)
+    np = re.match('(\w\..*?\d+)(\w+)\>(\w+)',pos[1])
+    npwt = np.group(1) + np.group(2) + "="
     print row1[0] +","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[0] + "||"+ pos[1]
-    return "NULL"
+    print row1[0] +","+ npwt + "," + pos[0] + "," +   local + "," + npwt + "||"+ pos[1]
+    print row1[0] +","+ pos[1] + ":0/1," + pos[0] + "," +   local + "," + pos[0] + ":0/1||"+ pos[1]
 
 
 def newTrans(vgid,rs,newtrans):#title,trans,version,gene
@@ -69,15 +71,15 @@ def selectAlt(choices,vgTransID,rsid_current,transfile):#array NR > XR > XM
 
     #now, sort through the stuff.
     if len(NR) > 0:
-        goodalts = NR
+        goodalts.append(NR)
     elif len(XR) > 0:
-        goodalts = bestXX(XR)
+        goodalts.append(bestXX(XR))
     elif len(XM) > 0:
-        goodalts = bestXX(XM)
+        goodalts.append(bestXX(XM))
     else:
         vgTransID = newTrans(vgTransID,rsid_current,transfile)
         goodalts.append(vgTransID)
-
+    print str(goodalts) + "\tGOODALTS"
     return goodalts
 
 
@@ -97,7 +99,8 @@ def nrCheck(ids,trans):
     arr.append(ncid.group(2))
     return arr
 
-
+def perf(ind):
+    return "NULL"
 
 #------------main--------##
 seentit = {}
@@ -137,11 +140,13 @@ for rsid in muts:
     #if transhgvs is not None and len(transhgvs) > 0:
     if transhgvs:
         for positions in transhgvs:##This is valid, as thare T>G and T>C or A type mutations.
-            varPrint(onerow,positions,localeprint)
+            perf(1)
+            #varPrint(onerow,positions,localeprint)
 
     elif althgvs:
         altID = []
         altID = selectAlt(althgvs,vgTransID,onerow[0],newtrans)
+        #print altID
         if altID is not None:
             for alt in altID:
                 varPrint(onerow,positions,localeprint)
