@@ -66,7 +66,7 @@ def LoserRecover(ovcf,rsid):
         failreturn.REF = 'FABRICated'
         failreturn.ALT = 'VAR'
         failreturn.INFO = {}
-        failreturn.INFO['VEP_EFFECT'] = "FABRIC_HARD_TO_MAP(" + ovcf[3].rstrip() + ")|(" + ovcf[4].rstrip() + ")"
+        failreturn.INFO['VEP_EFFECT'] = "FABRIC_HARD_TO_MAP(https://www.ncbi.nlm.nih.gov/clinvar/?term=" + ovcf[3].rstrip() + ")|(" + ovcf[4].rstrip() + ")"
         failreturn.INFO['FBRefAlleleCount'] = 0
         failreturn.INFO['VEP_HGVS'] = 'UNKNOWN'
         failreturn.INFO['FBReferenceAlleleQ'] = 0
@@ -78,11 +78,11 @@ def LoserRecover(ovcf,rsid):
 
 def AddOmicia(vcf,results):
     if 'VEP_EFFECT' in results.INFO.keys():
-        results.INFO['VEP_EFFECT'] = results.INFO['VEP_EFFECT'].rstrip() + "(" + vcf[3].rstrip() + ")|(" + vcf[4].rstrip() + ")"
+        results.INFO['VEP_EFFECT'] = results.INFO['VEP_EFFECT'].rstrip() + "(https://www.ncbi.nlm.nih.gov/clinvar/?term=" + vcf[3].rstrip() + ")|(" + vcf[4].rstrip() + ")"
     elif 'EFF_EFFECT' in results.INFO.keys():
-        results.INFO['EFF_EFFECT'] = results.INFO['EFF_EFFECT'] + "(" + vcf[3].rstrip() + ")|(" + vcf[4].rstrip() + ")"
+        results.INFO['EFF_EFFECT'] = results.INFO['EFF_EFFECT'] + "(https://www.ncbi.nlm.nih.gov/clinvar/?term=" + vcf[3].rstrip() + ")|(" + vcf[4].rstrip() + ")"
     else:
-        results.INFO['VEP_EFFECT'] = "(" + vcf[3].rstrip() + ")|(" + vcf[4].rstrip() + ")"
+        results.INFO['VEP_EFFECT'] = "(" + vcf[3].rstrip() + ")|(https://www.ncbi.nlm.nih.gov/clinvar/?term=" + vcf[4].rstrip() + ")"
     results.INFO['RSID'] = vcf[3].rstrip()
     results.INFO['QUAL'] = vcf[4].rstrip()
     return results
