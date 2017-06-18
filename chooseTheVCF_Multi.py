@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys,os,re,fileinput,argparse,math
+import subprocess,sys,os,re,fileinput,argparse,math
 import vcf
 
 parser = argparse.ArgumentParser(description="adds the position info into either the ID col or in INFO")
@@ -16,66 +16,55 @@ fabrictype = args.fabric
 #special load for vcffi? (vcffi,"r")
 
 vcf_full = vcf.Reader(open(vcffi,'r'))
-
-
-#hom_total = 0;
+#repair for one sample and not two.
+tempheader = open('vcf.tmp','w')
+headerrewritten = open('tmp.vcf','w')
+subprocess.call(['zgrep \"#\" '  + vcffi],shell=True,stdout=tempheader)
+subprocess.call(['sed -e \'s/unknown\tSample1/Sample1/\' vcf.tmp'],shell=True,stdout=headerrewritten)
 
 #--subs--#
 def chooseSample(samples):
 
-    if samples[0]['GT'] == ".":
+   if samples[0]['GT'] is None:
+        return [samples[1]]
+   else:
+        return [samples[0]]
 
-        return (samples[1]['GT'],samples[1]['DP'],samples[1]['GT'])
-    else:
-        
-        return (samples[0]['GT'],samples[0]['DP'],samples[0]['GT'])
-    
 
 def addAnnovar(line):
     #print line.INFO
     #return NULL
     line.INFO['IDX'] = line.POS
-    
-    if line.samples[0]['GT'] == ".":
-
-        #newsamples = vcf.model._Call(line.samples[1]['GT'],line.samples[1]['DP'],line.samples[1]['GT'])  
-        #newline = vcf.model._Record(line.CHROM,line.POS,line.ID,line.REF,line.ALT,line.QUAL,line.FILTER,line.INFO,line.FORMAT,0,samples=newsamples)#,str(newsamples))
-        #return newline
-        return "NULL"
-    else:
-        #newsamples = vcf.model._Call(line.samples[0]['GT'],line.samples[0]['DP'],line.samples[0]['GT'])
-        #newline = vcf.model._Record(line.CHROM,line.POS,line.ID,line.REF,line.ALT,line.QUAL,line.FILTER,line.INFO,line.FORMAT,0,samples=newsamples)#,str(newsamples))
-        #return newline
-        return "NULL"
+    newsamples = chooseSample(line.samples)
+    newline = vcf.model._Record(line.CHROM,line.POS,line.ID,line.REF,line.ALT,line.QUAL,line.FILTER,line.INFO,line.FORMAT,0,samples=newsamples)#,str(newsamples))
+    return newline
 
 
 def addFab(line):
     line.ID = line.POS
-    line.samples[0] = (line.samples)
-    return line
-
+    newsamples = chooseSample(line.samples)
+    newline = vcf.model._Record(line.CHROM,line.POS,line.ID,line.REF,line.ALT,line.QUAL,line.FILTER,line.INFO,line.FORMAT,0,samples=newsamples)#,str(newsamples))
+    return newline
 
 
 #--main--#
+headertemplate = vcf.Reader(open('tmp.vcf','r'))
 v = re.match('(\w+.*?)\.vcf.*',vcffi)
 counter = 0
-print vcf_full.metadata
 if annovartype is True:
     vcfoutfi = v.group(1) + '_2annovar.vcf'
-    vcf_write = vcf.Writer(open(vcfoutfi,'w'),vcf_full)
-    
-   # for record in vcf_full:
-    #    vcf_write.write_record(addAnnovar(record))
-        
-    
-    
+    vcf_write = vcf.Writer(open(vcfoutfi,'w'),headertemplate)
+
+    for record in vcf_full:
+        vcf_write.write_record(addAnnovar(record))
+        #(addAnnovar(record))
+
+
+
 elif fabrictype is True:
     vcfoutfi = v.group(1) + '_2fabric.vcf'
-    vcf_write = vcf.Writer(open(vcfoutfi,'w'),vcf_full)
-   # for record in vcf_full:
-   #     vcf_write.write_record(addFab(record))
+    vcf_write = vcf.Writer(open(vcfoutfi,'w'),headertemplate)
 
-
-
-
+    for record in vcf_full:
+        vcf_write.write_record(addFab(record))
 
