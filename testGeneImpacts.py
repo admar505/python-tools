@@ -6,7 +6,6 @@ import geneimpacts
 import vgr
 import csv
 from subprocess import call
-import pybedtools
 import random
 #Test if geneImpacts does job I want, and can add to VGR record.
 parser = argparse.ArgumentParser(description="VGR and geneimpacts library test!!")
@@ -19,14 +18,25 @@ vcf_full = vcf.Reader(open(efdfi,'r'))
 
 #-----------------here by DEFSgONS!!-------------------------*
 
+def addNewRecord(varrec):
+    newRes = vgr.model._Record(varrec.CHROM,varrec.POS,varrec.REF,varrec.ALT)
+    newRes.add_info('QUAL',varrec.QUAL)
+    newRes.add_info
+    
+    return newRes
+    #Oprint varrec.INFO
+    
+    
 
 
-
-
-failreturn = vgr.Reader("10")#instanciate empty record
 
 ##<---------------++++++++++ MAIN ++++++++++++------------->##
+resData = {}#key is record: val is the VGR line!
 for variant in vcf_full:
-    print variant.INFO['ANN']
-    failreturn[]
+    resData[str(variant.CHROM) + str(variant.POS) +  str(variant.REF) + str(variant.ALT)] = addNewRecord(variant)
+    #print variant.INFO['ANN']
     #newresults = vgr.Reader(open(rsid + '.COMPLETE.txt',"r"))
+
+for rec in resData:
+    print rec
+    print resData[rec].INFO['QUAL']
