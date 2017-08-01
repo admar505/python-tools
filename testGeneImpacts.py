@@ -19,12 +19,11 @@ vcf_full = vcf.Reader(open(efdfi,'r'))
 #-----------------here by DEFSgONS!!-------------------------*
 
 def addNewRecord(varrec):
-    newRes = vgr.model._Record(varrec.CHROM,varrec.POS,varrec.REF,varrec.ALT)
-    newRes.add_info('QUAL',varrec.QUAL)
-    newRes.add_info
-    
+    newRes = vgr.model._Record(varrec.CHROM,varrec.POS,varrec.REF,varrec.ALT,"EFD")
+    #newRes.add_info('QUAL',varrec.QUAL)
+    #newRes.add_info
+    print newRes.INFO
     return newRes
-    #Oprint varrec.INFO
     
     
 
@@ -37,6 +36,6 @@ for variant in vcf_full:
     #print variant.INFO['ANN']
     #newresults = vgr.Reader(open(rsid + '.COMPLETE.txt',"r"))
 
-for rec in resData:
-    print rec
-    print resData[rec].INFO['QUAL']
+#for rec in resData:
+#    print rec
+#    print resData[rec].INFO['QUAL']
