@@ -8,6 +8,10 @@ import csv
 from subprocess import call
 import random
 #Test if geneImpacts does job I want, and can add to VGR record.
+#is in the planning doc, there will be two phases. one for collecting data, the second for deciding which data to keep. and, a third for adding 
+#freq data, and you know, a fourth for filtration, and a fifth for ACMG incidental findings.
+#
+#
 parser = argparse.ArgumentParser(description="VGR and geneimpacts library test!!")
 parser.add_argument("--efd",help="fullvcf file",required=True)
 
@@ -26,7 +30,12 @@ def addNewRecord(varrec):
     print newRes.INFO
     return newRes
     
+def addAnn2Array(var):
     
+
+
+
+    return 1    
 
 
 
@@ -38,6 +47,7 @@ for variant in vcf_full:
 
 
 for row in resData:
+    print row
     newresults.write_record(row)
 
 
