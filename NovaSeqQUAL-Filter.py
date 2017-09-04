@@ -22,7 +22,7 @@ vcf_file = vcf.Reader(open(vcffi,'r'))
 outfi = vcf.Writer(vcfout,template=vcf_file)
 
 for var in vcf_file:
-    if var.QUAL > qthreshold or  var.FILTER == "PASS":
+    if var.QUAL > qthreshold or var.FILTER is not None:
         outfi.write_record(var) 
-
+        
 
