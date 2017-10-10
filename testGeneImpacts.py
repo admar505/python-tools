@@ -21,15 +21,24 @@ efd_full = vcf.Reader(open(efdfi, 'r'))
 vep_full = vcf.Reader(open(vepfi, 'r'))
 newresults = vgr.Writer(open('test.COMPLETE.txt',"w"))
 #-----------------here by DEFSgONS!!-------------------------*
+def getGT(sample):#expanded so can be used to extract any sample GT info needed.
+    return sample['GT']
+def getDP(sample):
+    return sample['DP']
 
 def addNewRecord(varrec):#Returns a vgr  record:
     newRes = vgr.model._Record(varrec.CHROM,varrec.POS,varrec.REF,varrec.ALT,{})
     newRes.INFO['QUAL'] = varrec.QUAL
-    newRes.INFO['FB_GenoType'] = varrec.sample['unknown']
-    #newRes.add_info
-    #print newRes.INFO
-    return newRes
+    if 'FB_Genotype' not in newRes.INFO:#one sample will ALWAYS exist 
+        newRes.INFO['FB_GenoType'] = getGT(varrec.samples[0])#attempting to get GT, needed big time.
+        newRes.INFO['FBTotalDepth'] = getDP(varrec.samples[0])
+    if len(varrec.samples) > 1 and 'VS_Genotype' not in newRes.INFO:
+        newRes.INFO['VS_GenoType'] = getGT(varrec.samples[1])#
+        newRes.INFO['VSTotalDepth'] = getDP(varrec.samples[1])
+    #newRes.add_info BLOCK TO HERE APPROVED< GETS GT OK
+    return newRes.INFO
 
+    
 
 
 
