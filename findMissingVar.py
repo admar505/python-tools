@@ -39,7 +39,7 @@ def pullUniqueVar(var):#def to open and read file to yoink! var
     file2open = re.sub('.idx','.txt', vgrfile)
     variants2search = vgr.Reader(open(file2open.strip(),'r'))
     vartoprint = filterVar(variants2search,pos)
-    vartoprint.INFO['Origin_FILE'] = file2open
+    vartoprint.INFO['Origin_FILE'] = file2open.strip()
     return vartoprint
     
     
