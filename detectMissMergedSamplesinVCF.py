@@ -2,6 +2,8 @@
 
 import subprocess,sys,os,re,fileinput,argparse,math
 import vcf
+sys.path.append('/home/nucleo/python-tools/AltObject')
+import altobject
 
 parser = argparse.ArgumentParser(description="adds the position info into either the ID col or in INFO")
 parser.add_argument("--vcf",help="the vcf file, has to be bgzipped and indexed",required=True)
@@ -25,24 +27,23 @@ headerrewritten = open('tmp.vcf','w')
 
 #--subs--#
 def returnAlts(samples):
-
-    if samples[0]['GT'] is None:
-        return [samples[1]]
-
+    #return None
+    my_alt = altobject.AltObj()
+    print my_alt.function()
+    print my_alt.ab
 #--main--#
 
 for var in vcf_full:
-#    print var.ALT 
+    #print var.ALT[0]
 
-    altDict = {}#hold alternates for 
+    altDict = {}#hold alternates for
 
-    check_for_none = for var.ALT:
-#        print alternate
+    check_for_none = var.ALT[0]
 
-        if check_for_none is not None:
-            #print var.samples[0]['GT']
+    if check_for_none is not None:
+        print var.samples[0]['GT']
             #from here, toss the variant into the alt class, and create alt objects.
 
-            altDict = returnAlts()
+        altDict = returnAlts(var)
 
 
