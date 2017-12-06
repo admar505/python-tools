@@ -20,9 +20,11 @@ tempheader = open('vcf.tmp','w')
 headerrewritten = open('tmp.vcf','w')
 #subprocess.call(['zgrep \"#\" '  + vcffi],shell=True,stdout=tempheader)
 #subprocess.call(['sed -e \'s/unknown\tSample1/Sample1/\' vcf.tmp'],shell=True,stdout=headerrewritten)
+#i
+
 
 #--subs--#
-def chooseSample(samples):
+def returnAlts(samples):
 
     if samples[0]['GT'] is None:
         return [samples[1]]
@@ -30,8 +32,17 @@ def chooseSample(samples):
 #--main--#
 
 for var in vcf_full:
-    print var 
-	
+#    print var.ALT 
 
+    altDict = {}#hold alternates for 
+
+    check_for_none = for var.ALT:
+#        print alternate
+
+        if check_for_none is not None:
+            #print var.samples[0]['GT']
+            #from here, toss the variant into the alt class, and create alt objects.
+
+            altDict = returnAlts()
 
 
