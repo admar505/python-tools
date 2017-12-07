@@ -20,17 +20,27 @@ vcf_full = vcf.Reader(open(vcffi,'r'))
 #repair for one sample and not two.
 tempheader = open('vcf.tmp','w')
 headerrewritten = open('tmp.vcf','w')
-#subprocess.call(['zgrep \"#\" '  + vcffi],shell=True,stdout=tempheader)
-#subprocess.call(['sed -e \'s/unknown\tSample1/Sample1/\' vcf.tmp'],shell=True,stdout=headerrewritten)
-#i
 
 
 #--subs--#
-def returnAlts(samples):
-    #return None
-    my_alt = altobject.AltObj()
-    print my_alt.function()
-    print my_alt.ab
+
+def returnAlts(samples):#this loads the altobject.py
+    #strategy, give the number for each as it goes through. and it will return that var. ok. got it.
+    
+    alts = {}
+    genotype_index = 0 
+
+    #print myalts.test() 
+
+    for alt_choice in samples.ALT:
+        print alt_choice  
+        myalts = altobject.AltObj(genotype_index)
+        alts[genotype_index] = myalts.returnAlt(samples,genotype_index)
+        
+        genotype_index += 1
+        print "\n"
+    return alts
+         
 #--main--#
 
 for var in vcf_full:
@@ -41,9 +51,10 @@ for var in vcf_full:
     check_for_none = var.ALT[0]
 
     if check_for_none is not None:
-        print var.samples[0]['GT']
+       # print var.samples[0]['GT']
             #from here, toss the variant into the alt class, and create alt objects.
 
+        
         altDict = returnAlts(var)
-
+        print altDict[0]
 
