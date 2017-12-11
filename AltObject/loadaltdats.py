@@ -14,13 +14,17 @@ class loadAlts(object):
             #print myalts.test()
 
         for alt_choice in samples.ALT:
-            print alt_choice
-            myalts = altobject.AltObj(genotype_index)
-            alts[genotype_index] = myalts.returnAlt(samples,genotype_index)
+            #print alt_choice
+            myalts = altobject.AltObj(samples,genotype_index)
+            alts[genotype_index] = myalts
 
             genotype_index += 1
 
-            print "\n"
 
             return alts
+
+class determinGenoType(object):
+
+        def __init__(self,alt):
+            print "loading..."
 

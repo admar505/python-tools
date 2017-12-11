@@ -2,27 +2,40 @@ import sys,re
 class AltObj(object):
     #create an object that has the var in a pipeline
 
-    def __init__(self,index):#intialize with just the index for this variant, 1,2,3 etc.
+    def __init__(self,pyvar,index):#intialize with just the index for this variant, 1,2,3 etc.
 
         #recall that index is zero, but zero means ref in the GT context.
         self.index = index - 1
+        self.pyvar = pyvar
+        #self.getcall = call
 
+    @property
     def test(self):
-        print "success!"
+        return "success!"
 
-    def getcall(self,pyvar,index):
+    @property
+    def getcall(self):
+        #this is the setter, it sets that the @property gets
+        ret = self.pyvar.ALT[self.index]
+        #self._getcall =  ret
+        return(ret)
 
-        ret = pyvar.ALT[index]
-        return ret
+    @property
+    def getAB(self):
 
-    def getAB(self,pyvar,index):
+        return self.pyvar.INFO['AB'][self.index]
 
-        return pyvar.INFO['AB'][index]
+    @property
+    def getGT(self):
+        retarr = None
+        for sample in self.pyvar.samples:
+            retarr = sample['GT']
+        return retarr
 
-
-    def AmIValid(self,gt,index): #this will return True if so, False if not.
+    @property
+    def AmIValid(self): #this will return True if so, False if not.
         returnTruOrNo = False
-        for gtsample in gt:
+        for gtsample in self.getGT:
             print str(gtsample) + "\tSAMPLeGT"
             gtvals = re.split('[|/]',gtsample)#split the type, if its in one and not the other ok?
             for gt in gtvals:
@@ -33,22 +46,19 @@ class AltObj(object):
 
         return returnTruOrNo
 
-    def getGT(self,pyvar):
-        retarr = []
-        pos = 0
-        for sample in pyvar.samples:
-            retarr.append(sample['GT'])
-        return retarr
 
-    def returnAlt(self,pyvar,index):
+#    def returnAlt(self,pyvar,index):
 
-        print pyvar.CHROM + "\t" + str(pyvar.POS)
 
-        self.index = index - 1                       #translating to array index
-        self.call = self.getcall(pyvar,self.index)   #this is the nucleotide call. position.
-        self.ab = self.getAB(pyvar,self.index)       #the allele balance for this altvar
-        self.gt = self.getGT(pyvar)                  #the full genotype of the call,  in a list so that multi can be kept.
-        self.valid=self.AmIValid(self.gt,self.index) #is this altbase included in the proposed GT?
 
-        print self.valid
-        print self.call
+
+        #print pyvar.CHROM + "\t" + str(pyvar.POS)
+
+        #self.index = index - 1                       #translating to array index
+        #self.call = self.getcall(pyvar,self.index)   #this is the nucleotide call. position.
+        #self.ab = self.getAB(pyvar,self.index)       #the allele balance for this altvar
+        #self.gt = self.getGT(pyvar)                  #the full genotype of the call,  in a list so that multi can be kept.
+        #self.valid=self.AmIValid(self.gt,self.index) #is this altbase included in the proposed GT?
+
+        #print self.valid
+        #print self.call
