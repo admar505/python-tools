@@ -23,8 +23,45 @@ class loadAlts(object):
 
             return alts
 
-class determinGenoType(object):
+#here I am thinking sort of a subclass on this.
+#currentalts = loadAlts(samples)
+class detGenoType(object):
 
-        def __init__(self,alt):
-            print "loading..."
+    def __init__(self,variants):#I need to load the above to here, how doI do that.
+        #print "alive!"
+        alts = loadAlts()
+        self.alts = alts.altLoader(variants)
+        self.WT = variants.REF
 
+    @property
+    def test(self):
+        return "alive"
+
+
+
+
+
+
+    @property
+    def defGT(self): #returns the sorted genotype.
+
+        retGT = []
+        for alt in self.alts:
+            print alt
+            if self.alts[alt].amivalid == True:
+                retGT.append(self.alts[alt].getcall)
+
+
+
+        retGT.sort()
+
+        return len(retGT)
+
+
+
+
+
+
+    @property
+    def retREF(self):
+        return self.WT

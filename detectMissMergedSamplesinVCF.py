@@ -39,9 +39,10 @@ for var in vcf_full:
        # print var.samples[0]['GT']
             #from here, toss the variant into the alt class, and create alt objects.
 
+        alts = loadaltdats.detGenoType(var)
 
-        alts = loadaltdats.loadAlts()
-        altDict = alts.altLoader(var)
-    for alternatevars in altDict:
-        print alternatevars
+    #for alternatevars in alts:
+
+        print alts.defGT
+        #print str(altDict[alternatevars].amivalid)  + "\t" +  str(altDict[alternatevars].getcall) + "\t" +  str(altDict[alternatevars].getindex) +"\t"+  str(altDict[alternatevars].getcall)
 

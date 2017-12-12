@@ -21,6 +21,10 @@ class AltObj(object):
         return(ret)
 
     @property
+    def getindex(self):
+        return self.index + 1
+
+    @property
     def getAB(self):
 
         return self.pyvar.INFO['AB'][self.index]
@@ -30,35 +34,19 @@ class AltObj(object):
         retarr = None
         for sample in self.pyvar.samples:
             retarr = sample['GT']
+
         return retarr
 
     @property
-    def AmIValid(self): #this will return True if so, False if not.
-        returnTruOrNo = False
-        for gtsample in self.getGT:
-            print str(gtsample) + "\tSAMPLeGT"
-            gtvals = re.split('[|/]',gtsample)#split the type, if its in one and not the other ok?
-            for gt in gtvals:
-                printindex = index + 1
-                print str(gt) +  "\t" + str(printindex)
-                if int(gt) == (int(index) + 1):
-                    returnTruOrNo = True
+    def amivalid(self): #this will return True if so, False if not. so if this var is in one .
+        TruOrNo = False
+        gtvals = re.split('[|/]',self.getGT)#split the type, if its in one and not the other ok?
 
-        return returnTruOrNo
+        for gt in gtvals:
+            indpr = self.index + 1
+            if int(gt) == int(indpr):
+                TruOrNo = True
+
+        return TruOrNo
 
 
-#    def returnAlt(self,pyvar,index):
-
-
-
-
-        #print pyvar.CHROM + "\t" + str(pyvar.POS)
-
-        #self.index = index - 1                       #translating to array index
-        #self.call = self.getcall(pyvar,self.index)   #this is the nucleotide call. position.
-        #self.ab = self.getAB(pyvar,self.index)       #the allele balance for this altvar
-        #self.gt = self.getGT(pyvar)                  #the full genotype of the call,  in a list so that multi can be kept.
-        #self.valid=self.AmIValid(self.gt,self.index) #is this altbase included in the proposed GT?
-
-        #print self.valid
-        #print self.call
