@@ -28,22 +28,19 @@ def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
     findsnp = re.compile('(\w\..*?\d+)(\w+)\>(\w+)')
     finddel = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
     findin = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
-
+    global np
     if findin.match(pos[1]) is not None:
 
-        global np
         np = findin.search(pos[1])
 
 
     elif finddel.match(pos[1]) is not None:
 
-        global np
         np = finddel.search(pos[1])
 
 
     elif findsnp.match(pos[1]) is not None:
 
-        global np
         np = findsnp.search(pos[1])
 
 
