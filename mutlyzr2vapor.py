@@ -22,7 +22,36 @@ trans = open(transfi,'r')
 
 def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
                              #(het, homovar, wt+)
-    np = re.match('(\w\..*?\d+)(\w+)\>(\w+)',pos[1])
+    #print pos[1]
+    #adjust to account for del. Stupid CFTR.
+
+    findsnp = re.compile('(\w\..*?\d+)(\w+)\>(\w+)')
+    finddel = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
+    findin = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
+
+    if findin.match(pos[1]) is not None:
+
+        global np
+        np = findin.search(pos[1])
+
+
+    elif finddel.match(pos[1]) is not None:
+
+        global np
+        np = finddel.search(pos[1])
+
+
+    elif findsnp.match(pos[1]) is not None:
+
+        global np
+        np = findsnp.search(pos[1])
+
+
+    #if hgmdfind.search(pos)
+    #np = re.match('(\w\..*?\d+)(\w+)\>(\w+)',pos[1])
+
+
+
     npwt = np.group(1) + np.group(2) + "="
     print row1[0] +","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[1] + "||"+ pos[0]
     print row1[0] +","+ npwt + "," + pos[0] + "," +   local + "," + npwt + "||"+ pos[0]
