@@ -32,7 +32,7 @@ class detGenoType(object):
         alts = loadAlts()
         self.alts = alts.altLoader(variants)
         self.WT = variants.REF
-
+        self.GL = variants.samples[0]['GL']
     @property
     def test(self):
         return "alive"
@@ -58,6 +58,27 @@ class detGenoType(object):
         return len(retGT)
 
 
+    @property
+    def assocGTandGL(self):
+
+        gtglpairs = {}
+        nucl = 0
+        altypes = [self.WT,self.alts]#add in the REF at pos zero.
+        while nucl < len(self.alts):
+            vcfpos = nucl - 1
+
+            if nucl == 1:
+
+
+
+            dict_index =  altypes[vcfpos] + altypes[vcfpos - 1]
+
+
+            gtglpairs[index] = self.GL[index]
+
+
+
+        return self.GL
 
 
 

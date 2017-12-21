@@ -30,19 +30,19 @@ headerrewritten = open('tmp.vcf','w')
 
 for var in vcf_full:
     #print var.ALT[0]
-
+    #print var.CHROM + "\t" + str(var.POS) + "\t" +  str(var.samples[0]['GL'])
     altDict = {}#hold alternates for
 
     check_for_none = var.ALT[0]
 
-    if check_for_none is not None:
+    #if check_for_none is not None:
        # print var.samples[0]['GT']
             #from here, toss the variant into the alt class, and create alt objects.
 
-        alts = loadaltdats.detGenoType(var)
+    alts = loadaltdats.detGenoType(var)
 
     #for alternatevars in alts:
 
-        print alts.defGT
+    print str(var.POS) + "\t" + str(alts.assocGTandGL)
         #print str(altDict[alternatevars].amivalid)  + "\t" +  str(altDict[alternatevars].getcall) + "\t" +  str(altDict[alternatevars].getindex) +"\t"+  str(altDict[alternatevars].getcall)
 
