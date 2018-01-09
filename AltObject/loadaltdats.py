@@ -59,23 +59,26 @@ class detGenoType(object):
 
 
     @property
-    def assocGTandGL(self):
+    def assocGTandGL(self): #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
+                            #for 00,01,11,02,12,22
 
         gtglpairs = {}
         nucl = 0
-        altypes = [self.WT,self.alts]#add in the REF at pos zero.
+        #altypes = [self.WT,",".join(self.alts)]#add in the REF at pos zero.
+        #print altypes
+        test = ','.join(str(self.alts))
+        for i in self.alts:
+            print i
         while nucl < len(self.alts):
             vcfpos = nucl - 1
 
             if nucl == 1:
 
+                dict_index =  altypes[vcfpos] + altypes[vcfpos - 1]
 
+                gtglpairs[index] = self.GL[index]
 
-            dict_index =  altypes[vcfpos] + altypes[vcfpos - 1]
-
-
-            gtglpairs[index] = self.GL[index]
-
+            nucl += 1
 
 
         return self.GL
