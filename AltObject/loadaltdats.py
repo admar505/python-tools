@@ -8,18 +8,20 @@ class loadAlts(object):
 
     def altLoader(self,samples):#this loads the altobject.py
                                 #strategy, give the number for each as it goes through. and it will return that var. ok. got it.
-        alts = {}
+        alts = {}#dictionary
         genotype_index = 1
 
             #print myalts.test()
 
         for alt_choice in samples.ALT:
-            #print alt_choice
-            myalts = altobject.AltObj(samples,genotype_index)
-            alts[genotype_index] = myalts
+            # print alt_choice
+            # myalts = altobject.AltObj(samples,genotype_index)
+            # I dont think this is right, it should just pull from the
+            # samples directly
+
+            alts[genotype_index] = alt_choice
 
             genotype_index += 1
-
 
             return alts
 
@@ -59,7 +61,8 @@ class detGenoType(object):
 
 
     @property
-    def assocGTandGL(self): #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
+    def assocGTandGL(self): #to connect the GL and call pair.
+                            #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
                             #for 00,01,11,02,12,22
 
         gtglpairs = {}
@@ -67,8 +70,9 @@ class detGenoType(object):
         #altypes = [self.WT,",".join(self.alts)]#add in the REF at pos zero.
         #print altypes
         test = ','.join(str(self.alts))
-        for i in self.alts:
-            print i
+        for i in self.alts.keys():
+            print str(i) +  "\tPINT"
+
         while nucl < len(self.alts):
             vcfpos = nucl - 1
 
