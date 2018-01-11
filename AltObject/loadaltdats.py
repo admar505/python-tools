@@ -11,26 +11,22 @@ class loadAlts(object):
         alts = {}#dictionary
         genotype_index = 1
 
-            #print myalts.test()
-
         for alt_choice in samples.ALT:
-            # print alt_choice
+            #print alt_choice
             # myalts = altobject.AltObj(samples,genotype_index)
-            # I dont think this is right, it should just pull from the
-            # samples directly
 
             alts[genotype_index] = alt_choice
 
             genotype_index += 1
 
-            return alts
+        return alts
 
 #here I am thinking sort of a subclass on this.
 #currentalts = loadAlts(samples)
 class detGenoType(object):
 
     def __init__(self,variants):#I need to load the above to here, how doI do that.
-        #print "alive!"
+        print "alive!---------------------------------------"
         alts = loadAlts()
         self.alts = alts.altLoader(variants)
         self.WT = variants.REF
@@ -39,57 +35,68 @@ class detGenoType(object):
     def test(self):
         return "alive"
 
-
-
-
-
+    @property
+    def retREF(self):
+        return self.WT
 
     @property
     def defGT(self): #returns the sorted genotype.
 
         retGT = []
         for alt in self.alts:
-            print alt
             if self.alts[alt].amivalid == True:
                 retGT.append(self.alts[alt].getcall)
-
-
 
         retGT.sort()
 
         return len(retGT)
 
+    def __retGT__(self,index):#should return the alt at pos,
+        index += 1
+        return self.alts[index]
+
+    def __retWTorALT__(self,posA,posB):#returns GT for numerical position input
+        thisGT = self.retREF + self.retREF#create dictionary that both can pull from
+        if posA == 0 and posB > 0:
+            thisGT = str(self.retREF) + str(self.__retGT__(posB))
+        elif posA > 0 and posB > 0:
+
+            thisGT = str(self.__retGT__(posA)) + str(self.__retGT__(posB))
+
+        return thisGT
+
+    def __retGL__(self,numpos):#will return the GL given a pos
+        pos = 0
+        while pos < numpos:
+            is_GL_wanted = self.GL[pos]#iterates through and finds the correct GL
+            if pos == numpos:
+                return is_GL_wanted
+            pos += 1
 
     @property
-    def assocGTandGL(self): #to connect the GL and call pair.
+    def assGT_GL(self): #to connect the GL and call pair.
                             #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
                             #for 00,01,11,02,12,22
 
-        gtglpairs = {}
-        nucl = 0
-        #altypes = [self.WT,",".join(self.alts)]#add in the REF at pos zero.
-        #print altypes
-        test = ','.join(str(self.alts))
-        for i in self.alts.keys():
-            print str(i) +  "\tPINT"
-
-        while nucl < len(self.alts):
-            vcfpos = nucl - 1
-
-            if nucl == 1:
-
-                dict_index =  altypes[vcfpos] + altypes[vcfpos - 1]
-
-                gtglpairs[index] = self.GL[index]
-
-            nucl += 1
-
-
-        return self.GL
+        gtglpairs = {} ##$GT => GL
+        nuclA = 0
+    #def __retCorrectGTforPos__()
 
 
 
+        while nuclA < len(self.alts):
+            nuclB = 1
+            while nuclB < len(self.alts):
+                checkpos  = str(nuclA) + str(nuclB)
+                print checkpos
+                currentGT = self.__retWTorALT__(nuclA,nuclB)
+                GLpos = nuclB * ((nuclB + 1)/2) + nuclA
+                currentGL = self.__retGL__(int(GLpos))
+                print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT)
+                gtglpairs[currentGT] = currentGL
+                nuclB += 1
+            nuclA += 1
 
-    @property
-    def retREF(self):
-        return self.WT
+        return  gtglpairs
+
+

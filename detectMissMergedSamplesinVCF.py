@@ -43,6 +43,6 @@ for var in vcf_full:
 
     #for alternatevars in alts:
 
-    print str(var.POS) + "\t" + str(alts.assocGTandGL)
+    print str(var.POS) + "\t" + str(alts.assGT_GL)
         #print str(altDict[alternatevars].amivalid)  + "\t" +  str(altDict[alternatevars].getcall) + "\t" +  str(altDict[alternatevars].getindex) +"\t"+  str(altDict[alternatevars].getcall)
 
