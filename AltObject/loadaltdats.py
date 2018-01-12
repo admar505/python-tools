@@ -58,7 +58,7 @@ class detGenoType(object):
         return len(retGT)
 
     def __retGT__(self,index):#should return the alt at pos,
-        index += 1
+        #index += 1
         return self.alts[index]
 
     def __retWTorALT__(self,posA,posB):#returns GT for numerical position input
@@ -71,36 +71,47 @@ class detGenoType(object):
 
         return thisGT
 
-    def __retGL__(self,numpos):#will return the GL given a pos
-        pos = 0
-        while pos < numpos:
-            is_GL_wanted = self.GL[pos]#iterates through and finds the correct GL
-            if pos == numpos:
-                return is_GL_wanted
-            pos += 1
+
+
+
+    def __retGL__(self,numpos): #will return the GL given a pos
+        GL_wanted = self.GL     #ok, hard here, sometimes array, sometimes not. so,
+                                #have to adjust how to acess.
+        if type(self.GL) != type(float()):#enter if not single val
+            GL_wanted = self.GL[numpos]
+            #for gl in self.GL:
+                #GL_wanted = gl
+        return GL_wanted
+
 
     @property
     def assGT_GL(self):     #to connect the GL and call pair.
                             #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
                             #for 00,01,11,02,12,22
-        gtglpairs = {}      ##$GT => GL
+        gtglpairs = {}      ##$GT => GL is format.
         nuclA = 0
+        nuclB = 0
         #def __retCorrectGTforPos__()
         print self.GL
-        while nuclA < len(self.alts):
-            nuclB = 0
 
-            while nuclB < len(self.alts):
-                checkpos  = str(nuclA) + str(nuclB)
-                print checkpos
-                currentGT = self.__retWTorALT__(nuclA,nuclB)
-                GLpos = nuclB * ((nuclB + 1)/2) + nuclA
-                currentGL = self.__retGL__(int(GLpos))
-                print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT)
-                gtglpairs[currentGT] = currentGL
+        #while nuclA < len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
+        #while nuclA < len(self.alts) and nuclB < len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
+        while nuclA + nuclB < len(self.alts) + len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
+            #nuclB = 0                                            #try:for increment B, then when A=B, set A to zero and increment
+            checkpos  = str(nuclA) + str(nuclB)
+            currentGT = self.__retWTorALT__(nuclA,nuclB)
+            GLpos = (nuclB * ((nuclB + 1)/2)) + nuclA
+            currentGL = self.__retGL__(int(GLpos))
+            print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT) + "\tposition call and check\t" + str(checkpos)
+            gtglpairs[currentGT] = currentGL
 
+            if nuclB == nuclA and nuclB + nuclA != 0:
+                nuclA = 0
                 nuclB += 1
-            nuclA += 1
+            elif nuclA + nuclB == 0:
+                nuclB += 1
+            else:
+                nuclA += 1
 
         return  gtglpairs
 
