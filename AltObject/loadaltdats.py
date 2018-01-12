@@ -31,9 +31,15 @@ class detGenoType(object):
         self.alts = alts.altLoader(variants)
         self.WT = variants.REF
         self.GL = variants.samples[0]['GL']
+        self.QUAL = variants.QUAL
+
     @property
     def test(self):
         return "alive"
+
+    @property
+    def retQUAL():
+        return self.QUAL
 
     @property
     def retREF(self):
@@ -74,18 +80,16 @@ class detGenoType(object):
             pos += 1
 
     @property
-    def assGT_GL(self): #to connect the GL and call pair.
+    def assGT_GL(self):     #to connect the GL and call pair.
                             #formula:F(j/k) = (k*(k+1)/2)+j from vcf4.2 doc.
                             #for 00,01,11,02,12,22
-
-        gtglpairs = {} ##$GT => GL
+        gtglpairs = {}      ##$GT => GL
         nuclA = 0
-    #def __retCorrectGTforPos__()
-
-
-
+        #def __retCorrectGTforPos__()
+        print self.GL
         while nuclA < len(self.alts):
-            nuclB = 1
+            nuclB = 0
+
             while nuclB < len(self.alts):
                 checkpos  = str(nuclA) + str(nuclB)
                 print checkpos
@@ -94,6 +98,7 @@ class detGenoType(object):
                 currentGL = self.__retGL__(int(GLpos))
                 print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT)
                 gtglpairs[currentGT] = currentGL
+
                 nuclB += 1
             nuclA += 1
 
