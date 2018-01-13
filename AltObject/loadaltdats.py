@@ -100,7 +100,8 @@ class detGenoType(object):
             #nuclB = 0                                            #try:for increment B, then when A=B, set A to zero and increment
             checkpos  = str(nuclA) + str(nuclB)
             currentGT = self.__retWTorALT__(nuclA,nuclB)
-            GLpos = (nuclB * ((nuclB + 1)/2)) + nuclA
+            #GLpos = (nuclA * ((nuclA + 1)/2)) + nuclB
+            GLpos = (nuclB * (nuclB + 1)/2) + nuclA
             currentGL = self.__retGL__(int(GLpos))
             print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT) + "\tposition call and check\t" + str(checkpos)
             gtglpairs[currentGT] = currentGL
