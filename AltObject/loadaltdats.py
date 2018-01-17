@@ -27,12 +27,12 @@ class detGenoType(object):
 
     def __init__(self,variants):#I need to load the above to here, how doI do that.
         print "alive!---------------------------------------"
-        alts = loadAlts()
-        self.alts = alts.altLoader(variants)
-        self.WT = variants.REF
-        self.GL = variants.samples[0]['GL']
-        self.QUAL = variants.QUAL
-
+        alts = loadAlts()                   #loading...
+        self.alts = alts.altLoader(variants)#all the alts
+        self.WT = variants.REF              #ref, for fast pulling
+        self.GL = variants.samples[0]['GL'] #likelihoods.
+        self.QUAL = variants.QUAL           #qual
+        self.full = variants                #the whole thing for everything else
     @property
     def test(self):
         return "alive"
@@ -91,11 +91,7 @@ class detGenoType(object):
         gtglpairs = {}      ##$GT => GL is format.
         nuclA = 0
         nuclB = 0
-        #def __retCorrectGTforPos__()
-        print self.GL
 
-        #while nuclA < len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
-        #while nuclA < len(self.alts) and nuclB < len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
         while nuclA + nuclB < len(self.alts) + len(self.alts):   #I think for this I want to do some crazy logic to assign positions.
             #nuclB = 0                                            #try:for increment B, then when A=B, set A to zero and increment
             checkpos  = str(nuclA) + str(nuclB)
@@ -103,7 +99,7 @@ class detGenoType(object):
             #GLpos = (nuclA * ((nuclA + 1)/2)) + nuclB
             GLpos = (nuclB * (nuclB + 1)/2) + nuclA
             currentGL = self.__retGL__(int(GLpos))
-            print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT) + "\tposition call and check\t" + str(checkpos)
+            #print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT) + "\tposition call and check\t" + str(checkpos)
             gtglpairs[currentGT] = currentGL
 
             if nuclB == nuclA and nuclB + nuclA != 0:
@@ -115,5 +111,19 @@ class detGenoType(object):
                 nuclA += 1
 
         return  gtglpairs
+
+
+
+    @property
+    def returnAD(self):#returns a dictionary of the allele and the depth
+        alleleDepths = {}#this is off a bit, I get error when I run and it doesnt make total sense,
+
+
+        for alt in self.alts.keys():
+            print "ALT-INFO:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
+            alleleDepths[self.alts[alt]] = self.full.samples[0]['AD'][(alt - 1)]
+
+        return alleleDepths
+
 
 
