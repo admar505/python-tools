@@ -26,7 +26,7 @@ class loadAlts(object):
 class detGenoType(object):
 
     def __init__(self,variants):#I need to load the above to here, how doI do that.
-        print "alive!---------------------------------------"
+        #print "alive!---------------------------------------"
         alts = loadAlts()                   #loading...
         self.alts = alts.altLoader(variants)#all the alts
         self.WT = variants.REF              #ref, for fast pulling
@@ -38,7 +38,7 @@ class detGenoType(object):
         return "alive"
 
     @property
-    def retQUAL():
+    def retQUAL(self):
         return self.QUAL
 
     @property
@@ -112,18 +112,56 @@ class detGenoType(object):
 
         return  gtglpairs
 
-
-
     @property
-    def returnAD(self):#returns a dictionary of the allele and the depth
+    def returnAD(self):#returns a dictionary of the allele ==> depth
         alleleDepths = {}#this is off a bit, I get error when I run and it doesnt make total sense,
 
+        def __chooseD__(adindex,samples):
+            depthval = 0
+
+            try:
+
+                depthval = samples[0]['AD'][adindex]
+            except(TypeError):
+                depthval = samples[0]['AD']
+            except(IndexError):
+                print "ERROR:AD index doesnt make complete sense in this context, it ran off end of AD" + str(adindex)
+
+            return depthval
+
+
+        alleleDepths[str(self.WT)] = __chooseD__(0,self.full.samples)
 
         for alt in self.alts.keys():
             print "ALT-INFO:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
-            alleleDepths[self.alts[alt]] = self.full.samples[0]['AD'][(alt - 1)]
+            alleleDepths[str(self.alts[alt])] = __chooseD__(alt,self.full.samples)
 
         return alleleDepths
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
