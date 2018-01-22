@@ -1,4 +1,5 @@
 import sys,re
+import vcf
 sys.path.append('./')
 import altobject
 
@@ -25,7 +26,7 @@ class loadAlts(object):
 #currentalts = loadAlts(samples)
 class detGenoType(object):
 
-    def __init__(self,variants):#I need to load the above to here, how doI do that.
+    def __init__(self,variants,rptfile=None):#I need to load the above to here, how doI do that.
         #print "alive!---------------------------------------"
         alts = loadAlts()                   #loading...
         self.alts = alts.altLoader(variants)#all the alts
@@ -33,6 +34,8 @@ class detGenoType(object):
         self.GL = variants.samples[0]['GL'] #likelihoods.
         self.QUAL = variants.QUAL           #qual
         self.full = variants                #the whole thing for everything else
+        self.rpt = rptfile
+
     @property
     def test(self):
         return "alive"
@@ -112,55 +115,75 @@ class detGenoType(object):
 
         return  gtglpairs
 
+class detRepeats(object):
+
+    def __init__(self,var_fi):#I need to load the above to here, how doI do that.
+        #print "alive!---------------------------------------"
+        #alts = loadAlts()                   #loading...
+        self.full = var_fi                #the whole thing for everything else
+
     @property
-    def returnAD(self):#returns a dictionary of the allele ==> depth
-        alleleDepths = {}#this is off a bit, I get error when I run and it doesnt make total sense,
+    def test(self):
+        return "alive"
 
-        def __chooseD__(adindex,samples):
-            depthval = 0
+    def countRepeats(self,repeat):#give the repeat file.#example:  chr   start     stop     [minimum_base_unit]    [unit]  [wt+]
+        rpt_size = None
 
-            try:
+        rvals = []
 
-                depthval = samples[0]['AD'][adindex]
-            except(TypeError):
-                depthval = samples[0]['AD']
-            except(IndexError):
-                print "ERROR:AD index doesnt make complete sense in this context, it ran off end of AD" + str(adindex)
-
-            return depthval
+        for proto in repeat:
+           rvals = proto.split()
 
 
-        alleleDepths[str(self.WT)] = __chooseD__(0,self.full.samples)
+        print rvals[0]
+        for var_rec in self.full.fetch(str(rvals[0]),int(rvals[1]),int(rvals[2])):
+            if var_rec is not None:
+                print var_rec
+            else:
+                print "NOTHERE"
 
-        for alt in self.alts.keys():
-            print "ALT-INFO:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
-            alleleDepths[str(self.alts[alt])] = __chooseD__(alt,self.full.samples)
+        return rpt_size
 
-        return alleleDepths
+        #return self.rpt
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#    @property
+#    def returnAD(self):     #returns a dictionary of the allele ==> depth
+#        alleleDepths = {}   #this is off a bit, I get error when I run and it doesnt make total sense,
+#                            #weird contigency, if there are two alts and three AD vals, need to push the
+#                            #second forward to take the third value, not the second. seems to be something to do with
+#                            #the number '2' in that space and coupled (ie, adjacent) variants
+#                            #potential bug here. delist this for now. check again with version 1.2
+#        def __chooseD__(adindex,samples):
+#            depthval = 0
+#            try:#try catch here is to deal with the fact that AD is sometimes list
+#                #and sometimes scalar val
+#                depthval = samples[0]['AD'][adindex]
+#            except(TypeError):
+#                depthval = samples[0]['AD']
+#            except(IndexError):
+#                print "ERROR:AD index doesnt make complete sense in this context, it ran off end of AD" + str(adindex)
+#            return depthval
+#        ##------------
+#        alleleDepths[str(self.WT)] = __chooseD__(0,self.full.samples)
+#        try:#see note in __chooseD__ def, same problem here.
+#            if len(self.alts.keys()) == 1 and len(self.full.samples[0]['AD']) == 3:#catching 1 alt and 3 AD contigency
+#                print "ALT-INFO-ORIG:\t" + str(1) + "\t" + str(self.full.samples[0]['AD'])
+#                alleleDepths[str(self.alts[1])] = __chooseD__(2,self.full.samples)
+#            #    for alt in self.alts.keys():
+#            #        print "ALT-INFO-EXC:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
+#            #        alleleDepths[str(self.alts[alt])] = __chooseD__(alt,self.full.samples)
+#        except:
+#            #if len(self.alts.keys()) == 1 and len(self.full.samples[0]['AD']) == 3:#catching 1 alt and 3 AD contigency
+#            #    print "ALT-INFO-ORIG:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
+#            #    alleleDepths[str(self.alts[1])] = __chooseD__(2,self.full.samples)
+#            #else:
+#            for alt in self.alts.keys():
+#                print "ALT-INFO-ELSE:\t" + str(alt) + "\t" + str(self.full.samples[0]['AD'])
+#                alleleDepths[str(self.alts[alt])] = __chooseD__(alt,self.full.samples)
+#        return alleleDepths
 
 
 
