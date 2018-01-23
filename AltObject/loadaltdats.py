@@ -132,13 +132,21 @@ class detRepeats(object):
         rvals = []
 
         for proto in repeat:
-           rvals = proto.split()
+            rvals = proto.split()
+            chrom = rvals[0]
+            start = rvals[1]
+            stop  = rvals[2]
+            base  = rvals[3]
+            unit  = rvals[4]
+            wt    = rvals[5]
 
+        vcfsection = self.full.fetch(str(chrom),int(start),int(stop)).strip("\n")
 
-        print rvals[0]
-        for var_rec in self.full.fetch(str(rvals[0]),int(rvals[1]),int(rvals[2])):
-            if var_rec is not None:
-                print var_rec
+        for section in vcfsection:
+
+            if section.CHROM:
+                print "   SECTION"
+
             else:
                 print "NOTHERE"
 
