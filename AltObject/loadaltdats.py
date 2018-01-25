@@ -1,7 +1,9 @@
-import sys,re
+import sys,re,operator
 import vcf
 sys.path.append('./')
 import altobject
+
+
 
 class loadAlts(object):
     def __init__(self):
@@ -65,12 +67,13 @@ class detGenoType(object):
         return self.alts[index]
 
     def __retWTorALT__(self,posA,posB):#returns GT for numerical position input
-        thisGT = self.retREF + self.retREF#create dictionary that both can pull from
-        if posA == 0 and posB > 0:
-            thisGT = str(self.retREF) + str(self.__retGT__(posB))
-        elif posA > 0 and posB > 0:
+        thisGT = self.retREF +  ","  + self.retREF#create dictionary that both can pull from
 
-            thisGT = str(self.__retGT__(posA)) + str(self.__retGT__(posB))
+        if posA == 0 and posB > 0:
+            thisGT = str(self.retREF) + "," + str(self.__retGT__(posB))
+
+        elif posA > 0 and posB > 0:
+            thisGT = str(self.__retGT__(posA)) + ","  + str(self.__retGT__(posB))
 
         return thisGT
 
@@ -105,7 +108,7 @@ class detGenoType(object):
             #print str(currentGL) + "   POS IN GL:" + str(GLpos) + "\tcurrentGT:" + str(currentGT) + "\tposition call and check\t" + str(checkpos)
             gtglpairs[currentGT] = currentGL
 
-            if nuclB == nuclA and nuclB + nuclA != 0:
+            if nuclB == nuclA and nuclB + nuclA != 0:#this adjusts the GL timing.
                 nuclA = 0
                 nuclB += 1
             elif nuclA + nuclB == 0:
@@ -126,9 +129,57 @@ class detRepeats(object):
     def test(self):
         return "alive"
 
+    def __createHGVS__(self,unt,allA,allB,cdot):
+        print "fudge"
+        hgvs = "c."+ cdot + unt + "[" + allA + "]/[" + allB + "]"
+        print hgvs
+        return hgvs
+
+
+    def __getRPT_GT__(self,unt,allA,allB,rptstart):
+        alleleAcnt =  str(unt) * int(allA)# expand repeat
+        allelA = rptstart + alleleAcnt
+        alleleBcnt =  str(unt) * int(allB)
+        allelB = rptstart + alleleBcnt
+        hgvsgt = allelA + ',' + allelB
+        if allA < allB:
+            hgvsgt = allelA + ',' + allelB
+
+        return hgvsgt
+
+    def __cntLength__(self,vcfln,base,unit,wt,wtlen,cdot,rptstart):
+        gt_and_hgvs = []
+
+        if vcfln == 'WT+':
+            gt_and_hgvs.append(self.__getRPT_GT__(unit,wtlen,wtlen,rptstart))
+            gt_and_hgvs.append(self.__createHGVS__(unit,wtlen,wtlen,cdot))
+
+        else:
+            for alt in vcfln.ALT:
+                print vcfln.samples[0]['GT']
+                print base
+                correct_gt_here = detGenoType(vcfln)    #do I need to test for het for sure? kinda.
+                print correct_gt_here.assGT_GL#this gives me the GLs to sort through to get the GT if not WT+
+                GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]
+                print GTGL
+                alleles = str(GTGL)
+                alleleA = alleles.split()[0]
+                alleleB = alleles.split()[1]
+                just_repeatA = re.search(r'%s(.*)' % base,str(alleleA))#need to find two lengths, alt and repeat.
+                just_repeatB = re.search(r'%s(.*)' % base,str(alleleB))#need to find two lengths, alt and repeat.
+                print str(alleleA) + "  what A"
+                print str(alleleB) + "  what B"
+                print just_repeatA.group(1)
+
+                gt_and_hgvs.append(self.__getRPT_GT__(unit,wtlen,wtlen,rptstart))
+                gt_and_hgvs.append(self.__createHGVS__(unit,wtlen,wtlen,cdot))
+
+        return gt_and_hgvs
+
+
+
     def countRepeats(self,repeat):#give the repeat file.#example:  chr   start     stop     [minimum_base_unit]    [unit]  [wt+]
         rpt_size = None
-
         rvals = []
 
         for proto in repeat:
@@ -137,18 +188,20 @@ class detRepeats(object):
             start = rvals[1]
             stop  = rvals[2]
             base  = rvals[3]
-            unit  = rvals[4]
-            wt    = rvals[5]
+            rptfront = rvals[4]
+            unit  = rvals[5]
+            wt    = rvals[6]
+            wtlen = rvals[7]
+            cdot  = rvals[8]
 
-        vcfsection = self.full.fetch(str(chrom),int(start),int(stop)).strip("\n")
+        vcfsection = self.full.fetch(str(chrom),int(start),int(stop))
+        #print vcfsection.call_rate()
+        try:#(run info, lets do this)
+            rpt_size = self.__cntLength__(next(vcfsection),base,unit,wt,wtlen,cdot,rptfront)
 
-        for section in vcfsection:
+        except StopIteration:#return WT+ alleles.
+            rpt_size = self.__cntLength__("WT+",base,unit,wt,wtlen,cdot,rptfront)
 
-            if section.CHROM:
-                print "   SECTION"
-
-            else:
-                print "NOTHERE"
 
         return rpt_size
 
