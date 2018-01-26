@@ -45,9 +45,9 @@ repeats = open(repeatsfile,'r')
 
 
 
-alts = loadaltdats.detRepeats(vcf_full)
+alts = loadaltdats.detRepeats(vcf_full,repeats)
 
-print alts.countRepeats(repeats)
+print alts.countRepeats
 
     #print alts.countRepeats(repeats)
     #for alternatevars in alts:

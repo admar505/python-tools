@@ -130,17 +130,12 @@ class detRepeats(object):
             self.chrom = rvals[0]
             self.start = rvals[1]
             self.stop  = rvals[2]
-            self.base  = rvals[3]
+            self.base  = rvals[3]       #the minimum smallest reported.
             self.rptfront = rvals[4]
             self.unit  = rvals[5]
             self.wt    = rvals[6]
             self.wtlen = rvals[7]
             self.cdot  = rvals[8]
-
-
-
-
-
 
     @property
     def test(self):
@@ -148,7 +143,7 @@ class detRepeats(object):
 
     def __createHGVS__(self,allA,allB):
         print "fudge"
-        hgvs = "c."+ self.cdot + self.unit + "[" + allA + "]/[" + allB + "]"
+        hgvs = "c."+ self.cdot + self.unit + "[" + str(allA) + "]/[" + str(allB) + "]"
         print hgvs
         return hgvs
 
@@ -156,7 +151,7 @@ class detRepeats(object):
     def __getRPT_GT__(self,allA,allB):
         alleleAcnt =  str(self.unit) * int(allA)# expand repeat
         allelA = self.rptfront + alleleAcnt
-        alleleBcnt =  str(unt) * int(allB)
+        alleleBcnt =  str(self.unit) * int(allB)
         allelB = self.rptfront + alleleBcnt
         hgvsgt = allelA + ',' + allelB
         if allA < allB:
@@ -165,6 +160,11 @@ class detRepeats(object):
         return hgvsgt
 
 
+    def measureRPT(self,varstring):
+        repeat = re.search(self.rptfront   + '(.*)',varstring)
+        print repeat.group(1)
+        rptlen = len(repeat.group(1))/len(self.unit)#simply length over unit length
+        return rptlen + 1
 
 
     def __cntLength__(self,vcfln):
@@ -176,8 +176,6 @@ class detRepeats(object):
 
         else:
             for alt in vcfln.ALT:#extract, measure, pass to measure repeater.
-                print self.full.samples[0]['GT']
-                print self.base
                 correct_gt_here = detGenoType(vcfln)    #do I need to test for het for sure? kinda.
                 print correct_gt_here.assGT_GL#this gives me the GLs to sort through to get the GT if not WT+
                 GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]#take top gl.
@@ -186,10 +184,12 @@ class detRepeats(object):
                 cutoutGT  = re.compile('([ATGC]{1,})')
                 foundallele = re.search(cutoutGT,alleles)
                 #send to measurer
+                rptlenA = self.measureRPT(foundallele.group(1))
+                rptlenB = self.measureRPT(foundallele.group(0))
                 print foundallele.group(1)
                 print foundallele.group(0)
-                #gt_and_hgvs.append(self.__getRPT_GT__(unit,foundallele.group(0),foundallele.group(1),rptstart))
-                #gt_and_hgvs.append(self.__createHGVS__(unit,foundallele.group(0),foundallele.group(1),cdot))
+                gt_and_hgvs.append(self.__getRPT_GT__(rptlenA,rptlenB))
+                gt_and_hgvs.append(self.__createHGVS__(rptlenA,rptlenB))
 
         return gt_and_hgvs
 
@@ -208,7 +208,6 @@ class detRepeats(object):
 
         except StopIteration:#return WT+ alleles.
             rpt_size = self.__cntLength__("WT+")
-
 
         return rpt_size
 
