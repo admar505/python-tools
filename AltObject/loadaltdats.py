@@ -120,87 +120,94 @@ class detGenoType(object):
 
 class detRepeats(object):
 
-    def __init__(self,var_fi):#I need to load the above to here, how doI do that.
+    def __init__(self,var_fi,repeatfi):#I need to load the above to here, how doI do that.
         #print "alive!---------------------------------------"
         #alts = loadAlts()                   #loading...
         self.full = var_fi                #the whole thing for everything else
+
+        for proto in repeatfi:
+            rvals = proto.split()
+            self.chrom = rvals[0]
+            self.start = rvals[1]
+            self.stop  = rvals[2]
+            self.base  = rvals[3]
+            self.rptfront = rvals[4]
+            self.unit  = rvals[5]
+            self.wt    = rvals[6]
+            self.wtlen = rvals[7]
+            self.cdot  = rvals[8]
+
+
+
+
+
 
     @property
     def test(self):
         return "alive"
 
-    def __createHGVS__(self,unt,allA,allB,cdot):
+    def __createHGVS__(self,allA,allB):
         print "fudge"
-        hgvs = "c."+ cdot + unt + "[" + allA + "]/[" + allB + "]"
+        hgvs = "c."+ self.cdot + self.unit + "[" + allA + "]/[" + allB + "]"
         print hgvs
         return hgvs
 
 
-    def __getRPT_GT__(self,unt,allA,allB,rptstart):
-        alleleAcnt =  str(unt) * int(allA)# expand repeat
-        allelA = rptstart + alleleAcnt
+    def __getRPT_GT__(self,allA,allB):
+        alleleAcnt =  str(self.unit) * int(allA)# expand repeat
+        allelA = self.rptfront + alleleAcnt
         alleleBcnt =  str(unt) * int(allB)
-        allelB = rptstart + alleleBcnt
+        allelB = self.rptfront + alleleBcnt
         hgvsgt = allelA + ',' + allelB
         if allA < allB:
             hgvsgt = allelA + ',' + allelB
 
         return hgvsgt
 
-    def __cntLength__(self,vcfln,base,unit,wt,wtlen,cdot,rptstart):
+
+
+
+    def __cntLength__(self,vcfln):
         gt_and_hgvs = []
 
         if vcfln == 'WT+':
-            gt_and_hgvs.append(self.__getRPT_GT__(unit,wtlen,wtlen,rptstart))
-            gt_and_hgvs.append(self.__createHGVS__(unit,wtlen,wtlen,cdot))
+            gt_and_hgvs.append(self.__getRPT_GT__(self.wtlen,self.wtlen))
+            gt_and_hgvs.append(self.__createHGVS__(self.wtlen,self.wtlen))
 
         else:
-            for alt in vcfln.ALT:
-                print vcfln.samples[0]['GT']
-                print base
+            for alt in vcfln.ALT:#extract, measure, pass to measure repeater.
+                print self.full.samples[0]['GT']
+                print self.base
                 correct_gt_here = detGenoType(vcfln)    #do I need to test for het for sure? kinda.
                 print correct_gt_here.assGT_GL#this gives me the GLs to sort through to get the GT if not WT+
-                GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]
-                print GTGL
+                GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]#take top gl.
+                print GTGL#take out
                 alleles = str(GTGL)
-                alleleA = alleles.split()[0]
-                alleleB = alleles.split()[1]
-                just_repeatA = re.search(r'%s(.*)' % base,str(alleleA))#need to find two lengths, alt and repeat.
-                just_repeatB = re.search(r'%s(.*)' % base,str(alleleB))#need to find two lengths, alt and repeat.
-                print str(alleleA) + "  what A"
-                print str(alleleB) + "  what B"
-                print just_repeatA.group(1)
-
-                gt_and_hgvs.append(self.__getRPT_GT__(unit,wtlen,wtlen,rptstart))
-                gt_and_hgvs.append(self.__createHGVS__(unit,wtlen,wtlen,cdot))
+                cutoutGT  = re.compile('([ATGC]{1,})')
+                foundallele = re.search(cutoutGT,alleles)
+                #send to measurer
+                print foundallele.group(1)
+                print foundallele.group(0)
+                #gt_and_hgvs.append(self.__getRPT_GT__(unit,foundallele.group(0),foundallele.group(1),rptstart))
+                #gt_and_hgvs.append(self.__createHGVS__(unit,foundallele.group(0),foundallele.group(1),cdot))
 
         return gt_and_hgvs
 
 
-
-    def countRepeats(self,repeat):#give the repeat file.#example:  chr   start     stop     [minimum_base_unit]    [unit]  [wt+]
+    @property
+    def countRepeats(self):#give the repeat file.#example:  chr   start     stop     [minimum_base_unit]    [unit]  [wt+]
         rpt_size = None
         rvals = []
 
-        for proto in repeat:
-            rvals = proto.split()
-            chrom = rvals[0]
-            start = rvals[1]
-            stop  = rvals[2]
-            base  = rvals[3]
-            rptfront = rvals[4]
-            unit  = rvals[5]
-            wt    = rvals[6]
-            wtlen = rvals[7]
-            cdot  = rvals[8]
 
-        vcfsection = self.full.fetch(str(chrom),int(start),int(stop))
+
+        vcfsection = self.full.fetch(str(self.chrom),int(self.start),int(self.stop))
         #print vcfsection.call_rate()
         try:#(run info, lets do this)
-            rpt_size = self.__cntLength__(next(vcfsection),base,unit,wt,wtlen,cdot,rptfront)
+            rpt_size = self.__cntLength__(next(vcfsection))
 
         except StopIteration:#return WT+ alleles.
-            rpt_size = self.__cntLength__("WT+",base,unit,wt,wtlen,cdot,rptfront)
+            rpt_size = self.__cntLength__("WT+")
 
 
         return rpt_size
