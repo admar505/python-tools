@@ -164,7 +164,7 @@ class detRepeats(object):
         repeat = re.search(self.rptfront   + '(.*)',varstring)
         print repeat.group(1)
         rptlen = len(repeat.group(1))/len(self.unit)#simply length over unit length
-        return rptlen + 1
+        return rptlen
 
 
     def __cntLength__(self,vcfln):
