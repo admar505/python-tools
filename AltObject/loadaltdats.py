@@ -142,9 +142,8 @@ class detRepeats(object):
         return "alive"
 
     def __createHGVS__(self,allA,allB):
-        print "fudge"
         hgvs = "c."+ self.cdot + self.unit + "[" + str(allA) + "]/[" + str(allB) + "]"
-        print hgvs
+        #print hgvs
         return hgvs
 
 
@@ -162,7 +161,6 @@ class detRepeats(object):
 
     def measureRPT(self,varstring):
         repeat = re.search(self.rptfront   + '(.*)',varstring)
-        print repeat.group(1)
         rptlen = len(repeat.group(1))/len(self.unit)#simply length over unit length
         return rptlen
 
@@ -170,24 +168,20 @@ class detRepeats(object):
     def __cntLength__(self,vcfln):
         gt_and_hgvs = []
 
-        if vcfln == 'WT+':
+        if vcfln == 'WT+':#for no var, which is WT+ just pass wt numbers.
             gt_and_hgvs.append(self.__getRPT_GT__(self.wtlen,self.wtlen))
             gt_and_hgvs.append(self.__createHGVS__(self.wtlen,self.wtlen))
 
         else:
-            for alt in vcfln.ALT:#extract, measure, pass to measure repeater.
+            for alt in vcfln.ALT:#extract, measure, pass to measure repeater. so this is if, what? het? what about 7/7? does 
                 correct_gt_here = detGenoType(vcfln)    #do I need to test for het for sure? kinda.
-                print correct_gt_here.assGT_GL#this gives me the GLs to sort through to get the GT if not WT+
                 GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]#take top gl.
-                print GTGL#take out
                 alleles = str(GTGL)
                 cutoutGT  = re.compile('([ATGC]{1,})')
-                foundallele = re.search(cutoutGT,alleles)
+                foundallele = re.findall(cutoutGT,alleles)		
                 #send to measurer
-                rptlenA = self.measureRPT(foundallele.group(1))
-                rptlenB = self.measureRPT(foundallele.group(0))
-                print foundallele.group(1)
-                print foundallele.group(0)
+                rptlenA = self.measureRPT(foundallele[0])
+                rptlenB = self.measureRPT(foundallele[1])
                 gt_and_hgvs.append(self.__getRPT_GT__(rptlenA,rptlenB))
                 gt_and_hgvs.append(self.__createHGVS__(rptlenA,rptlenB))
 
