@@ -28,7 +28,7 @@ class loadAlts(object):
 #currentalts = loadAlts(samples)
 class detGenoType(object):
 
-    def __init__(self,variants,rptfile=None):#I need to load the above to here, how doI do that.
+    def __init__(self,variants):#I need to load the above to here, how doI do that.
         #print "alive!---------------------------------------"
         alts = loadAlts()                   #loading...
         self.alts = alts.altLoader(variants)#all the alts
@@ -36,7 +36,6 @@ class detGenoType(object):
         self.GL = variants.samples[0]['GL'] #likelihoods.
         self.QUAL = variants.QUAL           #qual
         self.full = variants                #the whole thing for everything else
-        self.rpt = rptfile
 
     @property
     def test(self):
