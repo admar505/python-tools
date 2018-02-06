@@ -64,7 +64,7 @@ for var in vcf_full:
             major_alt += gtglpair.assGT_GL[gt]
         else:
             extra_alts += gtglpair.assGT_GL[gt]
-
+        c += 1
 
 print homo
 print major_alt
