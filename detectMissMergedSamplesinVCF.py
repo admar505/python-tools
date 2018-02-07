@@ -61,15 +61,15 @@ for var in vcf_full:
         elif c == 1:
             major_alt += gtglpair.assGT_GL[gt]
         elif c == 2:
-            major_alt += gtglpair.assGT_GL[gt]
+            minor_alt += gtglpair.assGT_GL[gt]
         else:
             extra_alts += gtglpair.assGT_GL[gt]
         c += 1
 
 print homo
-print major_alt
-print minor_alt
-print extra_alt
+print major_alt/homo
+print minor_alt/homo
+print extra_alts/homo
 
 
 
