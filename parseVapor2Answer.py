@@ -22,9 +22,10 @@ def formatRSID(row):
         alt = parsedvar.group(2)
 
     except AttributeError:
-        parsedvar = re.match('([ATGC]{0,30}).*?([insdel]*)',row['Title'])
+        #parsedvar = re.match('c.(.*)([insdel]+)(.*)',row['Title'])
+        parsedvar = re.search('c.(.*?)\:?.*',row['Title'])
         ref = parsedvar.group(1)
-        alt = parsedvar.group(2)
+        alt = 'delins'
 
     return row['rsid'] + "-" + ref + "-" + alt
 
@@ -37,14 +38,14 @@ def varPrint(rows):#HERE:expand to all vartypes, and print out.
         #for hgvs in var:
         #print var
         if re.match('.*?:0\/1',var['Title']) is not None:
-            printer[7] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
-            printer[6] = var['transcript'] + ":" + var['Title']
+            printer[9] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
+            printer[8] = var['transcript'] + ":" + var['Title']
         elif re.match('.*=',var['Title']):
             printer[11] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
             printer[10] = var['transcript'] + ":" + var['Title']
         else:
-            printer[9] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
-            printer[8] = var['transcript'] + ":" + var['Title']
+            printer[7] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
+            printer[6] = var['transcript'] + ":" + var['Title']
 
     printer[0] = 'chr' + rows[0]['chrome37']
 
