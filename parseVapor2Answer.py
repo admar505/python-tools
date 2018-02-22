@@ -16,26 +16,44 @@ vareader = csv.DictReader(muts)
 
 def formatRSID(row):
 
-    parsedvar = re.match('([ATGC]).([ATGC])',row['Title'])
-    ref = parsedvar.group(1)
-    alt = parsedvar.group(2)
-    print ref
-    print alt
-    print row['Title']
+    try:
+        parsedvar = re.match('.*?([ATGC]).([ATGC]).*?',row['Title'])
+        ref = parsedvar.group(1)
+        alt = parsedvar.group(2)
+
+    except AttributeError:
+        parsedvar = re.match('([ATGC]{0,30}).*?([insdel]*)',row['Title'])
+        ref = parsedvar.group(1)
+        alt = parsedvar.group(2)
+
+    return row['rsid'] + "-" + ref + "-" + alt
 
 def varPrint(rows):#HERE:expand to all vartypes, and print out.
                              #(het, homovar, wt+) strategy, it will be key in dict is print tab
     printer = {}
-
-    rsid = formatRSID(rows)
-    for hgvs in rows:
-        if re.match('.*?:0\/1',hgvs['Title']) is not None:
-          print hgvs['uuid'].strip()
+                             #THIS is stupid, it comes in threeeeessss
+    for var in rows:
+        rsid = formatRSID(var)
+        #for hgvs in var:
+        #print var
+        if re.match('.*?:0\/1',var['Title']) is not None:
+            printer[7] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
+            printer[6] = var['transcript'] + ":" + var['Title']
+        elif re.match('.*=',var['Title']):
+            printer[11] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
+            printer[10] = var['transcript'] + ":" + var['Title']
+        else:
+            printer[9] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
+            printer[8] = var['transcript'] + ":" + var['Title']
 
     printer[0] = 'chr' + rows[0]['chrome37']
 
     printer[1] = int(rows[0]['pos37']) - 1
     printer[2] = int(rows[0]['pos37']) + 1
+    printer[3] = rsid
+    #printer[]
+
+
     printer2 = []
 
     for val in printer.keys():
