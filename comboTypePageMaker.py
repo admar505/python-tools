@@ -58,11 +58,13 @@ def hgvsMaker(combo):
     hgvsses = []
     for variant in combo.split(";"):
         try:
-            cap = re.search('([NMXR]{2}\_\d+\.?\d?\:c.[-+*]{0,1}\d+.*?)([*_\-\>del]){1,4}(.*)',variant)
+            cap = re.search('([NMXR]{2}\_\d+\.?\d?)\:(c.[-+*]{0,1}\d+.*?)([*_\-\>del]{1,4})(.*)',variant)
 
             print cap.group(1)
             hgvsses.append(cap.group(0))
-            hgvsses.append(cap.group(1))
+            #hgvsses.append(cap.group(1) + ":" + $2 + $3 + $4)#WT+
+            hgvsses.append(cap.group(1) + ":[" + cap.group(2) +  cap.group(3) + cap.group(4) + "];[" + cap.group(2) + "=]")#HET
+
 
         except NoneType:
 
