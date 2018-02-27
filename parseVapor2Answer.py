@@ -16,6 +16,7 @@ vareader = csv.DictReader(muts)
 
 def formatRSID(row):
 
+    print row['uuid']
     parsedvar = re.match('([ATGC]).([ATGC])',row['Title'])
     ref = parsedvar.group(1)
     alt = parsedvar.group(2)
