@@ -18,44 +18,28 @@ mutfi = args.mut
 muts = open(mutfi,'r')
 #transfi = args.tr
 #trans = open(transfi,'r')
+
 ##-----------defs--------##
 
 
-def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
-                             #(het, homovar, wt+)
-                             #choose most common transcript to use a trans. FOR NEW version
-    #print pos[1]
-    #adjust to account for del. Stupid CFTR.
+def bestTrans(allvars):#returns the most common trnx
 
-    findsnp = re.compile('(\w\..*?\d+)(\w+)\>(\w+)')
-    finddel = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
-    findin = re.compile('(\w\..*?\d+)(\w+)del(\w+)')
-    global np
-    if findin.match(pos[1]) is not None:
+    alltrans = {}
+    for var in allvars:
+        tr = re.search('([NMXR]{2}\_\d+)\:.*',var)
 
-        np = findin.search(pos[1])
+        alltrans[tr.group(1)] = alltrans.get(tr.group, 0) + 1
+
+    return sorted(alltrans,key=alltrans.get, reverse=True)[0]
 
 
-    elif finddel.match(pos[1]) is not None:
+def varPrinter(vector,outfi):#HERE:print outline is here, collapse the transcripts as best as possible
+                             #Title, transcript, mutation, chrome38, pos38, chrome37, pos37, protein_mutation, uuid
 
-        np = finddel.search(pos[1])
+    transcript = bestTrans(vector)
+    title =  ";".join(vector)
 
-
-    elif findsnp.match(pos[1]) is not None:
-
-        np = findsnp.search(pos[1])
-
-
-    #if hgmdfind.search(pos)
-    #np = re.match('(\w\..*?\d+)(\w+)\>(\w+)',pos[1])
-
-
-
-    npwt = np.group(1) + np.group(2) + "="
-    print row1[0] +","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[1] + "||"+ pos[0]
-    print row1[0] +","+ npwt + "," + pos[0] + "," +   local + "," + npwt + "||"+ pos[0]
-    print row1[0] +","+ pos[1] + ":0/1," + pos[0] + "," +   local + "," + pos[1] + ":0/1||"+ pos[0]
-
+    outfi.write( "\"" + title +"\",\""+ transcript + "\",\"" + title + "\",\"\",\"\",\"\",\"\",\"\"," +  transcript + "||"+ title + "\"\n")
 
 
 def hgvsMaker(combo):#makes the HGVSses for all three types
@@ -94,7 +78,6 @@ def dropme(matrix,variant,pos):#this returns true if the var is new, and needs t
     if variant == matrix[pos]:#
         isitnew = False
 
-    print variant +
     return isitnew
 
 def newMatrix(matx,var,pos):#TRIMS the LINE of the var, keep everything before and delete all after.
@@ -102,12 +85,13 @@ def newMatrix(matx,var,pos):#TRIMS the LINE of the var, keep everything before a
 
     for oldpos in range(len(matx)):
         if oldpos < pos:
-            #newmat[oldpos] = matx[oldpos]
+
             newmat.append(matx[oldpos])
+
     return newmat
 
 
-def comboExpander(variantarray):##maker of the combos, so for all in, produces the uuid and sends to printer
+def comboExpander(variantarray,vfi):##maker of the combos, so for all in, produces the uuid and sends to printer
                                 #pcant delete the WHOLE variant array. thing, only delete if the variant changes.
     linevals = []               #
     mat =variantarray
@@ -117,57 +101,68 @@ def comboExpander(variantarray):##maker of the combos, so for all in, produces t
     lengthofrow = len(variantarray[0])
     numberoftimes = 0
 
-    print vmat.shape
-    print special.comb(lengthofcombo * lengthofrow,lengthofcombo,exact = True)
+    #print vmat.shape
+    #print special.comb(lengthofcombo * lengthofrow,lengthofcombo,exact = True)
 
     for row1 in mat[0]:#make this so it deletes only the position that is variable, so, for each, check if it is already in. if not delete the index position that is there
+
         if len(linevals) < 1:#try init condition
             linevals.append(row1)
 
-        if dropme(mat[0],row1,0):
+        elif dropme(linevals,row1,0):
             linevals = newMatrix(linevals,row1,0)
             linevals.append(row1)
 
 
         for row2 in mat[1]:
-            if dropme(mat[1],row2,1):
+
+            if len(linevals) < 2:
+                linevals.append(row2)
+
+
+            elif dropme(linevals,row2,1):
                 linevals = newMatrix(linevals,row2,1)
                 linevals.append(row2)
 
             try:#check for third row.
 
                 for row3 in mat[2]:
-                    print str(linevals) + "\tEND-LIVE-VALS"
-                    print row3 + "\tK WEISEN ROW3 VAL COMING IN NEW"
-                    if dropme(mat[2],row3,2):
+
+                    if len(linevals) < 3:
+                        linevals.append(row3)
+
+                    elif dropme(linevals,row3,2):
                         linevals = newMatrix(linevals,row3,2)
                         linevals.append(row3)
 
-                        print str(linevals)  + "\tmat2 and send to printer"
+
+                    varPrinter(linevals,vfi)
 
             except IndexError:
 
-                print str(linevals) +  "\tmat1 and send to printer"
-
+                varPrinter(linevals,vfi)
 
 #------------main--------##
 
 for combo_ln in muts:
     combo_hgvs_lst = []#contain the types. each row is one variant to use,
     combo_array = combo_ln.split()
+
     try:
         combos = combo_array[0]
         name = combo_array[1]
         outfi = open(name + '.scf','w')
+        outfi.write("Title, transcript, mutation, chrome38, pos38, chrome37, pos37, protein_mutation, uuid\n")
     except (NameError, IndexError) as e:
         print "ERROR: Input file is wrong"
 
     #make combos. so, enumerate the types. then, expand them do a triple for each.
+
     for combination in combos.split(";"):
+
         combo_hgvs_lst.append(hgvsMaker(combination))
 
-    print combo_hgvs_lst
-    comboExpander(combo_hgvs_lst)
+    comboExpander(combo_hgvs_lst,outfi)
 
 
 
