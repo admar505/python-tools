@@ -32,14 +32,27 @@ def bestTrans(allvars):#returns the most common trnx
 
     return sorted(alltrans,key=alltrans.get, reverse=True)[0]
 
+def prettyTitle(varvects):
+
+    nicevct = []
+
+    for vr in varvects:
+        cdot = re.search('\w+\_\w+\:(c.*)',vr)
+        nicevct.append(cdot.group(1))
+
+    return "];[".join(nicevct)
+
+
+
+
 
 def varPrinter(vector,outfi):#HERE:print outline is here, collapse the transcripts as best as possible
                              #Title, transcript, mutation, chrome38, pos38, chrome37, pos37, protein_mutation, uuid
 
     transcript = bestTrans(vector)
-    title =  ";".join(vector)
-
-    outfi.write( "\"" + title +"\",\""+ transcript + "\",\"" + title + "\",\"\",\"\",\"\",\"\",\"\"," +  transcript + "||"+ title + "\"\n")
+    uuidtitle =  ";".join(vector)
+    title =  prettyTitle(vector)
+    outfi.write( "\"[" + title +"]\",\""+ transcript + "\",\"[" + title + "]\",\"\",\"\",\"\",\"\",\"\",\"" +  transcript + "||"+ uuidtitle + "\"\n")
 
 
 def hgvsMaker(combo):#makes the HGVSses for all three types
