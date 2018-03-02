@@ -151,7 +151,7 @@ for combo_ln in muts:
     try:
         combos = combo_array[0]
         name = combo_array[1]
-        outfi = open(name + '.scf','w')
+        outfi = open(name + '.csv','w')
         outfi.write("Title, transcript, mutation, chrome38, pos38, chrome37, pos37, protein_mutation, uuid\n")
     except (NameError, IndexError) as e:
         print "ERROR: Input file is wrong"
