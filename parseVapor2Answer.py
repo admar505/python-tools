@@ -16,7 +16,6 @@ vareader = csv.DictReader(muts)
 
 def formatRSID(row):
 
-<<<<<<< HEAD
     print row['uuid']
     parsedvar = re.match('([ATGC]).([ATGC])',row['Title'])
     ref = parsedvar.group(1)
@@ -24,7 +23,6 @@ def formatRSID(row):
     print ref
     print alt
     print row['Title']
-=======
     try:
         parsedvar = re.match('.*?([ATGC]).([ATGC]).*?',row['Title'])
         ref = parsedvar.group(1)
@@ -37,7 +35,6 @@ def formatRSID(row):
         alt = 'delins'
 
     return row['rsid'] + "-" + ref + "-" + alt
->>>>>>> 4c2743afa45fb5d8c94c54f00f4ac51263348de5
 
 def varPrint(rows):#HERE:expand to all vartypes, and print out.
                              #(het, homovar, wt+) strategy, it will be key in dict is print tab
