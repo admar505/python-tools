@@ -16,13 +16,6 @@ vareader = csv.DictReader(muts)
 
 def formatRSID(row):
 
-    print row['uuid']
-    parsedvar = re.match('([ATGC]).([ATGC])',row['Title'])
-    ref = parsedvar.group(1)
-    alt = parsedvar.group(2)
-    print ref
-    print alt
-    print row['Title']
     try:
         parsedvar = re.match('.*?([ATGC]).([ATGC]).*?',row['Title'])
         ref = parsedvar.group(1)
@@ -44,12 +37,14 @@ def varPrint(rows):#HERE:expand to all vartypes, and print out.
         rsid = formatRSID(var)
         #for hgvs in var:
         #print var
-        if re.match('.*?:0\/1',var['Title']) is not None:
+        if re.match('.*?:0\/1',var['Title']) or re.match('\[.+?\]\;\[.+?\]',var['Title']) is not None:
             printer[9] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
             printer[8] = var['transcript'] + ":" + var['Title']
+
         elif re.match('.*=',var['Title']):
             printer[11] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
             printer[10] = var['transcript'] + ":" + var['Title']
+
         else:
             printer[7] = "https://vapor.veritasgenetics.com/?q=node/" + var['Nid'].strip()
             printer[6] = var['transcript'] + ":" + var['Title']
