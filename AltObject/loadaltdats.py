@@ -33,7 +33,12 @@ class detGenoType(object):
         alts = loadAlts()                   #loading...
         self.alts = alts.altLoader(variants)#all the alts
         self.WT = variants.REF              #ref, for fast pulling
-        self.GL = variants.samples[0]['GL'] #likelihoods.
+        try:
+            self.GL = variants.samples[0]['GL'] #likelihoods.
+
+        except AttributeError:
+            self.GL = [-100]
+
         self.QUAL = variants.QUAL           #qual
         self.full = variants                #the whole thing for everything else
 
@@ -172,12 +177,12 @@ class detRepeats(object):
             gt_and_hgvs.append(self.__createHGVS__(self.wtlen,self.wtlen))
 
         else:
-            for alt in vcfln.ALT:#extract, measure, pass to measure repeater. so this is if, what? het? what about 7/7? does 
+            for alt in vcfln.ALT:#extract, measure, pass to measure repeater. so this is if, what? het? what about 7/7? does
                 correct_gt_here = detGenoType(vcfln)    #do I need to test for het for sure? kinda.
                 GTGL =  sorted(correct_gt_here.assGT_GL.items(), key=operator.itemgetter(1),reverse = True)[0]#take top gl.
                 alleles = str(GTGL)
                 cutoutGT  = re.compile('([ATGC]{1,})')
-                foundallele = re.findall(cutoutGT,alleles)		
+                foundallele = re.findall(cutoutGT,alleles)
                 #send to measurer
                 rptlenA = self.measureRPT(foundallele[0])
                 rptlenB = self.measureRPT(foundallele[1])
