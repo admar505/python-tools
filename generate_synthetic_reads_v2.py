@@ -77,7 +77,7 @@ def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     c = 0
     print len(seq)
     while  c < term:
-        #startLeft = int(numpy.random.uniform(1,len(seq)))
+        startLeft = int(numpy.random.uniform(1,len(seq)))
 
         if startLeft < len(seq) - int(frags):
             c = c + 1
