@@ -8,9 +8,9 @@ import sys
 import subprocess
 import random
 import resource
-import unittest
 import re
 import pyfaidx
+import numpy
 
 parser = argparse.ArgumentParser(description='HGVS-based Synthetic Read Generator')
 parser.add_argument("--mutations", help="file with mutations to generate synthetic reads for")
@@ -52,17 +52,15 @@ def calcCov(chroml,rl,dp):#calc read cov, and number of reads needed.
 def genQual(rlen):#generates the qual line
     vals = ['A','F','K','G']
     qual = ''
+    for values in range(1,int(rlen)):
+        qual  += random.choice(vals)
 
-    #for values in range(1,len(rlen)):
-    #    qual  += random.choice(vals)
 
-    print(str(qual))
-
-   # return qual
+    return qual
 
 def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and facing.
     R1 = sq[st:(int(rl) + int(st))]
-    r2start =  int(random.gauss(int(frags),100))
+    r2start =  int(random.gauss(int(frags),int(rl)/3))
     R2 = ''
 
     if r2start < len(sq):
@@ -74,26 +72,20 @@ def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     out1 = open(idname + ".R1.fastq",'w')
     out2 = open(idname + ".R2.fastq",'w')
 
-
-    startLeft = random.choice(range(0,len(seq)))
-
+    startsfile = open(idname + "supers",'w')
     term = calcCov(len(seq),rlen,dpx)
     c = 0
-
+    print len(seq)
     while  c < term:
+        #startLeft = int(numpy.random.uniform(1,len(seq)))
+
         if startLeft < len(seq) - int(frags):
             c = c + 1
             rname = read_name(idname)
             reads = getSeqs(seq,rlen,startLeft)
-            out1.write(rname + "/1")
-            out2.write(rname+ "/2")
-            out1.write(reads[0]+ "\n" + getQual(rlen))
-            out2.write(reads[1]+ "\n+\n" + getQual(rlen))
-
-
-
-                              #with some variability
-    #print("IN")
+        #   ncheck
+            out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
+            out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
 
 
 #+++++++defs++++++++++++
