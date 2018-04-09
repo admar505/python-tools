@@ -52,21 +52,28 @@ def calcCov(chroml,rl,dp):#calc read cov, and number of reads needed.
 def genQual(rlen):#generates the qual line
     vals = ['A','F','K','G']
     qual = ''
-    for values in range(1,int(rlen)):
+    for values in range(0,int(rlen)):
         qual  += random.choice(vals)
 
 
     return qual
 
+
+def getRevComp(seq):
+    seq_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
+    return "".join([seq_dict[base] for base in reversed(seq)])
+
+
 def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and facing.
-    R1 = sq[st:(int(rl) + int(st))]
-    r2start =  int(random.gauss(int(frags),int(rl)/3))
+    R1 = sq[int(st):(int(rl) + int(st))]
+    r2start = int(st) + int(random.gauss(int(frags),int(frags)/3))
     R2 = ''
 
     if r2start < len(sq):
         R2 = sq[r2start - int(rl):r2start]
+        R2 = getRevComp(R2.upper())
 
-    return [R1,R2]
+    return [R1.upper(),R2]
 
 def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     out1 = open(idname + ".R1.fastq",'w')
@@ -75,7 +82,6 @@ def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     startsfile = open(idname + "supers",'w')
     term = calcCov(len(seq),rlen,dpx)
     c = 0
-    print len(seq)
     while  c < term:
         startLeft = int(numpy.random.uniform(1,len(seq)))
 
@@ -100,8 +106,6 @@ for mutations_line in mutations_lines:
     malteration2 = mutations_data[6].strip()
     old_seq = fasta_dct[mchrom]#whatshould this be? the file handle?
     new_id = args.output + "." +  "-".join(mutations_data[0:7]).strip()  +  ".fa"
-    OUT = open(new_id,"w")
-    new_seq = ""
     if(moperator == "del"):
 	#	if (malteration.isalpha()):
 
@@ -126,6 +130,8 @@ for mutations_line in mutations_lines:
 
     else:
         re = re
+        OUT = open(new_id,"w")
+        new_seq = ""
         new_seq_write = re.sub("(.{50})", "\\1\n", str(new_seq), 0,re.DOTALL)
         OUT.write(">" + mchrom + "\n" + str(new_seq_write) + "\n")
 
