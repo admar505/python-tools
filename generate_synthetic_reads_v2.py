@@ -48,21 +48,17 @@ def calcCov(chroml,rl,dp):#calc read cov, and number of reads needed.
     return readcount
 
 
-
 def genQual(rlen):#generates the qual line
     vals = ['A','F','K','G']
     qual = ''
     for values in range(0,int(rlen)):
         qual  += random.choice(vals)
 
-
     return qual
-
 
 def getRevComp(seq):
     seq_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
     return "".join([seq_dict[base] for base in reversed(seq)])
-
 
 def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and facing.
     R1 = sq[int(st):(int(rl) + int(st))]
@@ -79,7 +75,6 @@ def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     out1 = open(idname + ".R1.fastq",'w')
     out2 = open(idname + ".R2.fastq",'w')
 
-    startsfile = open(idname + "supers",'w')
     term = calcCov(len(seq),rlen,dpx)
     c = 0
     while  c < term:
