@@ -20,7 +20,7 @@ parser.add_argument("--output", help="prefix for file output")
 parser.add_argument("--read",help="read length")
 parser.add_argument("--dpx",help="read depth")
 parser.add_argument("--frag",help="target fragment length")
-parser.add_argument("--threads",help="number of parallel processes to use")
+parser.add_argument("--threads",help="number of parallel processes to use, default = 2",type=int,default=2)
 args = parser.parse_args()
 frags = args.frag
 mutations_file = args.mutations
@@ -74,22 +74,22 @@ def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and
     return [R1.upper(),R2]
 
 
-def runReads(seq,rlen,dpx,idname,out1,out2):
+def runReads(seq,rlen,dpx,idname,out1,out2,term):
 
-    startLeft = int(numpy.random.uniform(1,len(seq)))
+    c = 0
+    while c <  term:
+        startLeft = int(numpy.random.uniform(1,len(seq)))
 
-    if startLeft < len(seq) - int(frags):
+        if startLeft < len(seq) - int(frags):
+            c = c + 1
+            rname = read_name(idname)
+            reads = getSeqs(seq,rlen,startLeft)
+            #   ncheck
+            out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
+            out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
+       
         c = c + 1
-        rname = read_name(idname)
-        reads = getSeqs(seq,rlen,startLeft)
-        #   ncheck
-        out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
-        out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
-    
-    
-    
-    
-    
+
 def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     out1 = open(idname + ".R1.fastq",'w')
     out2 = open(idname + ".R2.fastq",'w')
@@ -98,8 +98,9 @@ def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
     #c = 0
     loops = int(int(term)/int(args.threads))
     
-    workers = multiprocessing.Pool(processes=args.threads) 
-    resultsgetter = workers.apply_async(runReads(seq,rlen,dpx,idname,out1,out2))
+    workers = multiprocessing.Pool(processes=args.threads)#doest seem to
+    #splitnotsure here
+    resultsgetter = workers.apply_async(runReads(seq,rlen,dpx,idname,out1,out2,loops))
 
      
     ##here is the parallel? or there?
