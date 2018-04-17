@@ -12,6 +12,7 @@ import re
 import pyfaidx
 import numpy
 import multiprocessing
+import os
 
 parser = argparse.ArgumentParser(description='HGVS-based Synthetic Read Generator')
 parser.add_argument("--mutations", help="file with mutations to generate synthetic reads for")
@@ -73,11 +74,17 @@ def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and
 
     return [R1.upper(),R2]
 
+#def runReads(seq,rlen,dpx,idname,out1,out2,term):
+#def runReads(seq,rlen,idname,threads,term):
+def runReads(prefix):
 
-def runReads(seq,rlen,dpx,idname,out1,out2,term):
+    #prefix = int(numpy.random.uniform(1,threads))
+
+    out1 = open(idname + "." +  str(prefix) + ".R1.fastq",'w')
+    out2 = open(idname + "." +  str(prefix) +  ".R2.fastq",'w')
 
     c = 0
-    while c <  term:
+    while c <  loops:
         startLeft = int(numpy.random.uniform(1,len(seq)))
 
         if startLeft < len(seq) - int(frags):
@@ -87,38 +94,46 @@ def runReads(seq,rlen,dpx,idname,out1,out2,term):
             #   ncheck
             out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
             out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
-       
-        c = c + 1
 
-def createReads(seq,rlen,dpx,idname):#create reads,choose rand selections
-    out1 = open(idname + ".R1.fastq",'w')
-    out2 = open(idname + ".R2.fastq",'w')
-    
+        #c = c + 1
+
+def createReads(seqs,readlength,dpx,identifiername):#create reads,choose rand selections
+    global idname
+    idname = identifiername
+    global rlen
+    rlen = readlength
+    global seq
+    seq = seqs
     term = calcCov(len(seq),rlen,dpx)
-    #c = 0
+
+    global loops
+
     loops = int(int(term)/int(args.threads))
-    
-    workers = multiprocessing.Pool(processes=args.threads)#doest seem to
-    #splitnotsure here
-    resultsgetter = workers.apply_async(runReads(seq,rlen,dpx,idname,out1,out2,loops))
 
-     
-    ##here is the parallel? or there?
-    #while  c < term:
-    ##here is the parallel, so try pool of workers, splits the runreads
+    if __name__ == '__main__':
+        workers = multiprocessing.Pool(processes=args.threads)#doest seem to
+        resultsgetter = workers.map(runReads,range(1,args.threads + 1))
 
-    #    startLeft = int(numpy.random.uniform(1,len(seq)))
+    bigfastq1 = open(idname + ".R1.fastq",'w')
+    bigfastq2 = open(idname + ".R2.fastq",'w')
 
-     #   if startLeft < len(seq) - int(frags):
-     #       c = c + 1
-     #       rname = read_name(idname)
-     #       reads = getSeqs(seq,rlen,startLeft)
-        #   ncheck
-     #       out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
-     #       out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
+    for fileindex in range(1,args.threads + 1):
+
+        file1 = idname + "." +  str(fileindex) + ".R1.fastq"
+        file2 = idname + "." +  str(fileindex) + ".R2.fastq"
+
+        writer1 = open(file1,'r')
+        writer2 = open(file2,'r')
+
+        bigfastq1.write(writer1.read())
+        bigfastq2.write(writer2.read())
+
+        os.remove(file1)
+        os.remove(file2)
 
 
-#+++++++defs++++++++++++
+
+#+++++++main++++++++++++
 
 for mutations_line in mutations_lines:
     mutations_data = mutations_line.split("\t")
