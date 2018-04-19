@@ -27,13 +27,14 @@ def anyNone(rets):
         if tagvals[1] != "[None]":
             not_none_ct = not_none_ct + 1
 
-    print str(size) + "\tWTF\t" + str(not_none_ct)
+    final_return = None
 
-    if not_none_ct < size:##Whats the deal here, its flipped somehow.
-        return None 
+    if not_none_ct <= size and not_none_ct != 0:##Whats the deal here, its flipped somehow.
+        final_return = rets
+        
 
-    else:
-        return rets
+    return final_return
+
 
 def getTags(tags, varset):
     retval = []
@@ -41,7 +42,6 @@ def getTags(tags, varset):
     for tagval in tags:
         if varset[tagval] is not None:
             retval.append(tagval +  '=' + str(varset[tagval]))
-    
     
     #make a loop or def() that checks of at least one is not none.
     return_final = anyNone(retval)
@@ -51,9 +51,28 @@ def getTags(tags, varset):
 
 for line in vcf_full:
     good_tags = getTags(taglst,line.INFO)
-    print good_tags
+
     if good_tags is not None:#might need to manage each tag individually
-            print good_tags
+        print "\t".join(good_tags)
+        print_line = line.CHROM + "\t" + line.POS +  "\t" line + "\t" + "\t".join(good_tags) + "\n"
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
