@@ -18,45 +18,65 @@ vcf_full = vcf.Reader(open(vcffi,'r'))
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 def anyNone(rets):
-    
+
     size = len(rets)
-    not_none_ct = 0
-    
-    for value in rets:
-        tagvals = re.split('=',value)
-        if tagvals[1] != "[None]":
-            not_none_ct = not_none_ct + 1
+    none_ct = size  #set to size, reduce as nones go
+
+
+    for tagkey in rets:
+        checkfornone = re.match('.*?\[None\].*',str(rets[tagkey]))#LOGIC: if there is a none check for none will be NOT NONE??
+
+        try:
+
+            if checkfornone is  None:
+                none_ct = none_ct - 1 #decided to use as --, as it is more sensible.
+
+        except (AttributeError, IndexError) as e:
+            dn = open(os.devnull,'w')
 
     final_return = None
 
-    if not_none_ct <= size and not_none_ct != 0:##Whats the deal here, its flipped somehow.
+    if none_ct < size:##indicates that no NONE vals were found in entirety.
         final_return = rets
-        
 
     return final_return
 
 
 def getTags(tags, varset):
-    retval = []
+    retval = {}
 
     for tagval in tags:
-        if varset[tagval] is not None:
-            retval.append(tagval +  '=' + str(varset[tagval]))
-    
+
+        if tagval in varset:
+            #retval.append(tagval +  '=' + str(varset[tagval]))
+            retval[tagval] = varset[tagval]
+
     #make a loop or def() that checks of at least one is not none.
+
     return_final = anyNone(retval)
+    #print return_final
     return return_final
+
+
+def makePLine(dct):
+    returnvals = []
+    for tags in dct.keys():
+        returnvals.append(str(tags) + "=" + str(dct[tags]))
+
+    return "\t".join(returnvals)
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
 for line in vcf_full:
     good_tags = getTags(taglst,line.INFO)
 
+
     if good_tags is not None:#might need to manage each tag individually
-        print "\t".join(good_tags)
-        print_line = line.CHROM + "\t" + line.POS +  "\t" line + "\t" + "\t".join(good_tags) + "\n"
-        
-            
+        print_line = line.CHROM + "\t" + str(line.POS) +  "\t" + makePLine(good_tags) + "\n"
+        newres.write(print_line)
+
+
 
 
 
