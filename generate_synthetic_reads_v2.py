@@ -12,7 +12,6 @@ import re
 import pyfaidx
 import numpy
 import multiprocessing
-import os
 
 parser = argparse.ArgumentParser(description='HGVS-based Synthetic Read Generator')
 parser.add_argument("--mutations", help="file with mutations to generate synthetic reads for")
@@ -74,6 +73,7 @@ def getSeqs(sq,rl,st):#returns two strings, frag length away from eachother, and
 
     return [R1.upper(),R2]
 
+
 #def runReads(seq,rlen,dpx,idname,out1,out2,term):
 #def runReads(seq,rlen,idname,threads,term):
 def runReads(prefix):
@@ -84,7 +84,7 @@ def runReads(prefix):
     out2 = open(idname + "." +  str(prefix) +  ".R2.fastq",'w')
 
     c = 0
-    while c <  loops:
+    while c <  term:
         startLeft = int(numpy.random.uniform(1,len(seq)))
 
         if startLeft < len(seq) - int(frags):
@@ -105,31 +105,20 @@ def createReads(seqs,readlength,dpx,identifiername):#create reads,choose rand se
     global seq
     seq = seqs
     term = calcCov(len(seq),rlen,dpx)
-
+    #c = 0
     global loops
 
     loops = int(int(term)/int(args.threads))
 
+
     if __name__ == '__main__':
         workers = multiprocessing.Pool(processes=args.threads)#doest seem to
-        resultsgetter = workers.map(runReads,range(1,args.threads + 1))
 
-    bigfastq1 = open(idname + ".R1.fastq",'w')
-    bigfastq2 = open(idname + ".R2.fastq",'w')
+        resultsgetter = workers.map(runReads,range(1,args.threads))
 
-    for fileindex in range(1,args.threads + 1):
 
-        file1 = idname + "." +  str(fileindex) + ".R1.fastq"
-        file2 = idname + "." +  str(fileindex) + ".R2.fastq"
 
-        writer1 = open(file1,'r')
-        writer2 = open(file2,'r')
 
-        bigfastq1.write(writer1.read())
-        bigfastq2.write(writer2.read())
-
-        os.remove(file1)
-        os.remove(file2)
 
 
 
@@ -164,13 +153,12 @@ for mutations_line in mutations_lines:
     if(moperator == "ins"):
         new_seq = str(old_seq[0:mleft])+malteration+str(old_seq[int(mleft):len(old_seq)])
 
-    if(args.read):
+    if args.read is not None:
         createReads(new_seq,args.read,args.dpx,new_id)
 
     else:
         re = re
         OUT = open(new_id,"w")
-        new_seq = ""
         new_seq_write = re.sub("(.{50})", "\\1\n", str(new_seq), 0,re.DOTALL)
         OUT.write(">" + mchrom + "\n" + str(new_seq_write) + "\n")
 
