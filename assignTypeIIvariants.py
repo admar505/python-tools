@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
 import vcf
-sys.path.append('/vbin/PyVGRes')
-sys.path.append('/vbin/goinfo-scrips/AltObject')
+sys.path.append('/home/nucleo/lib/PyVGRes')
+sys.path.append('/home/nucleo/python-tools/AltObject')
 import vgr
 import altobject
 import loadaltdats
