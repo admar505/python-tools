@@ -58,13 +58,20 @@ class detGenoType(object):
     def defGT(self): #returns the sorted genotype.
 
         retGT = []
+
         for alt in self.alts:
-            if self.alts[alt].amivalid == True:
-                retGT.append(self.alts[alt].getcall)
+            print self.alts[alt]
+            try:
+                if self.alts[alt].amivalid == True:#THIS DOESNOT CORRECTLY LOAD THE ALTS to get the AMIVALID # YOUAREHERE
+                    retGT.append(self.alts[alt].getcall)
+
+            except AttributeError:
+                print self.full
+
 
         retGT.sort()
 
-        return len(retGT)
+        return retGT
 
     def __retGT__(self,index):#should return the alt at pos,
         #index += 1

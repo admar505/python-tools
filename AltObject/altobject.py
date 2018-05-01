@@ -38,14 +38,21 @@ class AltObj(object):
         return retarr
 
     @property
-    def amivalid(self): #this will return True if so, False if not. so if this var is in one .
+    def amivalid(self): #this will return True if so, False if not. so if this var is in one.
+                        #needs to deal with None, it doesnt???
         TruOrNo = False
-        gtvals = re.split('[|/]',self.getGT)#split the type, if its in one and not the other ok?
+        print self.getGT
+        try:
+            print self.getGT  + "    HELLO"
 
-        for gt in gtvals:
-            indpr = self.index + 1
-            if int(gt) == int(indpr):
-                TruOrNo = True
+            gtvals = re.split('[|/]',self.getGT)#split the type, if its in one and not the other ok?
+
+            for gt in gtvals:
+                indpr = self.index + 1
+                if int(gt) == int(indpr):
+                    TruOrNo = True
+        except AttributeError:
+           print "NONE"
 
         return TruOrNo
 
