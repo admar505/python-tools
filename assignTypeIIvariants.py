@@ -44,21 +44,33 @@ results = {}#stores the results lines;
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 
+def determineCall(varobj,targ): #this will be the beginning of determining the call.
+    for variant in varobj:      #should this differentiate between dels and snps? lets see here.
+        #print variant.POS       #get call -> assign to this type --> success.
+        #print targ["start"]
+        callobj = loadaltdats.detGenoType(variant)
 
-def spinach
+        #try:
+        print "CALL IS GOOD " + str(callobj.defGT)
 
-def determineCAll():this will be the beginning of determining the call.
-    return None
+        #except AttributeError:
+        print targ
+
+
 
 
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
-for bed in bedfi:
-    variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))
+for bed in bedfi:#as csvDictReader
 
+    try:#need to pass the specific bed line that is target
 
+        variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))
+        call = determineCall(variant,bed)
 
+    except ValueError:#initiate error checks. here.
+        print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
 
 
