@@ -13,6 +13,7 @@ parser.add_argument("--list",help="lost to search through, in CAP format",requir
 parser.add_argument("--trans",help="allowed transcripts, format example NM_014946.3",required=True)
 parser.add_argument("--tag",help="allowed transcripts, format example NM_014946.3",required=True,action='append')
 parser.add_argument("--id",help="sample id, so that the bams can be called correctly",required=True)
+parser.add_argument("--redo",help="USE if the temp files have all been generated, and the only thing needed is to repull tags.",default=False,action="store_true")
 
 args = parser.parse_args()
 vcffi = args.vcf
@@ -26,30 +27,40 @@ vcf_full = vcf.Reader(open(vcffi,'r'))
 necessary_vars = csv.DictReader(open(varslst,'r'),delimiter="\t")
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
+
+
+
+
 def recallVar(needline):
-    bedtargetname = needline['Gene_Name'] +"."+ needline['Chr'] + "."+ needline['Pos'] + ".bed"
-    bedtarget = open(bedtargetname,'w')
 
-
-    pos = re.search('(\d+)\-(\d+)',needline['Pos'])
-
-    if pos is not None:
-        bedtarget.write(needline['Chr'] +"\t"+ str(int(pos.group(1)) - 1) +"\t"+ str(int(pos.group(2)) + 1))
-
-    else:
-        bedtarget.write(needline['Chr'] + "\t" + str(int(needline['Pos']) -1) +"\t" + str(int(needline['Pos']) + 1))
-
-    bedtarget.close()
 
     vcfoutname = needline['Gene_Name'] +"."+ needline['Chr'] + "."+ needline['Pos'] + ".vcf"
-    vcffile = open(vcfoutname,'w')
 
-    call(['freebayes --targets ' +bedtargetname + ' -f /ref/hg19.fa --haplotype-length 0 --min-alternate-count 1 --min-alternate-fraction 0 --pooled-continuous --report-monomorphic --ploidy 2 -b ' + args.id +"."+ needline['Chr']  + '.bam | /vbin/vcflib/vcfallelicprimitives --keep-info --keep-geno '],shell=True,stdout=vcffile)
-    sys.stdout.flush()
-    vcffile.close()
+
+    if args.redo is not True:
+        bedtargetname = needline['Gene_Name'] +"."+ needline['Chr'] + "."+ needline['Pos'] + ".bed"
+        bedtarget = open(bedtargetname,'w')
+
+
+        pos = re.search('(\d+)\-(\d+)',needline['Pos'])
+
+        if pos is not None:
+            bedtarget.write(needline['Chr'] +"\t"+ str(int(pos.group(1)) - 1) +"\t"+ str(int(pos.group(2)) + 1))
+
+        else:
+            bedtarget.write(needline['Chr'] + "\t" + str(int(needline['Pos']) -1) +"\t" + str(int(needline['Pos']) + 1))
+
+        bedtarget.close()
+
+
+        vcffile = open(vcfoutname,'w')
+
+        call(['freebayes --targets ' +bedtargetname + ' -f /ref/hg19.fa --haplotype-length 0 --min-alternate-count 1 --min-alternate-fraction 0 --pooled-continuous --report-monomorphic --ploidy 2 -b ' + args.id +"."+ needline['Chr']  + '.bam | /vbin/vcflib/vcfallelicprimitives --keep-info --keep-geno '],shell=True,stdout=vcffile)
+        sys.stdout.flush()
+        vcffile.close()
+
 
     vcfonevar = vcf.Reader(open(vcfoutname,'r'))
-
 
     for capvar in vcfonevar:
 
@@ -80,27 +91,27 @@ def mergeNWrite(vgrfile,caps,qval):
 def kickAnnotations(vcfln,capln,vcf_4_header):
     returnvals = []
 
-    #command = "/vbin/GoPipeRUN/goVarAnnotateAndID.sh" + rsid
-    #call(["/vbin/GoPipeRUN/goVarAnnotateAndID.sh",rsid])
     rsid = capln['Chr'] + "."  + capln['Pos']
-    vcf_write = vcf.Writer(open(rsid + '.Merged.vcf','w'),vcf_4_header)
-    vcf_write.write_record(vcfln)
-    sys.stdout.flush()
-    vcf_write.close()
 
-    effout = open(rsid + '.efd.vcf',"w")
-    errout = open(rsid + '.stderrr',"w")
+    if args.redo is not True:
+        vcf_write = vcf.Writer(open(rsid + '.Merged.vcf','w'),vcf_4_header)
+        vcf_write.write_record(vcfln)
+        sys.stdout.flush()
+        vcf_write.close()
 
-    call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout,stderr=errout)
-    sys.stdout.flush()
-    effout.close()
+        effout = open(rsid + '.efd.vcf',"w")
+        errout = open(rsid + '.stderrr',"w")
 
-    call(['/vbin/ensembl-tools-release-86/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' + rsid + '.VEP.vcf --dir /vbin/ensembl-tools-release-86/  --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
-    sys.stdout.flush()
+        call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout,stderr=errout)
+        sys.stdout.flush()
+        effout.close()
 
-    complete = open(rsid + '.COMPLETE.txt',"w")
+        call(['/vbin/ensembl-tools-release-86/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' + rsid + '.VEP.vcf --dir /vbin/ensembl-tools-release-86/  --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
+        sys.stdout.flush()
 
-    call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
+        complete = open(rsid + '.COMPLETE.txt',"w")
+
+        call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
 
     mergeNWrite(rsid + '.COMPLETE.txt',capln,vcfln.QUAL)
 
