@@ -30,7 +30,7 @@ try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
 except (TypeError,NameError) as e:
-    print "\n\n\n\tUSE -h thanks.\n\n\n"
+    print "\n\n\tUSE -h thanks.\n\n"
 
 
 
@@ -50,11 +50,12 @@ def determineCall(varobj,targ): #this will be the beginning of determining the c
         #print targ["start"]
         callobj = loadaltdats.detGenoType(variant)
 
-        #try:
-        print "CALL IS GOOD " + str(callobj.defGT)
+        try:
+            print "CALL IS GOOD " + str(callobj.defGT_Dict)
+            print "here is this " + str(callobj.assGT_GL)
 
-        #except AttributeError:
-        print targ
+        except AttributeError:
+            print targ + " FAILED to get variant"
 
 
 

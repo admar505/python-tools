@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys,os,re,fileinput,argparse
 import vcf
-sys.path.append('/home/diegoisi/PyVGRes')
+sys.path.append('/home/nucleo/lib/PyVGRes')
 import vgr
 import csv
 from subprocess import call
@@ -52,8 +52,8 @@ for skiprow in skiplist:
 #convert the omicia csv to annotated bed here:
 for region in skipper:
     print region
-    region_in_vgr = res.fetch(region.split('\t')[0],int(region.split('\t')[1]),int(region.split('\t')[2])) 
-    	
+    region_in_vgr = res.fetch(region.split('\t')[0],int(region.split('\t')[1]),int(region.split('\t')[2]))
+
     for vgr_record in region_in_vgr:
         newres.write_record(vgr_record)
 
