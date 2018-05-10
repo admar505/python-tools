@@ -2,7 +2,7 @@
 import sys,os,re,fileinput,argparse
 import vcf
 sys.path.append('/home/nucleo/lib/PyVGRes')
-sys.path.append('/home/nucleo/python-tools/AltObject')
+sys.path.append('/home/nucleo/lib/AltObject')
 import vgr
 import altobject
 import loadaltdats
@@ -32,17 +32,36 @@ try:
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
 
-
-
-
-
-
-
-
 results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
+
+def getBestGL(gtgl):#return best GT given GL
+    return None
+
+
+def gtCallOfficial(genodict):#return actual GT
+    return None
+
+
+
+
+
+def assignFinalGT(gtdict,gt2gls,AB,qual):#ok, so, some logic, if the gt gl all work,
+                                         #and the qqual is above threshold, and the AB is good, give it a blam.
+                                         #at the AB, at the
+                                         #
+    asserted_gt = gtCallOfficial(gtdict)
+
+    best_gtGL = getBestGL(gt2gls)
+
+    for vals in gt2gls:
+        print str(gt2gls[vals]) +"\tVALS\t"+ str(vals)
+
+        #for i in vals:
+        #    print i
+
 
 def determineCall(varobj,targ): #this will be the beginning of determining the call.
     for variant in varobj:      #should this differentiate between dels and snps? lets see here.
@@ -52,10 +71,12 @@ def determineCall(varobj,targ): #this will be the beginning of determining the c
 
         try:
             print "CALL IS GOOD " + str(callobj.defGT_Dict)
-            print "here is this " + str(callobj.assGT_GL)
+   #        print "here is this " + str(callobj.assGT_GL)
+            assignedGT = assignFinalGT(callobj.defGT_Dict,callobj.assGT_GL,variant.INFO['AB'],variant.QUAL)
+
 
         except AttributeError:
-            print targ + " FAILED to get variant"
+            print  "FAILED to get variant for rsid: " + str(targ['rsid'])
 
 
 
