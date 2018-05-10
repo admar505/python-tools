@@ -16,9 +16,7 @@ class loadAlts(object):
 
         for alt_choice in samples.ALT:
             #print alt_choice
-            # myalts = altobject.AltObj(samples,genotype_index)
-
-            alts[genotype_index] = alt_choice
+            alts[genotype_index] = altobject.AltObj(samples,genotype_index)
 
             genotype_index += 1
 
@@ -55,23 +53,47 @@ class detGenoType(object):
         return self.WT
 
     @property
-    def defGT(self): #returns the sorted genotype.
+    def defGT_Dict(self): #returns the sorted genotype.
 
-        retGT = []
+        #retGT = []#TEST: change to a dict, and returen T or F
+        retGT = {}#TEST: change to a dict, and returen T or F
 
         for alt in self.alts:
-            print self.alts[alt]
             try:
-                if self.alts[alt].amivalid == True:#THIS DOESNOT CORRECTLY LOAD THE ALTS to get the AMIVALID # YOUAREHERE
+                if self.alts[alt].amivalid == True:#WHAT is the POINT HERE--> only return if in the asserted GT, ie, 0/1, 0|1, but not if not, but what if I want to override?
+                                                   #need to rethink this.would be better to say it is or if it is not.
+                    retGT[self.alts[alt].getcall] = True
+
+                else:
+                    retGT[self.alts[alt].getcall] = False
+
+            except AttributeError:
+                print "WARNING " + str(self.full) + " UNABLE TO ASSIGN GT TRUE OR FALSE"
+
+
+        #retGT.sort()
+
+        return retGT
+
+    def defGT_ARR(self): #returns the sorted genotype.
+
+        retGT = []#TEST:
+
+        for alt in self.alts:
+            try:
+                if self.alts[alt].amivalid == True:#WHAT is the POINT HERE--> only return if in the asserted GT, ie, 0/1, 0|1, but not if not, but what if I want to override?
+                                                   #need to rethink this.would be better to say it is or if it is not.
                     retGT.append(self.alts[alt].getcall)
 
             except AttributeError:
-                print self.full
+                print "WARNING " + str(self.full) + " UNABLE TO ADD GT to ARRAY"
 
 
         retGT.sort()
 
         return retGT
+
+
 
     def __retGT__(self,index):#should return the alt at pos,
         #index += 1
