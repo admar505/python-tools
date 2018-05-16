@@ -73,7 +73,7 @@ for line in vcf_full:
 
 
     if good_tags is not None:#might need to manage each tag individually
-        print_line = line.CHROM + "\t" + str(line.POS) +  "\t" + makePLine(good_tags) + "\n"
+        print_line = line.CHROM + "\t" + str(line.POS) + "\t" +  str(line.ID) +"\t" + makePLine(good_tags) + "\n"
         newres.write(print_line)
 
 
