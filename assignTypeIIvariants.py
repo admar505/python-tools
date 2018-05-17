@@ -38,20 +38,25 @@ results = {}#stores the results lines;
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 
 def getBestGL(gtgl):#return best GT given GL
-    return None
+    best = None
+
+    sortedgtgl = sorted(gtgl, key=gtgl.get, reverse=True)
+    best = sortedgtgl[0]
+
+    return best
 
 
 def gtCallOfficial(genodict):#return actual GT
+    print genodict
     return None
-
-
 
 
 
 def assignFinalGT(gtdict,gt2gls,AB,qual):#ok, so, some logic, if the gt gl all work,
                                          #and the qqual is above threshold, and the AB is good, give it a blam.
-                                         #at the AB, at the
-                                         #
+                                         #see if all agree. if so, see if the call is homo, het or wt
+                                         ##then, can pull the lines here from the answer bed: homohgvs  homourl hethgvs heturl  wthgvs  wturl
+                                         #Also: ensure, with the rsid, that the call is valid.
     asserted_gt = gtCallOfficial(gtdict)
 
     best_gtGL = getBestGL(gt2gls)
@@ -64,19 +69,23 @@ def assignFinalGT(gtdict,gt2gls,AB,qual):#ok, so, some logic, if the gt gl all w
 
 
 def determineCall(varobj,targ): #this will be the beginning of determining the call.
+
+
+
     for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
         #print targ["start"]
         callobj = loadaltdats.detGenoType(variant)
-
-        try:
-            print "CALL IS GOOD " + str(callobj.defGT_Dict)
+        print str(callobj.defGT_Dict) + "\tGET GT and importance"
+        #try:
+        #    return None
+            #print "CALL IS GOOD " + str(callobj.defGT_Dict)
    #        print "here is this " + str(callobj.assGT_GL)
-            assignedGT = assignFinalGT(callobj.defGT_Dict,callobj.assGT_GL,variant.INFO['AB'],variant.QUAL)
+          #  assignedGT = assignFinalGT(callobj.defGT_Dict,callobj.assGT_GL,variant.INFO['AB'],variant.QUAL)
 
 
-        except AttributeError:
-            print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+        #except AttributeError:
+        #    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
 
 
 
@@ -87,12 +96,23 @@ def determineCall(varobj,targ): #this will be the beginning of determining the c
 
 for bed in bedfi:#as csvDictReader
 
-    try:#need to pass the specific bed line that is target
+    #try:#need to pass the specific bed line that is target
 
         variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))
         call = determineCall(variant,bed)
 
-    except ValueError:#initiate error checks. here.
-        print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
+    #except ValueError:#initiate error checks. here.
+     #   print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
+
+
+
+
+
+
+
+
+
+
+
 
 
