@@ -46,27 +46,45 @@ def getBestGL(gtgl):#return best GT given GL
     return best
 
 
-def gtCallOfficial(genodict):#return actual GT
-    print genodict
-    return None
+def gtCallOfficial(genocall):#return variant-caller asserted GT #IAMHERE
+    alleles = []
+
+    for alt in genocall.defGT_Dict:
+
+        if genocall.defGT_Dict[alt] is True:
+            alleles.append(str(alt))
+
+    if len(alleles) == 1:
+        alleles.append(str(genocall.retREF))
+
+    sortalleles = sorted(alleles)
+    returnable_string =  "".join(sortalleles)
+
+    return returnable_string
 
 
-
-def assignFinalGT(gtdict,gt2gls,AB,qual):#ok, so, some logic, if the gt gl all work,
+def assignFinalGT(callfb,AB,qual):#ok, so, some logic, if the gt gl all work,
                                          #and the qqual is above threshold, and the AB is good, give it a blam.
                                          #see if all agree. if so, see if the call is homo, het or wt
                                          ##then, can pull the lines here from the answer bed: homohgvs  homourl hethgvs heturl  wthgvs  wturl
                                          #Also: ensure, with the rsid, that the call is valid.
-    asserted_gt = gtCallOfficial(gtdict)
+    asserted_gt = gtCallOfficial(callfb)
 
-    best_gtGL = getBestGL(gt2gls)
+    best_gtGL = getBestGL(callfb.assGT_GL)
 
-    for vals in gt2gls:
-        print str(gt2gls[vals]) +"\tVALS\t"+ str(vals)
 
-        #for i in vals:
-        #    print i
 
+
+
+    for vals in callfb.defGT_Dict:
+        print str(callfb.defGT_Dict[vals]) +"\tVALS\t"+ str(vals) + "\tbest\t"  + best_gtGL + "\t" + str(AB) + " assertedGT " +  str(asserted_gt)
+
+
+
+
+
+def returnWT(wtcall,answerline):
+    print answerline['wthgvs'] + "\t" + answerline['wturl']
 
 def determineCall(varobj,targ): #this will be the beginning of determining the call.
 
@@ -74,18 +92,23 @@ def determineCall(varobj,targ): #this will be the beginning of determining the c
 
     for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
-        #print targ["start"]
+        #print targ["start"]     #if WT+, cut to chase?
+
         callobj = loadaltdats.detGenoType(variant)
-        print str(callobj.defGT_Dict) + "\tGET GT and importance"
-        #try:
-        #    return None
-            #print "CALL IS GOOD " + str(callobj.defGT_Dict)
-   #        print "here is this " + str(callobj.assGT_GL)
-          #  assignedGT = assignFinalGT(callobj.defGT_Dict,callobj.assGT_GL,variant.INFO['AB'],variant.QUAL)
+
+        if callobj.amIWT is  True:
+            returnWT(callobj,targ)#just call it done and returnWT+():
+
+        else:
+
+            try:
+                print "CALL IS GOOD " + str(callobj.defGT_Dict)
+                print "here is this " + str(callobj.assGT_GL)
+                assignedGT = assignFinalGT(callobj,variant.INFO['AB'],variant.QUAL)
 
 
-        #except AttributeError:
-        #    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+            except AttributeError:
+                print  "FAILED to get variant for rsid: " + str(targ['rsid'])
 
 
 
@@ -96,6 +119,7 @@ def determineCall(varobj,targ): #this will be the beginning of determining the c
 
 for bed in bedfi:#as csvDictReader
 
+    #FIRST: collapse ithe
     #try:#need to pass the specific bed line that is target
 
         variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))
