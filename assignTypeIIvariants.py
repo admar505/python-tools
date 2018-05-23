@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
 import vcf
-sys.path.append('/home/nucleo/lib/PyVGRes')
+sys.path.append('/home/nucleo/lib/PYVGRes')
 sys.path.append('/home/nucleo/lib/AltObject')
 import vgr
 import altobject
@@ -93,6 +93,14 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree o
 
     return itisgood
 
+def 
+
+
+def checkQUAL(correctGT,call,var):
+    qual = True
+
+    return qual
+
 def assignFinalGT(callAO,var_fb):#ok, so, some logic, if the gt gl all work,
     AB = var_fb.INFO['AB']               #and the qqual is above threshold, and the AB is good, give it a blam.
     qual = var_fb.QUAL                   #see if all agree. if so, see if the call is homo, het or wt
@@ -103,8 +111,17 @@ def assignFinalGT(callAO,var_fb):#ok, so, some logic, if the gt gl all work,
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:
+
         print "it is"
         print str(callAO.amIHOMO) + "\tHOMO:"
+        if checkQUAL(best_gtGL,callAO,var_fb) is True:
+            print "qual is good, send to printer"
+
+    else:
+        
+
+        
+
 
 
 
