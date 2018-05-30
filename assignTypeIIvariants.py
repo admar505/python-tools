@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
 import vcf
-sys.path.append('/home/nucleo/lib/PYVGRes')
+sys.path.append('/home/nucleo/lib/PyVGRes')
 sys.path.append('/home/nucleo/lib/AltObject')
 import vgr
 import altobject
@@ -17,18 +17,34 @@ parser.add_argument("--fullvcf",help="FULL genome VCF file, bgzipped, indexed wi
 parser.add_argument("--combo",help="combination types",action='append')
 parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
 
+#----------file-handling-defs----------#
 
+def newName(v,f):
+
+    m = re.compile('([a-zA-Z0-9_-]+)\..*')
+    try:
+        typeofvcf = m.match(v)
+        sampleid = m.match(str(os.path.basename(f)))
+        filename = sampleid.group(1) + "." + typeofvcf.group(1) + ".RESULTS.txt"
+        return filename
+
+    except AttributeError:
+
+        filename = "TEST.RESULTS.txt"
+        return filename
+
+#----------file-handling-main---------#
 
 args = parser.parse_args()
 answerfi = args.answer #-->  to dict, use CSV
 vcffi = args.vcf       #--> standard pyvcf
 fullfi = args.fullvcf  #--> to standard pyvcf
 combo = args.combo    # this is array, as this can be several
-#special load for vcffi? (vcffi,"r")
-newres = vgr.Writer(open('REQUIRED.RESULTS.txt',"w"))#temp name.
+newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
+
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
 
@@ -46,7 +62,7 @@ def getBestGL(gtgl):#return best GT given GL
     return best
 
 
-def gtCallOfficial(genocall):#return variant-caller asserted GT #IAMHERE
+def gtCallOfficial(genocall):#return variant-caller asserted GT
     alleles = []
 
     for alt in genocall.defGT_Dict:
@@ -100,44 +116,54 @@ def checkQUAL(correctGT,call,var):
 
     return qual
 
-def assignFinalGT(callAO,var_fb):#ok, so, some logic, if the gt gl all work,
+def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
+    print intendedcall + "\t" + reason
+
+
+
+
+def printVAR(callAO,var_fb,answer):
+    newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,var_fb.ALT,{})
+
+    newrecord.INFO['FBGenoType'] = getBestGL(callAO.assGT_GL)
+    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['QR']
+    newrecord.INFO['VAPOR_URL'] = answer['heturl']
+
+    newres.write_record(newrecord)
+
+def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all work,
     AB = var_fb.INFO['AB']               #and the qqual is above threshold, and the AB is good, give it a blam.
     qual = var_fb.QUAL                   #see if all agree. if so, see if the call is homo, het or wt
                                          ##then, can pull the lines here from the answer bed: homohgvs  homourl hethgvs heturl  wthgvs  wturl
                                          #Also: ensure, with the rsid, that the call is valid.
+    good_var = None
     asserted_gt = gtCallOfficial(callAO)
 
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
 
-    if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:
-
-        print "it is"
-        print str(callAO.amIHOMO) + "\tHOMO:"
+    if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
+                                                                           #this pulls all together.
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             print "qual is good, send to printer"
+            printVAR(callAO,var_fb,answer)
 
     else:
 
-        print "check fails"
+        raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
+
+    #this is just a check.
+
+    #for vals in callAO.defGT_Dict:
+    #     print str(callAO.defGT_Dict[vals]) +"\tVALS\t"+ str(vals) + "\tbest\t"  + best_gtGL + "\t" + str(AB) + " assertedGT " +  str(asserted_gt)
 
 
 
-
-
-    for vals in callAO.defGT_Dict:
-        print str(callAO.defGT_Dict[vals]) +"\tVALS\t"+ str(vals) + "\tbest\t"  + best_gtGL + "\t" + str(AB) + " assertedGT " +  str(asserted_gt)
-
-
-
-    return best_gtGL
-
-def returnWT(wtcall,answerline):
+def returnWT(wtcall,answerline):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
     print answerline['wthgvs'] + "\t" + answerline['wturl']
 
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
                                 #step TWO
-
-
+                                #---------------------------------------------------
     for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
         #print targ["start"]     #if WT+, cut to chase?
@@ -150,17 +176,13 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
         else:
 
             try:
-                print "CALL IS GOOD " + str(callobj.defGT_Dict)
-                print "here is this " + str(callobj.assGT_GL)
-                assignedGT = assignFinalGT(callobj,variant)
-
+                #print "CALL IS GOOD " + str(callobj.defGT_Dict)
+                #print "here is this " + str(callobj.assGT_GL)
+                assignedGT = assignFinalGT(callobj,variant,targ)
+                print assignedGT
 
             except AttributeError:
                 print  "FAILED to get variant for rsid: " + str(targ['rsid'])
-
-
-
-
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
