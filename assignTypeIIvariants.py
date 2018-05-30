@@ -64,7 +64,7 @@ def gtCallOfficial(genocall):#return variant-caller asserted GT #IAMHERE
 
 
 def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree on call.
-                                   #approach: verify that GTbyGL is either WT, or, is high AB alt
+                                          #approach: verify that GTbyGL is either WT, or, is high AB alt
     itisgood = False
     #print str(ab) + "\t" + str(alt) + "\t" + str(gl)
 
@@ -93,7 +93,6 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree o
 
     return itisgood
 
-def 
 
 
 def checkQUAL(correctGT,call,var):
@@ -118,9 +117,9 @@ def assignFinalGT(callAO,var_fb):#ok, so, some logic, if the gt gl all work,
             print "qual is good, send to printer"
 
     else:
-        
 
-        
+        print "check fails"
+
 
 
 
@@ -171,8 +170,8 @@ for bed in bedfi:#as csvDictReader
     #FIRST: collapse ithe rsids into possibles, example A-C or A-T for the same.
     #try:#need to pass the specific bed line that is target
 
-        variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))
-        call = determineCall(variant,bed)
+        variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))#pull variant
+        call = determineCall(variant,bed)                                         #send to make call
 
     #except ValueError:#initiate error checks. here.
      #   print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
