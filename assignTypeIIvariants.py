@@ -58,7 +58,6 @@ def getBestGL(gtgl):#return best GT given GL
 
     sortedgtgl = sorted(gtgl, key=gtgl.get, reverse=True)
     best = sortedgtgl[0]
-    print best
 
     return best
 
@@ -83,22 +82,23 @@ def gtCallOfficial(genocall):#return variant-caller asserted GT
 def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree on call.
                                           #approach: verify that GTbyGL is either WT, or, is high AB alt
     itisgood = False
-    #print str(ab) + "\t" + str(alt) + "\t" + str(gl)
+    print str(ab) + "\tIN " + str(alt) + " CHECK\t GL TO AB  " + str(gl)
 
     isinWT = False
     isValidAB = False
 
     for nucl in gl.split(","):
         if nucl == ref:
-
             isinWT = True
 
     variant = 0
 
     while variant < len(ab):
+        print str(ab[variant]) + " starting checks GL2AB"
 
-        if float(ab[variant]) > float(args.ABthreshold):
-            print str(alt[variant]) +  "\tis this in the variant and everything here\t" + str(gl)
+        if float(ab[variant]) > float(args.ABthreshold) or float(ab[variant]) == 0:# CHECK if AB is better than .15 or 
+                                                                                   #set to zero for HOMOVARS ()
+            print str(alt[variant]) +  "\tVAR inside the AB check\t" + str(gl)     #this may fail if minor allele get ready for that.
 
             if str(alt[variant]) in str(alt):
                 isValidAB = True
@@ -118,19 +118,25 @@ def checkQUAL(correctGT,call,var):
     return qual
 
 def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
-    print intendedcall + "\t" + reason
+    print str(intendedcall.defGT_Dict) + "\t" + str(reason)
 
-
+def printHetOrHomo():#for printing will direct to homo or het.
+    print "het or homo"
 
 
 def printVAR(callAO,var_fb,answer,truealt):
     #validalt = callAO.
+    
+    #print truealt + "\t" + callAO.WT + "\t" + str(callAO.defGT_Dict)
 
     newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
     newrecord.INFO['FBGenoType'] = var_fb.REF  + truealt
     newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['QR'] #might need to split
     newrecord.INFO['VAPOR_URL'] = answer['heturl']
+    newrecord.INFO['EFF_HGVS'] = answer['hethgvs']
+    
+
 
     newres.write_record(newrecord)
 
@@ -153,29 +159,25 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
     truealt = getGoodALT(callAO.defGT_Dict)
     asserted_gt = gtCallOfficial(callAO)
 
+
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
+    print best_gtGL + "\tB"
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
-                                                                           #this pulls all together.
+
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             print "qual is good, send to printer"
-            print best_gtGL
             print truealt
             printVAR(callAO,var_fb,answer,truealt)
 
     else:
         truealt = None#reassign what truealt is
+        print best_gtGL
         raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
-
-    #this is just a check.
-
-    #for vals in callAO.defGT_Dict:
-    #     print str(callAO.defGT_Dict[vals]) +"\tVALS\t"+ str(vals) + "\tbest\t"  + best_gtGL + "\t" + str(AB) + " assertedGT " +  str(asserted_gt)
-
 
 
 def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
-    print answer['wthgvs'] + "\t" + answer['wturl']
+    #print answer['wthgvs'] + "\t" + answer['wturl']
 
     wtrecord = vgr.model._Record(variant.CHROM,variant.POS,variant.REF,variant.REF,{})
 
@@ -205,9 +207,9 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
                 #print "CALL IS GOOD " + str(callobj.defGT_Dict)
                 #print "here is this " + str(callobj.assGT_GL)
                 assignedGT = assignFinalGT(callobj,variant,targ)
-                print assignedGT
+                #print assignedGT
 
-            except AttributeError:
+            except AttributeError:#eventually do variant failure return to file
                 print  "FAILED to get variant for rsid: " + str(targ['rsid'])
 
 
