@@ -58,6 +58,7 @@ def getBestGL(gtgl):#return best GT given GL
 
     sortedgtgl = sorted(gtgl, key=gtgl.get, reverse=True)
     best = sortedgtgl[0]
+    print best
 
     return best
 
@@ -122,21 +123,34 @@ def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
 
 
 
-def printVAR(callAO,var_fb,answer):
-    newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,var_fb.ALT,{})
+def printVAR(callAO,var_fb,answer,truealt):
+    #validalt = callAO.
 
-    newrecord.INFO['FBGenoType'] = getBestGL(callAO.assGT_GL)
-    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['QR']
+    newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
+
+    newrecord.INFO['FBGenoType'] = var_fb.REF  + truealt
+    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['QR'] #might need to split
     newrecord.INFO['VAPOR_URL'] = answer['heturl']
 
     newres.write_record(newrecord)
+
+
+def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
+                         #might be needed as there could be two
+    validalt = None
+
+    for arr in calldict:
+        if calldict[arr] is True:
+            validalt = arr
+
+    return str(validalt)
 
 def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all work,
     AB = var_fb.INFO['AB']               #and the qqual is above threshold, and the AB is good, give it a blam.
     qual = var_fb.QUAL                   #see if all agree. if so, see if the call is homo, het or wt
                                          ##then, can pull the lines here from the answer bed: homohgvs  homourl hethgvs heturl  wthgvs  wturl
                                          #Also: ensure, with the rsid, that the call is valid.
-    good_var = None
+    truealt = getGoodALT(callAO.defGT_Dict)
     asserted_gt = gtCallOfficial(callAO)
 
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
@@ -145,10 +159,12 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
                                                                            #this pulls all together.
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             print "qual is good, send to printer"
-            printVAR(callAO,var_fb,answer)
+            print best_gtGL
+            print truealt
+            printVAR(callAO,var_fb,answer,truealt)
 
     else:
-
+        truealt = None#reassign what truealt is
         raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
     #this is just a check.
@@ -158,8 +174,18 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
 
 
-def returnWT(wtcall,answerline):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
-    print answerline['wthgvs'] + "\t" + answerline['wturl']
+def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
+    print answer['wthgvs'] + "\t" + answer['wturl']
+
+    wtrecord = vgr.model._Record(variant.CHROM,variant.POS,variant.REF,variant.REF,{})
+
+    wtrecord.INFO['FBGenoType'] = variant.REF + variant.REF
+    wtrecord.INFO['FBRefAlleleCount'] = variant.INFO['QR']
+    wtrecord.INFO['VAPOR_URL'] = answer['heturl']
+
+    newres.write_record(wtrecord)
+
+
 
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
                                 #step TWO
@@ -171,7 +197,7 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
         callobj = loadaltdats.detGenoType(variant)
 
         if callobj.amIWT is  True:
-            returnWT(callobj,targ)#just call it done and returnWT+():
+            returnWT(callobj,variant,targ)#just call it done and returnWT+():
 
         else:
 
