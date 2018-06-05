@@ -82,8 +82,6 @@ def gtCallOfficial(genocall):#return variant-caller asserted GT
 def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree on call.
                                           #approach: verify that GTbyGL is either WT, or, is high AB alt
     itisgood = False
-    print str(ab) + "\tIN " + str(alt) + " CHECK\t GL TO AB  " + str(gl)
-
     isinWT = False
     isValidAB = False
 
@@ -94,12 +92,9 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao): #return True if GL and AB vals agree o
     variant = 0
 
     while variant < len(ab):
-        print str(ab[variant]) + " starting checks GL2AB"
 
-        if float(ab[variant]) > float(args.ABthreshold) or float(ab[variant]) == 0:# CHECK if AB is better than .15 or 
+        if float(ab[variant]) > float(args.ABthreshold) or float(ab[variant]) == 0:# CHECK if AB is better than .15 or
                                                                                    #set to zero for HOMOVARS ()
-            print str(alt[variant]) +  "\tVAR inside the AB check\t" + str(gl)     #this may fail if minor allele get ready for that.
-
             if str(alt[variant]) in str(alt):
                 isValidAB = True
 
@@ -120,24 +115,36 @@ def checkQUAL(correctGT,call,var):
 def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
     print str(intendedcall.defGT_Dict) + "\t" + str(reason)
 
-def printHetOrHomo():#for printing will direct to homo or het.
-    print "het or homo"
+def printHetOrHomo(callao,ans,alt):#for printing will direct to homo or het.
+    ret = []
+    hetgt = [alt,callao.WT]
+
+    if callao.amIHOMO is True:
+        ret.append(ans['homourl'])
+        ret.append(ans['homohgvs'])
+        ret.append(alt + alt)
+
+    else:
+        ret.append(ans['heturl'])
+        ret.append(ans['hethgvs'])
+        ret.append(''.join(sorted(hetgt)))
+
+    return ret
 
 
 def printVAR(callAO,var_fb,answer,truealt):
-    #validalt = callAO.
-    
-    #print truealt + "\t" + callAO.WT + "\t" + str(callAO.defGT_Dict)
 
     newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
-    newrecord.INFO['FBGenoType'] = var_fb.REF  + truealt
-    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['QR'] #might need to split
-    newrecord.INFO['VAPOR_URL'] = answer['heturl']
-    newrecord.INFO['EFF_HGVS'] = answer['hethgvs']
-    
-
-
+    newrecord.INFO['FBGenoType'] = printHetOrHomo(callAO,answer,truealt)[2]
+    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['RO'] #might need to split
+    newrecord.INFO['VAPOR_URL'] = printHetOrHomo(callAO,answer,truealt)[0]
+    newrecord.INFO['EFF_HGVS'] = printHetOrHomo(callAO,answer,truealt)[1]
+    newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    newrecord.INFO['RSID'] = answer['rsid']
+    newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
+    newrecord.INFO['QUAL'] = callAO.retQUAL
+    newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
     newres.write_record(newrecord)
 
 
@@ -161,18 +168,14 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
 
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
-    print best_gtGL + "\tB"
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
 
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
-            print "qual is good, send to printer"
-            print truealt
             printVAR(callAO,var_fb,answer,truealt)
 
     else:
         truealt = None#reassign what truealt is
-        print best_gtGL
         raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
 
@@ -182,8 +185,14 @@ def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just k
     wtrecord = vgr.model._Record(variant.CHROM,variant.POS,variant.REF,variant.REF,{})
 
     wtrecord.INFO['FBGenoType'] = variant.REF + variant.REF
-    wtrecord.INFO['FBRefAlleleCount'] = variant.INFO['QR']
-    wtrecord.INFO['VAPOR_URL'] = answer['heturl']
+    wtrecord.INFO['FBRefAlleleCount'] = variant.INFO['RO']
+    wtrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    wtrecord.INFO['VAPOR_URL'] = answer['wturl']
+    wtrecord.INFO['EFF_HGVS'] = answer['wthgvs']
+    wtrecord.INFO['RSID'] = answer['rsid']
+    wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
+    wtrecord.INFO['QUAL'] = wtcall.retQUAL
+    wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
 
     newres.write_record(wtrecord)
 
