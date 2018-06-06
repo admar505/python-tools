@@ -52,6 +52,22 @@ results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
+def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
+    #print answer['wthgvs'] + "\t" + answer['wturl']
+
+    wtrecord = vgr.model._Record(variant.CHROM,variant.POS,variant.REF,variant.REF,{})
+
+    wtrecord.INFO['FBGenoType'] = variant.REF + variant.REF
+    wtrecord.INFO['FBRefAlleleCount'] = variant.INFO['RO']
+    wtrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    wtrecord.INFO['VAPOR_URL'] = answer['wturl']
+    wtrecord.INFO['EFF_HGVS'] = answer['wthgvs']
+    wtrecord.INFO['RSID'] = answer['rsid']
+    wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
+    wtrecord.INFO['QUAL'] = wtcall.retQUAL
+    wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
+
+    newres.write_record(wtrecord)
 
 def getBestGL(gtgl):#return best GT given GL
     best = None
@@ -115,6 +131,9 @@ def checkQUAL(correctGT,call,var):
 def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
     print str(intendedcall.defGT_Dict) + "\t" + str(reason)
 
+
+
+
 def printHetOrHomo(callao,ans,alt):#for printing will direct to homo or het.
     ret = []
     hetgt = [alt,callao.WT]
@@ -158,6 +177,14 @@ def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
 
     return str(validalt)
 
+def sumAB(vcfvar):#checking to see if the AB is noisy
+    totalab = 0
+
+    if vcfvar.INFO['AB']:
+        for ab in vcfvar.INFO['AB']:
+            totalab += float(ab)
+    return totalab
+
 def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all work,
     AB = var_fb.INFO['AB']               #and the qqual is above threshold, and the AB is good, give it a blam.
     qual = var_fb.QUAL                   #see if all agree. if so, see if the call is homo, het or wt
@@ -174,28 +201,13 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt)
 
+    elif sumAB(var_fb)  < .1:#IF WT WITH NOISE, this will capture,and send to WT printer.
+
+        returnWT(callAO,var_fb,answer)
+
     else:
-        truealt = None#reassign what truealt is
+        truealt = None                        #reassign what truealt is
         raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
-
-
-def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
-    #print answer['wthgvs'] + "\t" + answer['wturl']
-
-    wtrecord = vgr.model._Record(variant.CHROM,variant.POS,variant.REF,variant.REF,{})
-
-    wtrecord.INFO['FBGenoType'] = variant.REF + variant.REF
-    wtrecord.INFO['FBRefAlleleCount'] = variant.INFO['RO']
-    wtrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-    wtrecord.INFO['VAPOR_URL'] = answer['wturl']
-    wtrecord.INFO['EFF_HGVS'] = answer['wthgvs']
-    wtrecord.INFO['RSID'] = answer['rsid']
-    wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
-    wtrecord.INFO['QUAL'] = wtcall.retQUAL
-    wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
-
-    newres.write_record(wtrecord)
-
 
 
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
