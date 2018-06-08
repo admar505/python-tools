@@ -201,7 +201,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt)
 
-    elif sumAB(var_fb)  < .1:#IF WT WITH NOISE, this will capture,and send to WT printer.
+    elif sumAB(var_fb)  < args.ABthreshold + .05:#IF WT WITH NOISE, this will capture,and send to WT printer.
 
         returnWT(callAO,var_fb,answer)
 
