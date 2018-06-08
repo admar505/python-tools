@@ -16,6 +16,7 @@ parser.add_argument("--vcf",help="VCF file, bgzipped, indexed with tabix -p vcf"
 parser.add_argument("--fullvcf",help="FULL genome VCF file, bgzipped, indexed with tabix -p vcf")
 parser.add_argument("--combo",help="combination types",action='append')
 parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
+parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages",default=0.15)
 
 #----------file-handling-defs----------#
 
@@ -41,9 +42,12 @@ vcffi = args.vcf       #--> standard pyvcf
 fullfi = args.fullvcf  #--> to standard pyvcf
 combo = args.combo    # this is array, as this can be several
 newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
+lcfi = args.lc
+
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
+    recovery = csv.DictReader(open(lcfi,'r'),delimiter='\t')
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
@@ -168,7 +172,7 @@ def printVAR(callAO,var_fb,answer,truealt):
 
 
 def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
-                         #might be needed as there could be two
+                         #adjustment might be needed as there could be two
     validalt = None
 
     for arr in calldict:
@@ -201,7 +205,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt)
 
-    elif sumAB(var_fb)  < float(args.ABthreshold) + float(.05):#IF WT WITH NOISE, this will capture,and send to WT printer.
+    elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025):#IF WT WITH NOISE, this will capture,and send to WT printer.
 
         returnWT(callAO,var_fb,answer)
 
@@ -213,12 +217,17 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
                                 #step TWO
                                 #---------------------------------------------------
-    for variant in varobj:      #should this differentiate between dels and snps? lets see here.
+    ##for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
-        #print targ["start"]     #if WT+, cut to chase?
+        #print targ["start"]     #if WT+, cut to chase
 
+
+        ##callobj = loadaltdats.detGenoType(variant)
+
+    c = 0
+    while c < 1:
+        variant = next(varobj)
         callobj = loadaltdats.detGenoType(variant)
-
         if callobj.amIWT is  True:
             returnWT(callobj,variant,targ)#just call it done and returnWT+():
 
@@ -232,7 +241,7 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
 
             except AttributeError:#eventually do variant failure return to file
                 print  "FAILED to get variant for rsid: " + str(targ['rsid'])
-
+        c += 1
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
