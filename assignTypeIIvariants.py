@@ -128,8 +128,8 @@ def checkQUAL(correctGT,call,var):
 
     return qual
 
-def raiseFAIL(intendedcall,reason):##proto:callao,"REASON, in text"
-    print str(intendedcall.defGT_Dict) + "\t" + str(reason)
+def raiseFAIL(intendedcall,answer,reason):##proto:callao,"REASON, in text"
+    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(answer)
 
 
 
@@ -207,7 +207,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
     else:
         truealt = None                        #reassign what truealt is
-        raiseFAIL(callAO,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
+        raiseFAIL(callAO,answer,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
 
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
