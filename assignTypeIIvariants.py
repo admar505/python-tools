@@ -217,17 +217,12 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
                                 #step TWO
                                 #---------------------------------------------------
-    ##for variant in varobj:      #should this differentiate between dels and snps? lets see here.
+    for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
-        #print targ["start"]     #if WT+, cut to chase
+        #print targ["start"]     #if WT+, cut to chase?
 
-
-        ##callobj = loadaltdats.detGenoType(variant)
-
-    c = 0
-    while c < 1:
-        variant = next(varobj)
         callobj = loadaltdats.detGenoType(variant)
+
         if callobj.amIWT is  True:
             returnWT(callobj,variant,targ)#just call it done and returnWT+():
 
@@ -241,7 +236,7 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
 
             except AttributeError:#eventually do variant failure return to file
                 print  "FAILED to get variant for rsid: " + str(targ['rsid'])
-        c += 1
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
