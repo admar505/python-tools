@@ -86,15 +86,25 @@ def gtCallOfficial(genocall):#return variant-caller asserted GT
     alleles = []             #YOU ARE HERE, for 169519049 returning het, should be HOMOVAR
 
     for alt in genocall.defGT_Dict:
+        print str(genocall.defGT_Dict[alt]) + "\t top of genocall\t"  + str(genocall.full.POS)
+
 
         if genocall.defGT_Dict[alt] is True:
             alleles.append(str(alt))
 
-    if len(alleles) == 1:
-        alleles.append(str(genocall.retREF))
+        if len(alleles) == 1 and genocall.amIHOMO is True:#doesnt account for HOMOVAR you fucking prick.
+
+            alleles.append(str(genocall.retREF))
+
+        else:
+            alleles.append(str(alt))
+
+
 
     sortalleles = sorted(alleles)
     returnable_string =  ",".join(sortalleles)
+
+    print str(alleles) + "\tIN GT CALL OFFICIAL\t"  + str(genocall.full.POS)
 
     return returnable_string
 
