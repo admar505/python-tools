@@ -82,29 +82,13 @@ def getBestGL(gtgl):#return best GT given GL
     return best
 
 
-def gtCallOfficial(genocall):#return variant-caller asserted GT
-    alleles = []             #YOU ARE HERE, for 169519049 returning het, should be HOMOVAR
+def gtCallOfficial(genocall):#return variant-caller asserted GT, for when GL is unreliable
+    alleles = []             #
 
-    for alt in genocall.defGT_Dict:
-        print str(genocall.defGT_Dict[alt]) + "\t top of genocall\t"  + str(genocall.full.POS)
-
-
-        if genocall.defGT_Dict[alt] is True:
-            alleles.append(str(alt))
-
-        if len(alleles) == 1 and genocall.amIHOMO is True:#doesnt account for HOMOVAR you fucking prick.
-
-            alleles.append(str(genocall.retREF))
-
-        else:
-            alleles.append(str(alt))
-
-
-
-    sortalleles = sorted(alleles)
+    sortalleles = sorted(genocall.get_default_GT)
     returnable_string =  ",".join(sortalleles)
 
-    print str(alleles) + "\tIN GT CALL OFFICIAL\t"  + str(genocall.full.POS)
+    #print str(alleles) + "\tIN GT CALL OFFICIAL\t"  + str(genocall.full.POS)
 
     return returnable_string
 
@@ -114,7 +98,7 @@ def cigarCheck(call):#for now, return just TRUE or FALSE
     if re.match('.*?M.*?',str(call.full.INFO['CIGAR'])):
         reliable = False
 
-    print str(reliable) + "\t" +  str(call.full.POS) + "\t IN CIGAR \t" +  str(call.full.INFO['CIGAR'])
+    #print str(reliable) + "\t" +  str(call.full.POS) + "\t IN CIGAR \t" +  str(call.full.INFO['CIGAR'])
 
     return reliable
 
@@ -167,7 +151,7 @@ def getABCall(callao):
     if fb_gt[0] != fb_gt[1]:
         homo = False
 
-    print str(fb_gt) + "   Official GT call" + str(callao.full.POS)
+    #print str(fb_gt) + "   Official GT call" + str(callao.full.POS)
 
     return homo
 
@@ -176,7 +160,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     ret = []                                #goal, decide if gl is trustable, if so, use it, if not
                                             #use AB
 
-    print alt + " " + str(callao.full.POS) +" in het or   "  +  str(trust_gl)   +   " homo decider " + str(callao.amIHOMO)
+    #print alt + " " + str(callao.full.POS) +" in het or   "  +  str(trust_gl)   +   " homo decider " + str(callao.amIHOMO)
 
     homo = True
 
@@ -191,6 +175,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
 
     if trust_gl is False:
         homo = getABCall(callao)
+        #print str(homo) + " " + str(callao.full.POS)
     elif callao.amIHOMO is False:
         homo = False
 
@@ -240,7 +225,7 @@ def sumAB(vcfvar):#checking to see if the AB is noisy
         for ab in vcfvar.INFO['AB']:
             totalab += float(ab)
 
-    print str(totalab) + "   IN TOTAL AB"
+    #print str(totalab) + "   IN TOTAL AB"
 
     return totalab
 
@@ -252,17 +237,17 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
     truealt = getGoodALT(callAO.defGT_Dict)
     asserted_gt = gtCallOfficial(callAO)
 
-    print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +"  + str(answer) + " " + str(var_fb.POS) + " " + var_fb.REF
+    #print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +"  + str(answer) + " " + str(var_fb.POS) + " " + var_fb.REF
 
     sumofballance = sumAB(var_fb)
 
-    print str(sumofballance) + "\t" +  str(var_fb.POS)
+    #print str(sumofballance) + "\t" +  str(var_fb.POS)
 
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
 
-        print str(sumofballance) + "\tTOP OF SELECTION\t" +  str(var_fb.POS)
+        #print str(sumofballance) + "\tTOP OF SELECTION\t" +  str(var_fb.POS)
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,True)
         else:
@@ -270,13 +255,15 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
     elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025) and float(sumAB(var_fb)) != float(0.0):#IF WT WITH NOISE, this will capture,and send to WT printer.
 
-        print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
+        #print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
         returnWT(callAO,var_fb,answer)
 
     elif (sumAB(var_fb) >= float(args.ABthreshold) + float(.025)) or (float(sumAB(var_fb)) == float(0.0)): #Here, if I turn off the GL trust due to the merged CIGAR issue.
-        print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS)
+        #print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS)
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,False)
+        else:
+            raiseFAIL(callAO,answer,"LOWQUALITY_GENOTYPE")
 
     else:
         truealt = None                        #reassign what truealt is
