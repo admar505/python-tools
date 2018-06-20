@@ -52,6 +52,10 @@ try:
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
 
+
+
+
+
 results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 
@@ -135,13 +139,49 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao):  #return True if GL and AB vals agree 
 
 
 
-def checkQUAL(correctGT,call,var):
-    qual = True
+def checkQUAL(correctGT,call,var):#this assumes that the highest
+    qual = False
+
+    if var.QUAL >= 100:
+        qual = True
+
+    if int(sorted(var.INFO['QR'],reverse=True)[0]) >= 100:
+        qual = True
 
     return qual
 
-def raiseFAIL(intendedcall,answer,reason):##proto:callao,"REASON, in text"
-    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(answer)
+
+
+
+def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, in text"
+    #print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover)
+
+    def __get_lc__(rec,line_selection,typer):
+        recoverer = {}
+
+        for recline in rec:
+            recoverer[recline['failhgvs']] = recline['failurl']
+
+        specific = str(line_selection) + str(typer)
+        return recoverer[str(specific)]
+
+
+
+    failrecord = vgr.model._Record(intendedcall.full.CHROM,intendedcall.full.POS,intendedcall.full.REF,intendedcall.full.REF,{})
+
+    failrecord.INFO['FBGenoType'] = "Unresolved"
+    failrecord.INFO['FBRefAlleleCount'] = intendedcall.full.INFO['RO']
+    failrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    failrecord.INFO['EFF_HGVS'] = answer['homohgvs'] + types
+    failrecord.INFO['VAPOR_URL'] = __get_lc__(recover,answer['homohgvs'],types)
+    failrecord.INFO['RSID'] = answer['rsid']
+    failrecord.INFO['FBTotalDepth'] = intendedcall.full.INFO['DP']
+    failrecord.INFO['QUAL'] = intendedcall.full.QUAL
+    failrecord.INFO['FBReferenceAlleleQ'] = intendedcall.full.INFO['QR']
+    failrecord.INFO['FAIL_REASON'] = reason
+
+    newres.write_record(failrecord)
+
 
 def getABCall(callao):
     homo = True
@@ -251,23 +291,28 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,True)
         else:
-            raiseFAIL(callAO,answer,"LOWQUALITY_GENOTYPE")
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
 
     elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025) and float(sumAB(var_fb)) != float(0.0):#IF WT WITH NOISE, this will capture,and send to WT printer.
 
         #print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
-        returnWT(callAO,var_fb,answer)
+
+        if checkQUAL(best_gtGL,callAO,var_fb) is True:
+            returnWT(callAO,var_fb,answer)
+
+        else:
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
 
     elif (sumAB(var_fb) >= float(args.ABthreshold) + float(.025)) or (float(sumAB(var_fb)) == float(0.0)): #Here, if I turn off the GL trust due to the merged CIGAR issue.
         #print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS)
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,False)
         else:
-            raiseFAIL(callAO,answer,"LOWQUALITY_GENOTYPE")
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
 
     else:
         truealt = None                        #reassign what truealt is
-        raiseFAIL(callAO,answer,"UNMATCHED_GENOTYPE")#RIGHT NOW RAISE FAIL --> later, assign correct type.
+        raiseFAIL(callAO,recovery,"UNMATCHED_GENOTYPE",answer,":LC")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
 def determineCall(varobj,targ): #This will be the beginning of determining the call.
                                 #step TWO
@@ -285,14 +330,14 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
 
             else:
 
-                try:
+                #try:
                     #print "CALL IS GOOD " + str(callobj.defGT_Dict) + "\t" +  str(variant.POS)
                     #print "here is this " + str(callobj.assGT_GL) + "\t" +  str(variant.POS)
                     assignedGT = assignFinalGT(callobj,variant,targ)
                     #print assignedGT
 
-                except AttributeError:#eventually do variant failure return to file
-                    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+                #except AttributeError:#eventually do variant failure return to file
+                #    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
