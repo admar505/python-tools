@@ -9,7 +9,7 @@ import loadaltdats
 import csv
 from subprocess import call
 #NEW VERSION: go through CSV, pull out the RESults file, if not in, then recreate from vcf.
-#chr start   stop    rsid    homohgvs    homourl hethgvs heturl  wthgvs  wturl
+#header is:chr start   stop    rsid    homohgvs    homourl hethgvs heturl  wthgvs  wturl
 parser = argparse.ArgumentParser(description="Assigns to each Type II variant, a vapor URL. if missing, returns error, but keeps going. Also assigns combos. Uses the new RESULTS.txt library!!")
 parser.add_argument("--answer",help="the mapping of variant to VAPor page")
 parser.add_argument("--vcf",help="VCF file, bgzipped, indexed with tabix -p vcf")
@@ -330,28 +330,67 @@ def determineCall(varobj,targ): #This will be the beginning of determining the c
 
             else:
 
-                #try:
+                try:
                     #print "CALL IS GOOD " + str(callobj.defGT_Dict) + "\t" +  str(variant.POS)
                     #print "here is this " + str(callobj.assGT_GL) + "\t" +  str(variant.POS)
                     assignedGT = assignFinalGT(callobj,variant,targ)
                     #print assignedGT
 
-                #except AttributeError:#eventually do variant failure return to file
-                #    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+                except AttributeError:#eventually do variant failure return to file
+                    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+
+
+
+####---------------PREDECISION_DEFS----####
+
+
+def choose_answer(var,ans):
+   print ans
+
+
+def answer_dict(full_ans):
+
+    ret_dict = {}
+
+    #$lets go different, like, a sub that detects multiple, in one pass, then, goes through and decide what in second?
+    for line in full_ans:
+        rsnum = re.search('(rs\d+)\-(\w+)\-(\w+)',str(line['rsid']))
+
+        print rsnum.group(1)
+        try:
+            for count in ret_dict[rsnum.group(1)]:
+                print " TRIED   " +  str(count)
+                count += 1
+
+                #ret_dict[rsnum.group(1):{int(count)}] = {int(count):rsnum.group(1),int(count):{rsnum.group(3): {'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
+                ret_dict = rsnum.group(1):{int(count),{int(count):rsnum.group(1),int(count):{rsnum.group(3): {'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
+                #print ret_dict
+        except:
+
+            #ret_dict[rsnum.group(1):{int(1)}] = {int(1):rsnum.group(1),int(1):{rsnum.group(3):{'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
+            ret_dict[rsnum.group(1):{int(1)}] = {int(1):rsnum.group(1),int(1):{rsnum.group(3):{'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
+
+    return ret_dict
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
+bed_dict = {}
+
+bed_dict = answer_dict(bedfi)
+
+print str(bed_dict)
+
 for bed in bedfi:#as csvDictReader
 
     #FIRST: collapse ithe rsids into possibles, example A-C or A-T for the same.
-    #try:#need to pass the specific bed line that is target
+    try:#need to pass the specific bed line that is target
 
         variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))#pull variant
-        call = determineCall(variant,bed)                                         #send to make call
+        call = determineCall(variant,choose_answer(variant,bed))                  #send to make call
 
-    #except ValueError:#initiate error checks. here.
-     #   print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
+    except ValueError:#initiate error checks. here. SEND to checker for
+        print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
 
 
 
