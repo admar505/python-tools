@@ -8,6 +8,7 @@ import altobject
 import loadaltdats
 import csv
 from subprocess import call
+from collections import defaultdict
 #NEW VERSION: go through CSV, pull out the RESults file, if not in, then recreate from vcf.
 #header is:chr start   stop    rsid    homohgvs    homourl hethgvs heturl  wthgvs  wturl
 parser = argparse.ArgumentParser(description="Assigns to each Type II variant, a vapor URL. if missing, returns error, but keeps going. Also assigns combos. Uses the new RESULTS.txt library!!")
@@ -234,6 +235,9 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
 
 def printVAR(callAO,var_fb,answer,truealt,trust_gl):
 
+
+
+
     newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
     newrecord.INFO['FBGenoType'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
@@ -281,6 +285,9 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
     sumofballance = sumAB(var_fb)
 
+
+
+
     #print str(sumofballance) + "\t" +  str(var_fb.POS)
 
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
@@ -291,7 +298,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,True)
         else:
-            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025) and float(sumAB(var_fb)) != float(0.0):#IF WT WITH NOISE, this will capture,and send to WT printer.
 
@@ -301,96 +308,105 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
             returnWT(callAO,var_fb,answer)
 
         else:
-            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     elif (sumAB(var_fb) >= float(args.ABthreshold) + float(.025)) or (float(sumAB(var_fb)) == float(0.0)): #Here, if I turn off the GL trust due to the merged CIGAR issue.
         #print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS)
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
-            printVAR(callAO,var_fb,answer,truealt,False)
+            printVAR(callAO,var_fb,answer['wt'],truealt,False)
         else:
-            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer,":LC")
+            raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     else:
         truealt = None                        #reassign what truealt is
-        raiseFAIL(callAO,recovery,"UNMATCHED_GENOTYPE",answer,":LC")#RIGHT NOW RAISE FAIL --> later, assign correct type.
+        raiseFAIL(callAO,recovery,"UNMATCHED_GENOTYPE",answer['wt'],":LC")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
-def determineCall(varobj,targ): #This will be the beginning of determining the call.
+#def choose_answer(bdict,var,index):#validates this is correct alt, and, if needed, chooses the correct answer line for this variant.
+#
+#    for altcall in bdict[index]['call']:
+
+
+#        print var.ALT
+
+
+#        return bdict[index]['call'][altcall]#temp pass through while I work on issue.
+
+def determineCall(varobj,rsindex,all_bed): #This will be the beginning of determining the call.
                                 #step TWO
                                 #---------------------------------------------------
     for variant in varobj:      #should this differentiate between dels and snps? lets see here.
         #print variant.POS       #get call -> assign to this type --> success.
         #print targ["start"]     #if WT+, cut to chase?
-        if int(variant.POS) == int(targ['start']) + 1:#protects from off target calls
+
+
+        try:
+
+            if int(variant.POS) == int(all_bed[rsindex]['start']) + 1:#protects from off target calls
         #if int(variant.POS) > int(targ['start']) and int(variant.POS) < int(targ['stop']):#protects from off target calls
-            callobj = loadaltdats.detGenoType(variant)
+               #targ = choose_answer(all_bed,variant,rsindex)
+                callobj = loadaltdats.detGenoType(variant)
 
+                if callobj.amIWT is  True:
+                    returnWT(callobj,variant,all_bed[rsindex]['wt'])#just call it done and returnWT+():
 
-            if callobj.amIWT is  True:
-                returnWT(callobj,variant,targ)#just call it done and returnWT+():
+                else:
 
-            else:
-
-                try:
                     #print "CALL IS GOOD " + str(callobj.defGT_Dict) + "\t" +  str(variant.POS)
                     #print "here is this " + str(callobj.assGT_GL) + "\t" +  str(variant.POS)
-                    assignedGT = assignFinalGT(callobj,variant,targ)
+                    assignedGT = assignFinalGT(callobj,variant,all_bed[rsindex])
                     #print assignedGT
 
-                except AttributeError:#eventually do variant failure return to file
-                    print  "FAILED to get variant for rsid: " + str(targ['rsid'])
+        except AttributeError:#eventually do variant failure return to file
+
+                print  "FAILED to get variant for rsid: " + str(rsindex)
 
 
+####---------------PRE_LOAD_DEFS----####
 
-####---------------PREDECISION_DEFS----####
-
-
-def choose_answer(var,ans):
-   print ans
+def tree(): return defaultdict(tree)
 
 
-def answer_dict(full_ans):
+def answer_dict(full_ans):#create tree of rsid to answer.
 
-    ret_dict = {}
+    ret_dict = tree()
+    #ret_dict = defaultdict(tree)
 
     #$lets go different, like, a sub that detects multiple, in one pass, then, goes through and decide what in second?
     for line in full_ans:
         rsnum = re.search('(rs\d+)\-(\w+)\-(\w+)',str(line['rsid']))
 
-        print rsnum.group(1)
-        try:
-            for count in ret_dict[rsnum.group(1)]:
-                print " TRIED   " +  str(count)
-                count += 1
-
-                #ret_dict[rsnum.group(1):{int(count)}] = {int(count):rsnum.group(1),int(count):{rsnum.group(3): {'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
-                ret_dict = rsnum.group(1):{int(count),{int(count):rsnum.group(1),int(count):{rsnum.group(3): {'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
-                #print ret_dict
-        except:
-
-            #ret_dict[rsnum.group(1):{int(1)}] = {int(1):rsnum.group(1),int(1):{rsnum.group(3):{'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
-            ret_dict[rsnum.group(1):{int(1)}] = {int(1):rsnum.group(1),int(1):{rsnum.group(3):{'ref':rsnum.group(2),'alt':rsnum.group(3),'full_bed':line}}}
+        ret_dict[rsnum.group(1)]['calls'][rsnum.group(3)] = line
+        ret_dict[rsnum.group(1)]['start'] = line['start']
+        ret_dict[rsnum.group(1)]['stop'] = line['stop']
+        ret_dict[rsnum.group(1)]['chr'] = line['chr']
+        ret_dict[rsnum.group(1)]['wt'] = line
 
     return ret_dict
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
-bed_dict = {}
 
-bed_dict = answer_dict(bedfi)
+#for key in bed_dict:
 
-print str(bed_dict)
+#    print str(key) + "\t" + str(bed_dict[key])
 
-for bed in bedfi:#as csvDictReader
+bed_dict= answer_dict(bedfi)
+
+
+
+for rsindex in bed_dict:#as csvDictReader
 
     #FIRST: collapse ithe rsids into possibles, example A-C or A-T for the same.
-    try:#need to pass the specific bed line that is target
+    #try:#need to pass the specific bed line that is target
+    print rsindex
 
-        variant = resvcf.fetch(str(bed['chr']),int(bed['start']),int(bed['stop']))#pull variant
-        call = determineCall(variant,choose_answer(variant,bed))                  #send to make call
+    variant = resvcf.fetch(str(bed_dict[rsindex]['chr']),int(bed_dict[rsindex]['start']),int(bed_dict[rsindex]['stop']))#pull variant
+    #print variant#compatibility test
+    call = determineCall(variant,rsindex,bed_dict)                  #send to make call
 
-    except ValueError:#initiate error checks. here. SEND to checker for
-        print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
+    #except ValueError:#initiate error checks. here. SEND to checker for
+       # print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
 
 
 
