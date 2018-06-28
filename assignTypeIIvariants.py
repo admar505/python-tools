@@ -139,7 +139,6 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao):  #return True if GL and AB vals agree 
     return itisgood
 
 
-
 def checkQUAL(correctGT,call,var):#this assumes that the highest
     qual = False
 
@@ -152,9 +151,9 @@ def checkQUAL(correctGT,call,var):#this assumes that the highest
     return qual
 
 
-
-
 def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, in text"
+                                                        #types is either ":LC" for normal SNPs,
+                                                        #or "Unresolved"
     #print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover)
 
     def __get_lc__(rec,line_selection,typer):
@@ -175,7 +174,7 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
     failrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     failrecord.INFO['EFF_HGVS'] = answer['homohgvs'] + types
     failrecord.INFO['VAPOR_URL'] = __get_lc__(recover,answer['homohgvs'],types)
-    failrecord.INFO['RSID'] = answer['rsid']
+    failrecord.INFO['RSID'] = answer['rsid']#dont forget to trim this biotch
     failrecord.INFO['FBTotalDepth'] = intendedcall.full.INFO['DP']
     failrecord.INFO['QUAL'] = intendedcall.full.QUAL
     failrecord.INFO['FBReferenceAlleleQ'] = intendedcall.full.INFO['QR']
@@ -195,6 +194,39 @@ def getABCall(callao):
     #print str(fb_gt) + "   Official GT call" + str(callao.full.POS)
 
     return homo
+
+def choose_answer(homo,alt,callao,answer):#THIS is final check, needs to make sure, that if
+                                          #this is het, then the het is ref/alt, not alt1/alt2,
+                                          #and if homo, not homo alt2/alt2 that is not covered by the
+                                          #answer bed.
+    allowed_answer_line = None
+
+    for ans_alt in  answer['calls']:
+        print ans_alt
+
+        if homo is True:
+
+            if alt == ans_alt:
+
+                allowed_answer_line = answer['calls'][ans_alt]
+                print "captured HOMO " + str(answer['calls'][ans_alt]['homourl'])
+
+        else:
+
+            for potential_call in  callao.full.ALT:
+
+                if potential_call == ans_alt:
+
+
+                    allowed_answer_line = answer['calls'][ans_alt]
+                    print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
+
+    if allowed_answer_line is None:
+        raiseFAIL(callAO,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
+        print "CAPTURED FAIL"
+
+    else:
+        return allowed_answer_line#temp passthrough.
 
 
 def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or het.
@@ -220,18 +252,23 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     elif callao.amIHOMO is False:
         homo = False
 
+    #I think, here I can check, and see if it can be redirected to reportFAIL. test with also the undet type.
+    #
+    final_ans = choose_answer(homo,alt,callao,ans)
+
     if homo is True:
-        ret.append(ans['homourl'])
-        ret.append(ans['homohgvs'])
+        ret.append(final_ans['homourl'])
+        ret.append(final_ans['homohgvs'])
         ret.append(__big_join__(alt,alt))
 
     else:
-        ret.append(ans['heturl'])
-        ret.append(ans['hethgvs'])
+        ret.append(final_ans['heturl'])
+        ret.append(final_ans['hethgvs'])
         ret.append(__big_join__(alt,callao.WT))
 
-    return ret
 
+
+    return ret
 
 def printVAR(callAO,var_fb,answer,truealt,trust_gl):
 
@@ -245,7 +282,7 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
     newrecord.INFO['VAPOR_URL'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[0]
     newrecord.INFO['EFF_HGVS'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-    newrecord.INFO['RSID'] = answer['rsid']
+    newrecord.INFO['RSID'] = answer['wt']['rsid']
     newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
     newrecord.INFO['QUAL'] = callAO.retQUAL
     newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
@@ -302,18 +339,19 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
 
     elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025) and float(sumAB(var_fb)) != float(0.0):#IF WT WITH NOISE, this will capture,and send to WT printer.
 
-        #print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
+       # print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
 
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
-            returnWT(callAO,var_fb,answer)
+            returnWT(callAO,var_fb,answer['wt'])
 
         else:
             raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     elif (sumAB(var_fb) >= float(args.ABthreshold) + float(.025)) or (float(sumAB(var_fb)) == float(0.0)): #Here, if I turn off the GL trust due to the merged CIGAR issue.
-        #print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS)
+        print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS) + "\t" + truealt
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
-            printVAR(callAO,var_fb,answer['wt'],truealt,False)
+
+            printVAR(callAO,var_fb,answer,truealt,False)
         else:
             raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
