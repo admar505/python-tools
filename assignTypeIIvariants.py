@@ -195,18 +195,41 @@ def getABCall(callao):
 
     return homo
 
-def choose_answer(homo,alt,callao,answer):#THIS is final check, needs to make sure, that if
+
+def check_final_GT(callao,trustgl):#return GL call if trust is true, else use the AB
+
+    genotype = None
+    if trustgl is True:
+        print str(callao.get_default_GT) + "\tTRUST IS TRUE\t" + str(callao.defGT_Dict)
+        genotype = callao.get_default_GT
+
+    else:
+        print str(callao.defGT_Dict) + "\tTRUST is FALSE\t" + str(callao.get_default_GT)
+
+        for val in callao.defGT_Dict:
+            print callao.defGT_Dict[val]
+            if callao.defGT_Dict[val] is True:
+                genotype.append(val)
+
+    print genotype
+    return genotype
+
+
+
+def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs to make sure, that if
                                           #this is het, then the het is ref/alt, not alt1/alt2,
                                           #and if homo, not homo alt2/alt2 that is not covered by the
                                           #answer bed.
     allowed_answer_line = None
 
-    for ans_alt in  answer['calls']:
+    for ans_alt in  answer['calls']:#CALLS contains the ALT.
         print ans_alt
+
+        the_real_gt = check_final_GT(callao,trust_gl)
 
         if homo is True:
 
-            if alt == ans_alt:
+            if alt == ans_alt:#here should be checkFinalGT
 
                 allowed_answer_line = answer['calls'][ans_alt]
                 print "captured HOMO " + str(answer['calls'][ans_alt]['homourl'])
@@ -215,7 +238,7 @@ def choose_answer(homo,alt,callao,answer):#THIS is final check, needs to make su
 
             for potential_call in  callao.full.ALT:
 
-                if potential_call == ans_alt:
+                if potential_call == ans_alt:#here should be checkFinalGT
 
 
                     allowed_answer_line = answer['calls'][ans_alt]
@@ -254,7 +277,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
 
     #I think, here I can check, and see if it can be redirected to reportFAIL. test with also the undet type.
     #
-    final_ans = choose_answer(homo,alt,callao,ans)
+    final_ans = choose_answer(homo,alt,callao,ans,trust_gl)
 
     if homo is True:
         ret.append(final_ans['homourl'])
