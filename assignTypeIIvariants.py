@@ -121,7 +121,6 @@ def checkGLtoAB(gl,ab,ql,alt,ref,callao):  #return True if GL and AB vals agree 
         if (nucl == ref):
             isinWT = True
 
-
     variant = 0
 
     while variant < len(ab):
@@ -154,16 +153,17 @@ def checkQUAL(correctGT,call,var):#this assumes that the highest
 def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, in text"
                                                         #types is either ":LC" for normal SNPs,
                                                         #or "Unresolved"
-    #print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover)
+    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover)
 
     def __get_lc__(rec,line_selection,typer):
-        recoverer = {}
-
-        for recline in rec:
-            recoverer[recline['failhgvs']] = recline['failurl']
+        lc_return = None
 
         specific = str(line_selection) + str(typer)
-        return recoverer[str(specific)]
+        for recline in rec:
+            if str(recline['failhgvs']) == str(specific):
+                lc_return = recline['failurl']
+
+        return lc_return
 
 
 
@@ -200,34 +200,52 @@ def check_final_GT(callao,trustgl):#return GL call if trust is true, else use th
 
     genotype = None
     if trustgl is True:
-        print str(callao.get_default_GT) + "\tTRUST IS TRUE\t" + str(callao.defGT_Dict)
+        #print str(callao.get_default_GT) + "\tTRUST IS TRUE\t" + str(callao.defGT_Dict)
         genotype = callao.get_default_GT
 
     else:
-        print str(callao.defGT_Dict) + "\tTRUST is FALSE\t" + str(callao.get_default_GT)
+        #print str(callao.defGT_Dict) + "\tTRUST is FALSE\t" + str(callao.get_default_GT)
 
+        genotype = []
         for val in callao.defGT_Dict:
-            print callao.defGT_Dict[val]
+
+            #print callao.defGT_Dict[val]
             if callao.defGT_Dict[val] is True:
-                genotype.append(val)
+                genotype.append(str(val))
 
-    print genotype
-    return genotype
+    #print genotype
+    return sorted(genotype)
 
+def check_final_Homo(gt):
+
+    homo = True
+
+    if gt[0] != gt[1]:
+        homo = False
+
+    return homo
+
+def check_final_Het(genotype, answered):
+    het = False
+    if str(''.join(sorted(genotype))) == str(answered):
+        het = True
+
+    return het
 
 
 def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs to make sure, that if
                                           #this is het, then the het is ref/alt, not alt1/alt2,
                                           #and if homo, not homo alt2/alt2 that is not covered by the
                                           #answer bed.
+
+    the_real_gt = check_final_GT(callao,trust_gl)
+
     allowed_answer_line = None
 
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
-        print ans_alt
-
-        the_real_gt = check_final_GT(callao,trust_gl)
-
-        if homo is True:
+        print str(the_real_gt) + "\tin choose answer, the check for the real GT"
+        if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
+                                                                    #and the realGT is Homo
 
             if alt == ans_alt:#here should be checkFinalGT
 
@@ -237,19 +255,17 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
         else:
 
             for potential_call in  callao.full.ALT:
-
-                if potential_call == ans_alt:#here should be checkFinalGT
-
+                if potential_call == ans_alt and check_final_Het(the_real_gt,''.join(sorted(callao.full.REF,potential_call))) is True:#here should be checkFinalGT
 
                     allowed_answer_line = answer['calls'][ans_alt]
                     print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
 
     if allowed_answer_line is None:
-        raiseFAIL(callAO,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
+        raiseFAIL(callao,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
         print "CAPTURED FAIL"
 
     else:
-        return allowed_answer_line#temp passthrough.
+        return allowed_answer_line
 
 
 def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or het.
@@ -278,7 +294,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     #I think, here I can check, and see if it can be redirected to reportFAIL. test with also the undet type.
     #
     final_ans = choose_answer(homo,alt,callao,ans,trust_gl)
-
+    print str(final_ans) + "\tWHAT IS THE FINAL ANSWER"
     if homo is True:
         ret.append(final_ans['homourl'])
         ret.append(final_ans['homohgvs'])
