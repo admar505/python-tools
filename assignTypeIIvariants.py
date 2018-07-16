@@ -153,18 +153,20 @@ def checkQUAL(correctGT,call,var):#this assumes that the highest
 def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, in text"
                                                         #types is either ":LC" for normal SNPs,
                                                         #or "Unresolved"
-    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover)
+    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover) + "\t" + str(answer)
 
     def __get_lc__(rec,line_selection,typer):
         lc_return = None
 
         specific = str(line_selection) + str(typer)
+        print specific + "\t + this is the specifc"
         for recline in rec:
+            print str(recline['failhgvs']) + " WHAT IS THIS " + str(specific)
             if str(recline['failhgvs']) == str(specific):
-                lc_return = recline['failurl']
-
+                print str(recline['failhgvs']) + "\twhat is the \t" + specific
+                lc_return = str(recline['failurl'])
+        print str(lc_return) + " \t + this the returned"
         return lc_return
-
 
 
     failrecord = vgr.model._Record(intendedcall.full.CHROM,intendedcall.full.POS,intendedcall.full.REF,intendedcall.full.REF,{})
@@ -172,7 +174,7 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
     failrecord.INFO['FBGenoType'] = "Unresolved"
     failrecord.INFO['FBRefAlleleCount'] = intendedcall.full.INFO['RO']
     failrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-    failrecord.INFO['EFF_HGVS'] = answer['homohgvs'] + types
+    failrecord.INFO['EFF_HGVS'] = str(answer['homohgvs']) + str(types)
     failrecord.INFO['VAPOR_URL'] = __get_lc__(recover,answer['homohgvs'],types)
     failrecord.INFO['RSID'] = answer['rsid']#dont forget to trim this biotch
     failrecord.INFO['FBTotalDepth'] = intendedcall.full.INFO['DP']
@@ -262,7 +264,7 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
 
     if allowed_answer_line is None:
         raiseFAIL(callao,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
-        print "CAPTURED FAIL"
+        print "CAPTURED FAIL    "  + str(answer)
 
     else:
         return allowed_answer_line
@@ -295,12 +297,12 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     #
     final_ans = choose_answer(homo,alt,callao,ans,trust_gl)
     print str(final_ans) + "\tWHAT IS THE FINAL ANSWER"
-    if homo is True:
+    if homo is True and final_ans is not None:#final_ans could return None if no good answer is available.
         ret.append(final_ans['homourl'])
         ret.append(final_ans['homohgvs'])
         ret.append(__big_join__(alt,alt))
 
-    else:
+    elif final_ans is not None:
         ret.append(final_ans['heturl'])
         ret.append(final_ans['hethgvs'])
         ret.append(__big_join__(alt,callao.WT))
@@ -313,19 +315,20 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
 
 
 
+    if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) > 0:#protects against no good answer
 
-    newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
+        newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
-    newrecord.INFO['FBGenoType'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
-    newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['RO'] #might need to split
-    newrecord.INFO['VAPOR_URL'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[0]
-    newrecord.INFO['EFF_HGVS'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
-    newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-    newrecord.INFO['RSID'] = answer['wt']['rsid']
-    newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
-    newrecord.INFO['QUAL'] = callAO.retQUAL
-    newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
-    newres.write_record(newrecord)
+        newrecord.INFO['FBGenoType'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
+        newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['RO'] #might need to split
+        newrecord.INFO['VAPOR_URL'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[0]
+        newrecord.INFO['EFF_HGVS'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
+        newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+        newrecord.INFO['RSID'] = answer['wt']['rsid']
+        newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
+        newrecord.INFO['QUAL'] = callAO.retQUAL
+        newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
+        newres.write_record(newrecord)
 
 
 def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
