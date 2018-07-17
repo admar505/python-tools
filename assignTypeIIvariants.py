@@ -48,7 +48,7 @@ lcfi = args.lc
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
-    recovery = csv.DictReader(open(lcfi,'r'),delimiter='\t')
+    recovery = open(lcfi,'r')
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
@@ -153,19 +153,17 @@ def checkQUAL(correctGT,call,var):#this assumes that the highest
 def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, in text"
                                                         #types is either ":LC" for normal SNPs,
                                                         #or "Unresolved"
-    print str(intendedcall.defGT_Dict) + "\t" + str(reason) + "\t" + str(recover) + "\t" + str(answer)
-
     def __get_lc__(rec,line_selection,typer):
         lc_return = None
 
+        recs = csv.DictReader(rec,delimiter='\t')
+        rec.seek(0)
+
         specific = str(line_selection) + str(typer)
-        print specific + "\t + this is the specifc"
-        for recline in rec:
-            print str(recline['failhgvs']) + " WHAT IS THIS " + str(specific)
+
+        for recline in recs:
             if str(recline['failhgvs']) == str(specific):
-                print str(recline['failhgvs']) + "\twhat is the \t" + specific
                 lc_return = str(recline['failurl'])
-        print str(lc_return) + " \t + this the returned"
         return lc_return
 
 
@@ -245,14 +243,14 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
     allowed_answer_line = None
 
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
-        print str(the_real_gt) + "\tin choose answer, the check for the real GT"
+        #print str(the_real_gt) + "\tin choose answer, the check for the real GT"
         if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
                                                                     #and the realGT is Homo
 
             if alt == ans_alt:#here should be checkFinalGT
 
                 allowed_answer_line = answer['calls'][ans_alt]
-                print "captured HOMO " + str(answer['calls'][ans_alt]['homourl'])
+                #print "captured HOMO " + str(answer['calls'][ans_alt]['homourl'])
 
         else:
 
@@ -260,11 +258,11 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
                 if potential_call == ans_alt and check_final_Het(the_real_gt,''.join(sorted(callao.full.REF,potential_call))) is True:#here should be checkFinalGT
 
                     allowed_answer_line = answer['calls'][ans_alt]
-                    print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
+                    #print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
 
     if allowed_answer_line is None:
         raiseFAIL(callao,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
-        print "CAPTURED FAIL    "  + str(answer)
+        #print "CAPTURED FAIL    "  + str(answer)
 
     else:
         return allowed_answer_line
@@ -296,7 +294,8 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     #I think, here I can check, and see if it can be redirected to reportFAIL. test with also the undet type.
     #
     final_ans = choose_answer(homo,alt,callao,ans,trust_gl)
-    print str(final_ans) + "\tWHAT IS THE FINAL ANSWER"
+    #print str(final_ans) + "\tWHAT IS THE FINAL ANSWER"
+
     if homo is True and final_ans is not None:#final_ans could return None if no good answer is available.
         ret.append(final_ans['homourl'])
         ret.append(final_ans['homohgvs'])
@@ -390,7 +389,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
             raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     elif (sumAB(var_fb) >= float(args.ABthreshold) + float(.025)) or (float(sumAB(var_fb)) == float(0.0)): #Here, if I turn off the GL trust due to the merged CIGAR issue.
-        print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS) + "\t" + truealt
+       # print "through the catcher\t" + str(sumofballance) + "\t" +  str(var_fb.POS) + "\t" + truealt
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
 
             printVAR(callAO,var_fb,answer,truealt,False)
@@ -479,7 +478,7 @@ for rsindex in bed_dict:#as csvDictReader
 
     #FIRST: collapse ithe rsids into possibles, example A-C or A-T for the same.
     #try:#need to pass the specific bed line that is target
-    print rsindex
+    #print rsindex
 
     variant = resvcf.fetch(str(bed_dict[rsindex]['chr']),int(bed_dict[rsindex]['start']),int(bed_dict[rsindex]['stop']))#pull variant
     #print variant#compatibility test
