@@ -18,7 +18,7 @@ parser.add_argument("--fullvcf",help="FULL genome VCF file, bgzipped, indexed wi
 parser.add_argument("--combo",help="combination types",action='append')
 parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
 parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages",default=0.15)
-
+parser.add_argument("--hap",help="vcf-allele-haplotypes output",required=True)
 #----------file-handling-defs----------#
 
 def newName(v,f):
@@ -44,11 +44,13 @@ fullfi = args.fullvcf  #--> to standard pyvcf
 combo = args.combo    # this is array, as this can be several
 newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
 lcfi = args.lc
+hapfi = args.hap
 
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
     recovery = open(lcfi,'r')
+    haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
@@ -400,15 +402,6 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
         truealt = None                        #reassign what truealt is
         raiseFAIL(callAO,recovery,"UNMATCHED_GENOTYPE",answer['wt'],":LC")#RIGHT NOW RAISE FAIL --> later, assign correct type.
 
-#def choose_answer(bdict,var,index):#validates this is correct alt, and, if needed, chooses the correct answer line for this variant.
-#
-#    for altcall in bdict[index]['call']:
-
-
-#        print var.ALT
-
-
-#        return bdict[index]['call'][altcall]#temp pass through while I work on issue.
 
 def determineCall(varobj,rsindex,all_bed): #This will be the beginning of determining the call.
                                 #step TWO
@@ -486,7 +479,6 @@ for rsindex in bed_dict:#as csvDictReader
 
     #except ValueError:#initiate error checks. here. SEND to checker for
        # print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
-
 
 
 
