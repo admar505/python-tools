@@ -455,6 +455,17 @@ def answer_dict(full_ans):#create tree of rsid to answer.
 
     return ret_dict
 
+#############-----------------HAPloTYPE_SUb_and-DEFS----------------------###########
+
+
+
+
+def mapHaps(gene_name,hapdct):
+    #use the
+
+
+    for haptype in hapdct[gene_name]:
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -480,11 +491,20 @@ for rsindex in bed_dict:#as csvDictReader
     #except ValueError:#initiate error checks. here. SEND to checker for
        # print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
 
+hapdat = {} #NOW, get the haplotypes sorted.
+
+for haplotype in haps:
+    #print haplotype
+    if haplotype['gene'] not in hapdat.keys():
+        hapdat[haplotype['gene']] = list()
+
+    hapdat[haplotype['gene']].append(haplotype['allele1'])
+    hapdat[haplotype['gene']].append(haplotype['allele2'])
 
 
-
-
-
+for keyes in hapdat:
+    print hapdat[keyes]
+    mapped = mapHaps(gene,hapdat)
 
 
 
