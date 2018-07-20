@@ -456,16 +456,35 @@ def answer_dict(full_ans):#create tree of rsid to answer.
     return ret_dict
 
 #############-----------------HAPloTYPE_SUb_and-DEFS----------------------###########
+#overall goal:for gene, send each element to hapformatter, return type. save type in gene specific
+
+
+def hapFormat(haptype):#BLAH, I think GEne specific regex. darn.well, break em out by bite, the send to recon
+                       #method, and return the
 
 
 
+    try:
+        hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype)
+        print hid.group(3)
+    except TypeError:
+        print "GODDOAMN"
 
-def mapHaps(gene_name,hapdct):
-    #use the
+    return haptype
 
 
+def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way also.
+
+    formatted = {}
+
+    print hapdct[gene_name]
     for haptype in hapdct[gene_name]:
+        print haptype
 
+        formatted[hapFormat(haptype)] = 1
+
+
+    return formatted
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -502,11 +521,14 @@ for haplotype in haps:
     hapdat[haplotype['gene']].append(haplotype['allele2'])
 
 
-for keyes in hapdat:
-    print hapdat[keyes]
-    mapped = mapHaps(gene,hapdat)
+for gene_id in hapdat:
+    #print hapdat[gene_id]
+    typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
 
-
+    #counter
+    #failure check
+        #printer
+        #fail printer
 
 
 
