@@ -459,18 +459,39 @@ def answer_dict(full_ans):#create tree of rsid to answer.
 #overall goal:for gene, send each element to hapformatter, return type. save type in gene specific
 
 
-def hapFormat(haptype):#BLAH, I think GEne specific regex. darn.well, break em out by bite, the send to recon
+def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break em out by bite, the send to recon
                        #method, and return the
 
+    haptype = []
 
 
-    try:
-        hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype)
-        print hid.group(3)
-    except TypeError:
-        print "GODDOAMN"
+    try:#
+        hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype_inc)
 
-    return haptype
+        if hid.group(1) == "TPMT":      #TPMT, detect if hid contains subtype, and allow
+            haptype.append(hid.group(2))#
+
+            if hid.group(3).isalpha() is True and hid.group(3).isdigit() is True:
+                haptype.append(hid.group(3))
+
+            if hid.group(4).isalpha() is True and hid.group(4).isdigit() is True:
+                haptype.append(hid.group(4))
+
+
+        else:
+            haptype.append(hid.group(2))
+
+            if hid.group(3).isdigit() is True:
+                haptype.append(hid.group(3))
+
+            if hid.group(4).isdigit() is True:
+                haptype.append(hid.group(4))
+
+    except TypeError:#
+        print "unable to parse " + str(haptype) + " correctly, please check output and code"
+
+
+    return "".join(haptype)
 
 
 def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way also.
@@ -480,8 +501,8 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
     print hapdct[gene_name]
     for haptype in hapdct[gene_name]:
         print haptype
-
-        formatted[hapFormat(haptype)] = 1
+                                         #check for None,
+        formatted[hapFormat(haptype)] = 1#load the haplotype, formatted as a key.
 
 
     return formatted
@@ -524,9 +545,11 @@ for haplotype in haps:
 for gene_id in hapdat:
     #print hapdat[gene_id]
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
+    print str(typed)
 
-    #counter
-    #failure check
+    if len(typed.keys()) == 1:
+        #counter, so here, if one, make diploptype homozygous. if more than two, send to raiseFail
+        #failure
         #printer
         #fail printer
 
