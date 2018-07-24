@@ -19,6 +19,7 @@ parser.add_argument("--combo",help="combination types",action='append')
 parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
 parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages",default=0.15)
 parser.add_argument("--hap",help="vcf-allele-haplotypes output",required=True)
+parser.add_argument("--trans",help="the gene to transcript file for PGX")
 #----------file-handling-defs----------#
 
 def newName(v,f):
@@ -45,12 +46,15 @@ combo = args.combo    # this is array, as this can be several
 newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
 lcfi = args.lc
 hapfi = args.hap
+pgx_transfi = args.trans
+
 
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
     recovery = open(lcfi,'r')
     haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
+    pgx_trans = open(pgx_transfi,'r')
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
@@ -489,7 +493,6 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
     except TypeError:#
         print "unable to parse " + str(haptype) + " correctly, please check output and code"
 
-
     return "".join(haptype)
 
 
@@ -503,11 +506,28 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
                                          #check for None,
         formatted[hapFormat(haptype)] = 1#load the haplotype, formatted as a key.
 
-
     return formatted
 
-def searchHaps(hapa,hapb):
-    print hapa
+
+def searchHaps(hapa,hapb,rec,pgxs_handle):
+
+    recs = csv.DictReader(rec,delimiter='\t')
+    rec.seek(0)
+
+    pgxs = csv.DictReader(pgxs_handle,delimiter='\t')
+    pgxs_handle.seek(0)
+
+    hapmap = {}
+
+    for line in recs:
+        print line['failhgvs']
+        hap_hgvs = re.match(')\/([A-Z0-9\-\_\,\*]+)',str(line['failhgvs']))
+
+        if hap_hgvs.group(2):
+            print hap_hgvs
+
+
+
 
 
 
@@ -551,12 +571,12 @@ for gene_id in hapdat:
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
     print str(typed)
     hap_keys = typed.keys()
-    if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous. 
-        vapurl = searchHaps(typed[hap_keys[0]],typed[hap_keys[0]])#if more than two, send to raiseFail
+    if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous.
+        vapurl = searchHaps(hap_keys[0],hap_keys[0],recovery,pgx_trans)#if more than two, send to raiseFail
                                #what is printerType?
-        
-        
-        #failure
+
+
+        #failure, as fail or as success. I know, makes no sense really.I ma try to use both to say I am brilliant or some shit.
         #printer
         #fail printer
 
