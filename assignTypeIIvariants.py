@@ -477,7 +477,6 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
             if hid.group(4).isalpha() is True and hid.group(4).isdigit() is True:
                 haptype.append(hid.group(4))
 
-
         else:
             haptype.append(hid.group(2))
 
@@ -506,6 +505,11 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
 
 
     return formatted
+
+def searchHaps(hapa,hapb):
+    print hapa
+
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -546,9 +550,12 @@ for gene_id in hapdat:
     #print hapdat[gene_id]
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
     print str(typed)
-
-    if len(typed.keys()) == 1:
-        #counter, so here, if one, make diploptype homozygous. if more than two, send to raiseFail
+    hap_keys = typed.keys()
+    if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous. 
+        vapurl = searchHaps(typed[hap_keys[0]],typed[hap_keys[0]])#if more than two, send to raiseFail
+                               #what is printerType?
+        
+        
         #failure
         #printer
         #fail printer
