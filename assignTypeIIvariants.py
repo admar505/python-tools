@@ -165,7 +165,9 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
         recs = csv.DictReader(rec,delimiter='\t')
         rec.seek(0)
 
-        specific = str(line_selection) + str(typer)
+        hgvs = line_selection.split(':')
+
+        specific = str(hgvs[1]) + str(typer) + "||" + str(hgvs[0])
 
         for recline in recs:
             if str(recline['failhgvs']) == str(specific):
@@ -313,12 +315,9 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
         ret.append(__big_join__(alt,callao.WT))
 
 
-
     return ret
 
 def printVAR(callAO,var_fb,answer,truealt,trust_gl):
-
-
 
     if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) > 0:#protects against no good answer
 
@@ -364,16 +363,9 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
                                          #Also: ensure, with the rsid, that the call is valid.
     truealt = getGoodALT(callAO.defGT_Dict)
     asserted_gt = gtCallOfficial(callAO)
-
     #print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +"  + str(answer) + " " + str(var_fb.POS) + " " + var_fb.REF
 
     sumofballance = sumAB(var_fb)
-
-
-
-
-    #print str(sumofballance) + "\t" +  str(var_fb.POS)
-
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
@@ -500,47 +492,60 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
 
     formatted = {}
 
-    print hapdct[gene_name]
     for haptype in hapdct[gene_name]:
-        print haptype
+        #print haptype
                                          #check for None,
         formatted[hapFormat(haptype)] = 1#load the haplotype, formatted as a key.
 
     return formatted
 
 
-def searchHaps(hapa,hapb,rec,pgxs_handle):
+def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
 
-    recs = csv.DictReader(rec,delimiter='\t')
+    hgvs_and_url = {}
+
+    def __loadtrans__(pfi):
+        ret_dict = {}
+
+        for pf in pfi:
+            ret_dict[pf['sym']] = pf['trans']
+
+        return ret_dict
+
+
+    recs = csv.DictReader(rec,delimiter='\t')#I do it like this because I have to rewind and reuse alot. fuck.py for making em like this.
     rec.seek(0)
 
-    pgxs = csv.DictReader(pgxs_handle,delimiter='\t')
+    pgxs = __loadtrans__(csv.DictReader(pgxs_handle,delimiter='\t'))
     pgxs_handle.seek(0)
+    hapmap = {}#
 
-    hapmap = {}
+    for line in recs:                               #loading the hapmap, make sure in the lookup table that
+        hapmap[line['failhgvs']] = line['failurl']  #all the subtypes that need to be removed ARE.
 
-    for line in recs:
-        print line['failhgvs']
-        hap_hgvs = re.match(')\/([A-Z0-9\-\_\,\*]+)',str(line['failhgvs']))
+    #next, construct the hgvs.. recon and search
+    hgvslinea = hapa + "/" + hapb + "||" + pgxs[genesym]
+    hgvslineb = hapb + "/" + hapa + "||" + pgxs[genesym]
 
-        if hap_hgvs.group(2):
-            print hap_hgvs
+    #print hgvslinea + "\t" + hgvslineb
+
+    if hgvslinea in hapmap.keys():
+        hgvs_and_url['wthgvs'] = hgvslinea
+        hgvs_and_url['wturl'] = hapmap[hgvslinea]
 
 
+    elif hgvslineb in hapmap.keys():
+        hgvs_and_url['wthgvs'] = hgvslineb
+        hgvs_and_url['hgvslineb'] = hapmap[hgvslineb]
 
+    return hgvs_and_url
 
-
+def callaoHaplotype(thing):#creates a callao like record for haplotypes. use something good here.
+    print thing
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
-
-#for key in bed_dict:
-
-#    print str(key) + "\t" + str(bed_dict[key])
-
 bed_dict= answer_dict(bedfi)
-
-
 
 for rsindex in bed_dict:#as csvDictReader
 
@@ -567,16 +572,30 @@ for haplotype in haps:
 
 
 for gene_id in hapdat:
-    #print hapdat[gene_id]
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
-    print str(typed)
     hap_keys = typed.keys()
     if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous.
-        vapurl = searchHaps(hap_keys[0],hap_keys[0],recovery,pgx_trans)#if more than two, send to raiseFail
-                               #what is printerType?
+        vapurl = searchHaps(hap_keys[0],hap_keys[0],recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
+        if len(vapurl.keys()) == 0:#check for empty
+            print "NOne " +  gene_id
+            raiseFAIL(callaoHaplotype(NULL),recovery,"Unresolved",answer['wt'],":Unresolved")
+
+        else:
+            print "success " + str(vapurl)
+
+            #what is printerType?
+    elif len(hap_keys) == 2:
+        vapurl = searchHaps(hap_keys[0],hap_keys[1],recovery,pgx_trans,gene_id)#
+
+        if len(vapurl.keys()) == 0:#check for empty
+            raiseFAIL(callao,recovery,"Unresolved",answer['wt'],":Unresolved")
+
+        else:
+            print "success " + str(vapurl)
 
 
-        #failure, as fail or as success. I know, makes no sense really.I ma try to use both to say I am brilliant or some shit.
+
+            #failure, as fail or as success. I know, makes no sense really.I ma try to use both to say I am brilliant or some shit.
         #printer
         #fail printer
 
