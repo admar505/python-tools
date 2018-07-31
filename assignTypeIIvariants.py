@@ -318,8 +318,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     return ret
 
 def printVAR(callAO,var_fb,answer,truealt,trust_gl):
-
-    if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) > 0:#protects against no good answer
+    if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) != 0:#protects against no good answer
 
         newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
@@ -333,7 +332,8 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
         newrecord.INFO['QUAL'] = callAO.retQUAL
         newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
         newres.write_record(newrecord)
-
+    else:
+        print "UNABLE to make call " + str(answer)
 
 def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
                          #adjustment might be needed as there could be two
@@ -501,7 +501,7 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
 
 
 def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
-
+    print hapa
     hgvs_and_url = {}
 
     def __loadtrans__(pfi):
@@ -523,9 +523,15 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
     for line in recs:                               #loading the hapmap, make sure in the lookup table that
         hapmap[line['failhgvs']] = line['failurl']  #all the subtypes that need to be removed ARE.
 
+    hgvslinea = ""
+    hgvslineb = ""
+
     #next, construct the hgvs.. recon and search
-    hgvslinea = hapa + "/" + hapb + "||" + pgxs[genesym]
-    hgvslineb = hapb + "/" + hapa + "||" + pgxs[genesym]
+    if hapa == "Unresovled":
+        hgvslinea  = hapa + "||" + pgxs[genesym]
+    else:
+        hgvslinea = hapa + "/" + hapb + "||" + pgxs[genesym]
+        hgvslineb = hapb + "/" + hapa + "||" + pgxs[genesym]
 
     #print hgvslinea + "\t" + hgvslineb
 
@@ -540,8 +546,34 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
 
     return hgvs_and_url
 
-def callaoHaplotype(thing):#creates a callao like record for haplotypes. use something good here.
-    print thing
+
+
+def printHap(pgxs_handle,vap_url,genesym):
+
+    def __loadpgx__(pfi,genesym):
+        pgxd = {}
+        for pf in pfi:
+            if pf['sym'] == genesym:
+                pgxd = pf
+
+        return pgxd
+
+
+    def __gtonly__(string):
+        gttype = re.match('(\w+)||.*',string)
+        return gttype.group(1)
+
+
+    pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
+    pgxs_handle.seek(0)
+
+    newrecord = vgr.model._Record(pgxs['chr'],pgxs['start'],"NULL","NULL",{})
+    newrecord.INFO['FBGenoType'] = __gtonly__(vap_url['wthgvs'])
+    newrecord.INFO['VAPOR_URL'] = vap_url['wturl']
+    newrecord.INFO['EFF_HGVS'] = vap_url['wthgvs']
+    newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    newrecord.INFO['RSID'] = 'Haplotype'
+    newres.write_record(newrecord)
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -560,9 +592,9 @@ for rsindex in bed_dict:#as csvDictReader
     #except ValueError:#initiate error checks. here. SEND to checker for
        # print "WARNING:No variant for answerbed regioni " + answerfi + " " + str(bed['rsid'])
 
-hapdat = {} #NOW, get the haplotypes sorted.
+hapdat = {} #NOW, get the haplotypes worked out.
 
-for haplotype in haps:
+for haplotype in haps:#loading patient haps in.
     #print haplotype
     if haplotype['gene'] not in hapdat.keys():
         hapdat[haplotype['gene']] = list()
@@ -574,26 +606,30 @@ for haplotype in haps:
 for gene_id in hapdat:
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
     hap_keys = typed.keys()
+    vapfailurl = searchHaps('Unresovled','',recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
+    print vapfailurl
+
+
     if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous.
         vapurl = searchHaps(hap_keys[0],hap_keys[0],recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
+
         if len(vapurl.keys()) == 0:#check for empty
-            print "NOne " +  gene_id
-            raiseFAIL(callaoHaplotype(NULL),recovery,"Unresolved",answer['wt'],":Unresolved")
+            printHap(pgx_trans,vapfailurl,gene_id)
 
         else:
-            print "success " + str(vapurl)
+            printHap(pgx_trans,vapurl,gene_id)
 
-            #what is printerType?
     elif len(hap_keys) == 2:
         vapurl = searchHaps(hap_keys[0],hap_keys[1],recovery,pgx_trans,gene_id)#
 
         if len(vapurl.keys()) == 0:#check for empty
-            raiseFAIL(callao,recovery,"Unresolved",answer['wt'],":Unresolved")
+            printHap(pgx_trans,vapfailurl,gene_id)#HERE, do this:  make this make a normal looking file.
 
         else:
-            print "success " + str(vapurl)
+            printHap(pgx_trans,vapurl,gene_id)
 
-
+    else:
+        printHap(pgx_trans,vapfailurl,gene_id)
 
             #failure, as fail or as success. I know, makes no sense really.I ma try to use both to say I am brilliant or some shit.
         #printer
