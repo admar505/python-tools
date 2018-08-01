@@ -318,7 +318,7 @@ def printHetOrHomo(callao,ans,alt,trust_gl):#for printing will direct to homo or
     return ret
 
 def printVAR(callAO,var_fb,answer,truealt,trust_gl):
-    if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) != 0:#protects against no good answer
+    if len(printHetOrHomo(callAO,answer,truealt,trust_gl)) > 0:#protects against no good answer
 
         newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
@@ -332,8 +332,8 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
         newrecord.INFO['QUAL'] = callAO.retQUAL
         newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
         newres.write_record(newrecord)
-    else:
-        print "UNABLE to make call " + str(answer)
+
+    #eventually put in fail here. doing that now though? it does kick the fail. and just doesnt print here.
 
 def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
                          #adjustment might be needed as there could be two
@@ -501,7 +501,7 @@ def mapHaps(gene_name,hapdct):#return collapsed formatted diplotype, two way als
 
 
 def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
-    print hapa
+    #print hapa
     hgvs_and_url = {}
 
     def __loadtrans__(pfi):
@@ -560,8 +560,8 @@ def printHap(pgxs_handle,vap_url,genesym):
 
 
     def __gtonly__(string):
-        gttype = re.match('(\w+)||.*',string)
-        return gttype.group(1)
+        gtwood =string.split('|')
+        return gtwood[0]
 
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
@@ -607,7 +607,7 @@ for gene_id in hapdat:
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
     hap_keys = typed.keys()
     vapfailurl = searchHaps('Unresovled','',recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
-    print vapfailurl
+    #print vapfailurl
 
 
     if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous.
