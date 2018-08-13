@@ -575,18 +575,56 @@ def printHap(pgxs_handle,vap_url,genesym):
     newrecord.INFO['RSID'] = 'Haplotype'
     newres.write_record(newrecord)
 #####----------------REPEAT-DEFS-------####     ######----------------------------------####
-def reportRepeat(vcfs,reps):#method: kind of crazy, grab region. needs to match exact. is there a
-                            #def already that does this? then, ASSUME there is enough coverage to
-    print reps['chrom']     #make the call good. just gonna hafta.are repeats always at same start?
-                            #regardless, this seems to capture even if start is reported upstream of start.
-    #region_4_rpt = vcfs.fetch(reps['chrom'],int(reps['start']),int(reps['stop']))
-    #print region_4_rpt
-    #selection_count = 0
-    #for variant in region_4_rpt:#catch empty, send for WT+ report.
-        #if variant is not "":
+
+def searchRepeat(rpt,rec,s2t):
+
+    sym = rpt.rptSYM
+    vapurl = {}
+
+    def __loadtrans__(pfi):
+        ret_dict = {}
+
+        for pf in pfi:
+            ret_dict[pf['sym']] = pf['trans']
+
+        return ret_dict
+
+    recs = csv.DictReader(rec,delimiter='\t')
+    rec.seek(0)
+
+    genetrans = __loadtrans__(csv.DictReader(s2t,delimiter='\t'))
+    s2t.seek(0)
+
+    repeat_var = rpt.countRepeats[1] + "||" + str(genetrans[str(sym)])
+    vapurl['wthgvs'] = "LC||" + str(genetrans[str(sym)])#I am changing failhgvs to wthgvs to reuse the happrinter.
+    #first, load failure contingency
+
+    for recfail in recs:
+        if str(recfail['failhgvs']) == vapurl['wthgvs']:
+            vapurl['wturl'] = recfail['failurl']
+
+    rec.seek(0)
+
+    #then grab the regular line.
+    for recline in recs:
+
+        if str(recline['failhgvs']) == str(repeat_var):
+
+            vapurl['wthgvs'] = str(repeat_var)
+            vapurl['wturl'] = recline['failurl']
+
+    return vapurl
+
+
+
+def reportRepeat(vcfs,reps,lookuptab,sym2trans):#vcfull,repeat_specs,allthe urls,sym2transand pos file
 
     repeat = loadaltdats.detRepeats(vcfs,reps)
-    print repeat
+    print repeat.countRepeats
+    vapurl = searchRepeat(repeat,lookuptab,sym2trans)
+
+    printHap(pgx_trans,vapurl,"UGT1A1")
+
 
 
 
@@ -649,10 +687,8 @@ for gene_id in hapdat:
 
 if repeats:
     for repeat in repeats:
-        repeat_set = csv.DictReader(open(repeat,'r'),delimiter='\t')
-
-        for reps in repeat_set:
-            repeat_capture = reportRepeat(fullvcf,reps)
+        repeat_set = open(repeat,'r')
+        repeat_capture = reportRepeat(fullvcf,repeat_set,recovery,pgx_trans)
 
 
 #current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt
