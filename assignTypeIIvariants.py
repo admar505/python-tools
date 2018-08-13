@@ -655,7 +655,7 @@ if repeats:
             repeat_capture = reportRepeat(fullvcf,reps)
 
 
-
+#current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt
 
 
 
