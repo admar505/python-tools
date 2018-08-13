@@ -20,6 +20,8 @@ parser.add_argument("--ABthreshold",help="this is a value at which to trust alle
 parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages",default=0.15)
 parser.add_argument("--hap",help="vcf-allele-haplotypes output",required=True)
 parser.add_argument("--trans",help="the gene to transcript file for PGX")
+parser.add_argument("--rpt",help='the repeats formatted file, reuse argument for multiple searches.\n format is: \"chrom start stop base leader unit wt_version wt_length hgvs_primitive\"',action='append')
+
 #----------file-handling-defs----------#
 
 def newName(v,f):
@@ -47,10 +49,11 @@ newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
 lcfi = args.lc
 hapfi = args.hap
 pgx_transfi = args.trans
-
+repeats = args.rpt
 
 try:
     resvcf = vcf.Reader(open(vcffi,'r'))
+    fullvcf = vcf.Reader(open(fullfi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
     recovery = open(lcfi,'r')
     haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
@@ -547,7 +550,6 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
     return hgvs_and_url
 
 
-
 def printHap(pgxs_handle,vap_url,genesym):
 
     def __loadpgx__(pfi,genesym):
@@ -558,11 +560,9 @@ def printHap(pgxs_handle,vap_url,genesym):
 
         return pgxd
 
-
     def __gtonly__(string):
         gtwood =string.split('|')
         return gtwood[0]
-
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
     pgxs_handle.seek(0)
@@ -574,6 +574,21 @@ def printHap(pgxs_handle,vap_url,genesym):
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     newrecord.INFO['RSID'] = 'Haplotype'
     newres.write_record(newrecord)
+#####----------------REPEAT-DEFS-------####     ######----------------------------------####
+def reportRepeat(vcfs,reps):#method: kind of crazy, grab region. needs to match exact. is there a
+                            #def already that does this? then, ASSUME there is enough coverage to
+    print reps['chrom']     #make the call good. just gonna hafta.are repeats always at same start?
+                            #regardless, this seems to capture even if start is reported upstream of start.
+    #region_4_rpt = vcfs.fetch(reps['chrom'],int(reps['start']),int(reps['stop']))
+    #print region_4_rpt
+    #selection_count = 0
+    #for variant in region_4_rpt:#catch empty, send for WT+ report.
+        #if variant is not "":
+
+    repeat = loadaltdats.detRepeats(vcfs,reps)
+    print repeat
+
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -631,9 +646,40 @@ for gene_id in hapdat:
     else:
         printHap(pgx_trans,vapfailurl,gene_id)
 
-            #failure, as fail or as success. I know, makes no sense really.I ma try to use both to say I am brilliant or some shit.
-        #printer
-        #fail printer
+
+if repeats:
+    for repeat in repeats:
+        repeat_set = csv.DictReader(open(repeat,'r'),delimiter='\t')
+
+        for reps in repeat_set:
+            repeat_capture = reportRepeat(fullvcf,reps)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
