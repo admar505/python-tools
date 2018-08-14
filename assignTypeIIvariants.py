@@ -21,6 +21,9 @@ parser.add_argument("--lc",help="If no genotype can be found, then this is the l
 parser.add_argument("--hap",help="vcf-allele-haplotypes output",required=True)
 parser.add_argument("--trans",help="the gene to transcript file for PGX")
 parser.add_argument("--rpt",help='the repeats formatted file, reuse argument for multiple searches.\n format is: \"chrom start stop base leader unit wt_version wt_length hgvs_primitive\"',action='append')
+parser.add_argument("--add",help="inject a line, usually used to add results from an external tool and add it to the combo search sections",action='append')
+
+all_hgvs = {}#this will store all the hgvs for combo type.
 
 #----------file-handling-defs----------#
 
@@ -48,6 +51,7 @@ combo = args.combo    # this is array, as this can be several
 newres = vgr.Writer(open(newName(vcffi,fullfi),"w"))#temp name.
 lcfi = args.lc
 hapfi = args.hap
+addfiles = args.add
 pgx_transfi = args.trans
 repeats = args.rpt
 
@@ -58,6 +62,8 @@ try:
     recovery = open(lcfi,'r')
     haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
     pgx_trans = open(pgx_transfi,'r')
+
+
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
@@ -70,6 +76,9 @@ results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
+
+
+
 def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
     #print answer['wthgvs'] + "\t" + answer['wturl']
 
@@ -84,6 +93,8 @@ def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just k
     wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
     wtrecord.INFO['QUAL'] = wtcall.retQUAL
     wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
+    all_hgvs[str(answer['wthgvs'])] = str(answer['wthgvs'])
+    all_hgvs[str(variant.REF + variant.REF)] = str(variant.REF + variant.REF)
 
     newres.write_record(wtrecord)
 
@@ -190,6 +201,9 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
     failrecord.INFO['QUAL'] = intendedcall.full.QUAL
     failrecord.INFO['FBReferenceAlleleQ'] = intendedcall.full.INFO['QR']
     failrecord.INFO['FAIL_REASON'] = reason
+
+    all_hgvs[str("Unresolved")] = str("Unresolved")
+    all_hgvs[str(answer['homohgvs']) + str(types)] = str(answer['homohgvs']) + str(types)
 
     newres.write_record(failrecord)
 
@@ -334,6 +348,10 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
         newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
         newrecord.INFO['QUAL'] = callAO.retQUAL
         newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
+
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[2]] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[1]] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
+
         newres.write_record(newrecord)
 
     #eventually put in fail here. doing that now though? it does kick the fail. and just doesnt print here.
@@ -573,6 +591,10 @@ def printHap(pgxs_handle,vap_url,genesym):
     newrecord.INFO['EFF_HGVS'] = vap_url['wthgvs']
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     newrecord.INFO['RSID'] = 'Haplotype'
+
+    all_hgvs[vapurl['wthgvs']] = vapurl['wthgvs']
+    all_hgvs[__gtonly__(vap_url['wthgvs'])] = __gtonly__(vap_url['wthgvs'])
+
     newres.write_record(newrecord)
 #####----------------REPEAT-DEFS-------####     ######----------------------------------####
 
@@ -620,15 +642,48 @@ def searchRepeat(rpt,rec,s2t):
 def reportRepeat(vcfs,reps,lookuptab,sym2trans):#vcfull,repeat_specs,allthe urls,sym2transand pos file
 
     repeat = loadaltdats.detRepeats(vcfs,reps)
-    print repeat.countRepeats
+    #print repeat.countRepeats
     vapurl = searchRepeat(repeat,lookuptab,sym2trans)
 
     printHap(pgx_trans,vapurl,"UGT1A1")
 
 
+#####------------INJECT-DEFS-----------###       ######---------INJECT-DEFS-------------###
 
 
-#####----------------MAIN--------------####      #####----------------MAIN--------------####
+
+def addRes(addline):
+
+    def __returnVal__(adder,val):
+        for potential in adder:
+            if re.match('.*?=.*',potential):
+                groups = re.match('(\S+?)\=(\S+)',potential)
+                if groups.group(1) == val:
+                    return groups.group(2)
+
+    adder = addline.split("\t")
+    #print adder
+    newrecord = vgr.model._Record(adder[0],1000,"NULL","NULL",{})
+    newrecord.INFO['FBGenoType'] =  __returnVal__(adder,'FBGenoType')
+    newrecord.INFO['VAPOR_URL'] = "NULL"
+    newrecord.INFO['EFF_HGVS'] =__returnVal__(adder,'EFF_HGVS')
+    newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    newrecord.INFO['RSID'] = 'Haplotype'
+    all_hgvs[__returnVal__(adder,'FBGenoType')] = __returnVal__(adder,'FBGenoType')
+    all_hgvs[__returnVal__(adder,'EFF_HGVS')] = __returnVal__(adder,'EFF_HGVS')
+    newres.write_record(newrecord)
+
+#####---------combo-value-meals--------####     #####----------------combo-menus--------####
+
+def assignCombo(combo,hgvs_list):#approach:break combo down in to the various components, and search for each?
+
+
+
+
+
+
+
+#####----------------MAIN--------------####     #####----------------MAIN--------------####
 
 bed_dict= answer_dict(bedfi)
 
@@ -655,13 +710,11 @@ for haplotype in haps:#loading patient haps in.
     hapdat[haplotype['gene']].append(haplotype['allele1'])
     hapdat[haplotype['gene']].append(haplotype['allele2'])
 
-
+#haplotype handling, contains methods for discerning diplotypes and hap|haplotypes.
 for gene_id in hapdat:
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
     hap_keys = typed.keys()
     vapfailurl = searchHaps('Unresovled','',recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
-    #print vapfailurl
-
 
     if len(hap_keys) == 1: #counter, so here, if one, make diploptype homozygous.
         vapurl = searchHaps(hap_keys[0],hap_keys[0],recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
@@ -683,15 +736,38 @@ for gene_id in hapdat:
 
     else:
         printHap(pgx_trans,vapfailurl,gene_id)
+#injection, to add a line to be included in the combos (see star5 handling)
+if addfiles:
 
+    for addfile in addfiles:
+        addres = open(addfile,'r')
 
+        for adds in addres:
+            addRes(adds)
+
+#repeats handling:
 if repeats:
     for repeat in repeats:
         repeat_set = open(repeat,'r')
         repeat_capture = reportRepeat(fullvcf,repeat_set,recovery,pgx_trans)
 
+#COMBO_types#TRY to reuse the hapPrinter, it would save a lot of code.
+if combo:
+    for combs in combo:
+        combo_set = open(combs,'r')
+        assignCombo(combo_set,all_hgvs)
 
-#current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt
+
+
+#for hgvs in global_captured_hgvs:
+
+
+
+
+
+
+
+#current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt --add combo.tmp
 
 
 
