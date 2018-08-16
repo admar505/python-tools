@@ -12,16 +12,16 @@ from collections import defaultdict
 #NEW VERSION: go through CSV, pull out the RESults file, if not in, then recreate from vcf.
 #header is:chr start   stop    rsid    homohgvs    homourl hethgvs heturl  wthgvs  wturl
 parser = argparse.ArgumentParser(description="Assigns to each Type II variant, a vapor URL. if missing, returns error, but keeps going. Also assigns combos. Uses the new RESULTS.txt library!!")
-parser.add_argument("--answer",help="the mapping of variant to VAPor page")
-parser.add_argument("--vcf",help="VCF file, bgzipped, indexed with tabix -p vcf")
-parser.add_argument("--fullvcf",help="FULL genome VCF file, bgzipped, indexed with tabix -p vcf")
-parser.add_argument("--combo",help="combination types",action='append')
+parser.add_argument("--answer",help="the mapping of variant to VAPor page",required=True)
+parser.add_argument("--vcf",help="VCF file, bgzipped, indexed with tabix -p vcf",required=True)
+parser.add_argument("--fullvcf",help="FULL genome VCF file, bgzipped, indexed with tabix -p vcf",required=True)
+parser.add_argument("--combo",help="combination types",action='append',required=False)
 parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
-parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages",default=0.15)
-parser.add_argument("--hap",help="vcf-allele-haplotypes output",required=True)
-parser.add_argument("--trans",help="the gene to transcript file for PGX")
-parser.add_argument("--rpt",help='the repeats formatted file, reuse argument for multiple searches.\n format is: \"chrom start stop base leader unit wt_version wt_length hgvs_primitive\"',action='append')
-parser.add_argument("--add",help="inject a line, usually used to add results from an external tool and add it to the combo search sections",action='append')
+parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages")
+parser.add_argument("--hap",help="vcf-allele-haplotypes output")
+parser.add_argument("--trans",help="the gene to transcript file for PGX",required=False)
+parser.add_argument("--rpt",help='the repeats formatted file, reuse argument for multiple searches.\n format is: \"chrom start stop base leader unit wt_version wt_length hgvs_primitive\"',action='append',required=False)
+parser.add_argument("--add",help="inject a line, usually used to add results from an external tool and add it to the combo search sections",action='append',required=False)
 
 all_hgvs = {}#this will store all the hgvs for combo type.
 
@@ -60,11 +60,13 @@ try:
     fullvcf = vcf.Reader(open(fullfi,'r'))
     bedfi  = csv.DictReader(open(answerfi,'r'),delimiter='\t')
     recovery = open(lcfi,'r')
-    haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
-    pgx_trans = open(pgx_transfi,'r')
+
 
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
+
+
+
 
 
 results = {}#stores the results lines;
@@ -594,7 +596,7 @@ def printHap(pgxs_handle,vap_url,genesym):
 
     all_hgvs[vapurl['wthgvs']] = 'Haplotype'
     all_hgvs[__gtonly__(vap_url['wthgvs'])] = 'Haplotype'
-    
+
     all_hgvs[__fliphgvs__(vapurl['wthgvs'])] = 'Haplotype' #for combo lookup
 
     newres.write_record(newrecord)
@@ -759,13 +761,18 @@ for rsindex in bed_dict:#as csvDictReader
 
 hapdat = {} #NOW, get the haplotypes worked out.
 
-for haplotype in haps:#loading patient haps in.
-    #print haplotype
-    if haplotype['gene'] not in hapdat.keys():
-        hapdat[haplotype['gene']] = list()
+if hapfi:
+    haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
+    pgx_trans = open(pgx_transfi,'r')
 
-    hapdat[haplotype['gene']].append(haplotype['allele1'])
-    hapdat[haplotype['gene']].append(haplotype['allele2'])
+
+    for haplotype in haps:#loading patient haps in.
+        #print haplotype
+        if haplotype['gene'] not in hapdat.keys():
+            hapdat[haplotype['gene']] = list()
+
+        hapdat[haplotype['gene']].append(haplotype['allele1'])
+        hapdat[haplotype['gene']].append(haplotype['allele2'])
 
 #haplotype handling, contains methods for discerning diplotypes and hap|haplotypes.
 for gene_id in hapdat:
@@ -816,7 +823,6 @@ if combo:
 
 
 
-#for hgvs in global_captured_hgvs:
 
 
 
@@ -824,7 +830,7 @@ if combo:
 
 
 
-#current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt --add combo.tmp
+#current full command:assignTypeIIvariants.py --answer PGX.ans.test.bed  --vcf pr.UNK.PGX.good.vcf.gz   --fullvcf 160406_S2_combined.vcf.gz     --combo /ref/NC_PGX/cftrwt.combo.scf --ABthreshold .15 --lc  /ref/NC_PGX/LC.Novel.HaploType.lst  --hap Sample_160406S4-EXT-ERRORs-alleles.csv  --trans /ref/NC_PGX/pgx.trans.lst  --rpt /ref/NC_PGX/UGT1A1_TA.rpt --add combo.tmp --add combo.rs67376798.tmp
 
 
 
