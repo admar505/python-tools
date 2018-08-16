@@ -474,7 +474,6 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
 
     haptype = []
 
-
     try:#
         hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype_inc)
 
@@ -595,6 +594,8 @@ def printHap(pgxs_handle,vap_url,genesym):
 
     all_hgvs[vapurl['wthgvs']] = 'Haplotype'
     all_hgvs[__gtonly__(vap_url['wthgvs'])] = 'Haplotype'
+    
+    all_hgvs[__fliphgvs__(vapurl['wthgvs'])] = 'Haplotype' #for combo lookup
 
     newres.write_record(newrecord)
 
