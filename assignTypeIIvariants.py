@@ -63,21 +63,14 @@ try:
     haps = csv.DictReader(open(hapfi,'r'),delimiter=',')
     pgx_trans = open(pgx_transfi,'r')
 
-
-
 except (TypeError,NameError) as e:
     print "\n\n\tUSE -h thanks.\n\n"
-
-
-
 
 
 results = {}#stores the results lines;
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
-
-
 
 def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just kicks it. eventually turn to printer
     #print answer['wthgvs'] + "\t" + answer['wturl']
@@ -93,8 +86,8 @@ def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just k
     wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
     wtrecord.INFO['QUAL'] = wtcall.retQUAL
     wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
-    all_hgvs[str(answer['wthgvs'])] = str(answer['wthgvs'])
-    all_hgvs[str(variant.REF + variant.REF)] = str(variant.REF + variant.REF)
+    all_hgvs[str(answer['wthgvs'])] = str(answer['rsid'])
+    all_hgvs[str(variant.REF + variant.REF)] = str(answer['rsid'])
 
     newres.write_record(wtrecord)
 
@@ -202,8 +195,8 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
     failrecord.INFO['FBReferenceAlleleQ'] = intendedcall.full.INFO['QR']
     failrecord.INFO['FAIL_REASON'] = reason
 
-    all_hgvs[str("Unresolved")] = str("Unresolved")
-    all_hgvs[str(answer['homohgvs']) + str(types)] = str(answer['homohgvs']) + str(types)
+    all_hgvs[str("Unresolved")] = answer['rsid']
+    all_hgvs[str(answer['homohgvs']) + str(types)] = answer['rsid']
 
     newres.write_record(failrecord)
 
@@ -349,8 +342,8 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
         newrecord.INFO['QUAL'] = callAO.retQUAL
         newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
 
-        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[2]] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
-        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[1]] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[2]] =  answer['wt']['rsid']
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[1]] =  answer['wt']['rsid']
 
         newres.write_record(newrecord)
 
@@ -582,20 +575,29 @@ def printHap(pgxs_handle,vap_url,genesym):
         gtwood =string.split('|')
         return gtwood[0]
 
+
+    def __fliphgvs__(wth):
+
+        if re.match('.*?\|\|.*',wth):
+            flp = re.search('(.*?)\|\|(.*)',wth)
+            wth = flp.group(2) + ":" + flp.group(1)
+        return wth
+
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
     pgxs_handle.seek(0)
 
     newrecord = vgr.model._Record(pgxs['chr'],pgxs['start'],"NULL","NULL",{})
     newrecord.INFO['FBGenoType'] = __gtonly__(vap_url['wthgvs'])
     newrecord.INFO['VAPOR_URL'] = vap_url['wturl']
-    newrecord.INFO['EFF_HGVS'] = vap_url['wthgvs']
+    newrecord.INFO['EFF_HGVS'] = __fliphgvs__(vap_url['wthgvs'])
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     newrecord.INFO['RSID'] = 'Haplotype'
 
-    all_hgvs[vapurl['wthgvs']] = vapurl['wthgvs']
-    all_hgvs[__gtonly__(vap_url['wthgvs'])] = __gtonly__(vap_url['wthgvs'])
+    all_hgvs[vapurl['wthgvs']] = 'Haplotype'
+    all_hgvs[__gtonly__(vap_url['wthgvs'])] = 'Haplotype'
 
     newres.write_record(newrecord)
+
 #####----------------REPEAT-DEFS-------####     ######----------------------------------####
 
 def searchRepeat(rpt,rec,s2t):
@@ -665,22 +667,76 @@ def addRes(addline):
     #print adder
     newrecord = vgr.model._Record(adder[0],1000,"NULL","NULL",{})
     newrecord.INFO['FBGenoType'] =  __returnVal__(adder,'FBGenoType')
-    newrecord.INFO['VAPOR_URL'] = "NULL"
+    newrecord.INFO['VAPOR_URL'] = __returnVal__(adder,'VAPOR_URL')
     newrecord.INFO['EFF_HGVS'] =__returnVal__(adder,'EFF_HGVS')
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-    newrecord.INFO['RSID'] = 'Haplotype'
-    all_hgvs[__returnVal__(adder,'FBGenoType')] = __returnVal__(adder,'FBGenoType')
-    all_hgvs[__returnVal__(adder,'EFF_HGVS')] = __returnVal__(adder,'EFF_HGVS')
+    newrecord.INFO['RSID'] = __returnVal__(adder,'RSID')
+    all_hgvs[__returnVal__(adder,'FBGenoType')] = __returnVal__(adder,'RSID')
+    all_hgvs[__returnVal__(adder,'EFF_HGVS')] = __returnVal__(adder,'RSID')
+
     newres.write_record(newrecord)
 
 #####---------combo-value-meals--------####     #####----------------combo-menus--------####
 
-def assignCombo(combo,hgvs_list):#approach:break combo down in to the various components, and search for each?
+def printCombo(adder,gt,effhgvs,vapurl,rsid):#I feel like a failure in many ways, I never had a way of making the printer generic.
+                #I will work on this in the future.
+
+    newrecord = vgr.model._Record(adder,1000,"NULL","NULL",{})
+    newrecord.INFO['FBGenoType'] = gt
+    newrecord.INFO['VAPOR_URL'] = vapurl.strip()
+    newrecord.INFO['EFF_HGVS'] = effhgvs
+    newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
+    newrecord.INFO['RSID'] = rsid
+    newres.write_record(newrecord)
+
+def testCombo(pvars,hgvs):
+    test = False
+
+    var_arr = pvars.split(',')
+    success = len(var_arr)
+
+    rsids = []
+
+    for variant in var_arr:
+        #print variant
+        if variant in hgvs.keys():
+            success -= 1
+            rsids.append(hgvs[variant])
+
+    if success == 0:
+        test = True
+
+    return test,','.join(rsids)
 
 
+def assignCombo(combo,hgvs_list,filename):#approach:break combo down in to the various components, and search for each?
+                                 #also, have fail contingency for not found.just a count and success strategy.
+
+    def __gtmaker__(variants):
+        gt = []
+        var_arr = variants.split(',')
+        for gttype in var_arr:
+            gtt = gttype.split(':')
+            gt.append(gtt[1])
+
+        return ','.join(gt)
+
+    def __filenamer__(fname):
+        fn = fname.split('.')
+        return str(os.path.basename(fn[0])) + "_COMBO_NOT_FOUND"
 
 
+    captured = 0
+    for possible_combo in combo:
+        (variants,url) = possible_combo.split('\t')
+        combogood,rsid = testCombo(variants,hgvs_list)
 
+        if combogood is True:
+            printCombo('chrN',__gtmaker__(variants),variants,url,rsid)
+            captured = 1
+
+    if captured == 0:
+        printCombo('chrN',__filenamer__(filename),"NOT_FOUND",url,"None")
 
 
 #####----------------MAIN--------------####     #####----------------MAIN--------------####
@@ -755,7 +811,7 @@ if repeats:
 if combo:
     for combs in combo:
         combo_set = open(combs,'r')
-        assignCombo(combo_set,all_hgvs)
+        assignCombo(combo_set,all_hgvs,combs)
 
 
 
