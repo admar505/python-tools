@@ -228,12 +228,12 @@ def check_final_GT(callao,trustgl):#return GL call if trust is true, else use th
 
         genotype = []
         for val in callao.defGT_Dict:
-
             #print callao.defGT_Dict[val]
             if callao.defGT_Dict[val] is True:
                 genotype.append(str(val))
+    if len(genotype) == 1:
+        genotype.append(genotype[0])
 
-    #print genotype
     return sorted(genotype)
 
 def check_final_Homo(gt):
@@ -263,7 +263,7 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
     allowed_answer_line = None
 
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
-        #print str(the_real_gt) + "\tin choose answer, the check for the real GT"
+        #print str(the_real_gt) + "\tin choose answer, the check for the real GT" + str( callao.full.POS )
         if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
                                                                     #and the realGT is Homo
 
@@ -594,10 +594,10 @@ def printHap(pgxs_handle,vap_url,genesym):
     newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     newrecord.INFO['RSID'] = 'Haplotype'
 
-    all_hgvs[vapurl['wthgvs']] = 'Haplotype'
+    all_hgvs[vap_url['wthgvs']] = 'Haplotype'
     all_hgvs[__gtonly__(vap_url['wthgvs'])] = 'Haplotype'
 
-    all_hgvs[__fliphgvs__(vapurl['wthgvs'])] = 'Haplotype' #for combo lookup
+    all_hgvs[__fliphgvs__(vap_url['wthgvs'])] = 'Haplotype' #for combo lookup
 
     newres.write_record(newrecord)
 
