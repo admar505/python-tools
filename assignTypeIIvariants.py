@@ -99,6 +99,8 @@ def getBestGL(gtgl):#return best GT given GL
     sortedgtgl = sorted(gtgl, key=gtgl.get, reverse=True)
     best = sortedgtgl[0]
 
+    #print best
+
     return best
 
 
@@ -107,8 +109,6 @@ def gtCallOfficial(genocall):#return variant-caller asserted GT, for when GL is 
 
     sortalleles = sorted(genocall.get_default_GT)
     returnable_string =  ",".join(sortalleles)
-
-    #print str(alleles) + "\tIN GT CALL OFFICIAL\t"  + str(genocall.full.POS)
 
     return returnable_string
 
@@ -216,22 +216,21 @@ def getABCall(callao):
     return homo
 
 
-def check_final_GT(callao,trustgl):#return GL call if trust is true, else use the AB
+def check_final_GT(callao,trustgl):#return GL call if trust is true, else use the AB#NOTE:for dels, this isnt returning the correct thing.
 
     genotype = None
     if trustgl is True:
-        #print str(callao.get_default_GT) + "\tTRUST IS TRUE\t" + str(callao.defGT_Dict)
         genotype = callao.get_default_GT
 
     else:
-        #print str(callao.defGT_Dict) + "\tTRUST is FALSE\t" + str(callao.get_default_GT)
-
         genotype = []
         for val in callao.defGT_Dict:
-            #print callao.defGT_Dict[val]
+
             if callao.defGT_Dict[val] is True:
                 genotype.append(str(val))
-    if len(genotype) == 1:
+
+
+    if len(genotype) == 1: #this is a hax to deal with HOMO_VAR having only one var returned.
         genotype.append(genotype[0])
 
     return sorted(genotype)
@@ -245,9 +244,10 @@ def check_final_Homo(gt):
 
     return homo
 
-def check_final_Het(genotype, answered):
+def check_final_Het(genotype, answered):#answered should contain both REF and ALT
     het = False
-    if str(''.join(sorted(genotype))) == str(answered):
+
+    if str(''.join(sorted(genotype))) == str(''.join(sorted(answered))):
         het = True
 
     return het
@@ -257,26 +257,24 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
                                           #this is het, then the het is ref/alt, not alt1/alt2,
                                           #and if homo, not homo alt2/alt2 that is not covered by the
                                           #answer bed.
-
     the_real_gt = check_final_GT(callao,trust_gl)
 
     allowed_answer_line = None
 
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
-        #print str(the_real_gt) + "\tin choose answer, the check for the real GT" + str( callao.full.POS )
         if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
                                                                     #and the realGT is Homo
 
             if alt == ans_alt:#here should be checkFinalGT
 
                 allowed_answer_line = answer['calls'][ans_alt]
-                #print "captured HOMO " + str(answer['calls'][ans_alt]['homourl'])
 
         else:
-
             for potential_call in  callao.full.ALT:
-                if potential_call == ans_alt and check_final_Het(the_real_gt,''.join(sorted(callao.full.REF,potential_call))) is True:#here should be checkFinalGT
+                het_from_answer = [str(callao.full.REF),str(potential_call)]
 
+                if (potential_call == ans_alt or re.search('del.*',ans_alt) is not None) and check_final_Het(the_real_gt,het_from_answer) is True:#here checkFinalGT
+                #if potential_call == ans_alt and check_final_Het(the_real_gt,sorted(het_from_answer)) is True:#here should be checkFinalGT
                     allowed_answer_line = answer['calls'][ans_alt]
                     #print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
 
@@ -334,10 +332,13 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
 
         newrecord = vgr.model._Record(var_fb.CHROM,var_fb.POS,var_fb.REF,truealt,{})
 
-        newrecord.INFO['FBGenoType'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[2]
+        het_homo_call = printHetOrHomo(callAO,answer,truealt,trust_gl)
+
+
+        newrecord.INFO['FBGenoType'] = het_homo_call[2]
         newrecord.INFO['FBRefAlleleCount'] = var_fb.INFO['RO'] #might need to split
-        newrecord.INFO['VAPOR_URL'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[0]
-        newrecord.INFO['EFF_HGVS'] = printHetOrHomo(callAO,answer,truealt,trust_gl)[1]
+        newrecord.INFO['VAPOR_URL'] = het_homo_call[0]
+        newrecord.INFO['EFF_HGVS'] = het_homo_call[1]
         newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
         newrecord.INFO['RSID'] = answer['wt']['rsid']
         newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
