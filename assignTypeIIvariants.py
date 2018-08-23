@@ -352,12 +352,12 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
 
     #eventually put in fail here. doing that now though? it does kick the fail. and just doesnt print here.
 
-def getGoodALT(calldict):#give a dictionary, and it will return only the TRUE
+def getGoodALT(calldict,theWT,vartest):#give a dictionary, and it will return only the TRUE
                          #adjustment might be needed as there could be two
-    validalt = None
+    validalt = None      #ok, 20180823 adjust: return not WT,since that is now included.
 
     for arr in calldict:
-        if calldict[arr] is True:
+        if calldict[arr] is True and str(arr) != str(theWT):
             validalt = arr
 
     return str(validalt)
@@ -378,7 +378,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
     qual = var_fb.QUAL                   #see if all agree. if so, see if the call is homo, het or wt
                                          ##then, can pull the lines here from the answer bed: homohgvs  homourl hethgvs heturl  wthgvs  wturl
                                          #Also: ensure, with the rsid, that the call is valid.
-    truealt = getGoodALT(callAO.defGT_Dict)
+    truealt = getGoodALT(callAO.defGT_Dict,callAO.WT,var_fb)
     asserted_gt = gtCallOfficial(callAO)
     #print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +"  + str(answer) + " " + str(var_fb.POS) + " " + var_fb.REF
 
@@ -386,15 +386,13 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
 
     if checkGLtoAB(best_gtGL,AB,qual,var_fb.ALT,var_fb.REF,callAO) is True:#DOES all information match the asserted type,
-
-        #print str(sumofballance) + "\tTOP OF SELECTION\t" +  str(var_fb.POS)
+        #print str(sumofballance) + "\tTOP OF SELECTION\t" +  str(var_fb.POS) + "   " + var_fb.ALT
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
             printVAR(callAO,var_fb,answer,truealt,True)
         else:
             raiseFAIL(callAO,recovery,"LOW_QUALITY_GENOTYPE",answer['wt'],":LC")
 
     elif sumAB(var_fb)  < float(args.ABthreshold) + float(.025) and float(sumAB(var_fb)) != float(0.0):#IF WT WITH NOISE, this will capture,and send to WT printer.
-
        # print str(sumofballance) + "\tNOISE REDIRECT ELIF\t" +  str(var_fb.POS)
 
         if checkQUAL(best_gtGL,callAO,var_fb) is True:
