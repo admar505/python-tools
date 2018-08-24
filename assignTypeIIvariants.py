@@ -573,7 +573,12 @@ def printHap(pgxs_handle,vap_url,genesym):
 
     def __gtonly__(string):
         gtwood =string.split('|')
-        return gtwood[0]
+        returngt = gtwood[0]
+        if re.search('.\[.*',gtwood[0]) is not None:
+            gttype = re.search('.(\[.*)',gtwood[0])
+            returngt =  gttype.group(1)
+
+        return returngt
 
 
     def __fliphgvs__(wth):
@@ -679,6 +684,10 @@ def addRes(addline):
     newres.write_record(newrecord)
 
 #####---------combo-value-meals--------####     #####----------------combo-menus--------####
+
+
+
+
 
 def printCombo(adder,gt,effhgvs,vapurl,rsid):#I feel like a failure in many ways, I never had a way of making the printer generic.
                 #I will work on this in the future.
