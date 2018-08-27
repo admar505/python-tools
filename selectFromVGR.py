@@ -1,61 +1,98 @@
 #!/usr/bin/env python
 import sys,os,re,fileinput,argparse
-import vcf
 sys.path.append('/home/nucleo/lib/PyVGRes')
 import vgr
 import csv
-from subprocess import call
-import pybedtools
 import random
-#idea: grab the full vcf in a dict/map; grab the omicia vcf in a dict/map;
-#then, then make a map to of res. read through the vcf, and add to reslines. If res in vcf, then
-#add score and rsid to EFF_EFFECT. if not, then grab line from big vcf, and process like olden times as if new. call recover.RESULTS.txt
-#NEW VERSION: go through CSV, pull out the RESults file, if not in, then recreate from vcf.
-parser = argparse.ArgumentParser(description="selecting results lines from a list of chr\tpos\tstp fromatted files")
-parser.add_argument("--res",help="COMPLETE.txt or whole genome RESULTS.txt file, bgzipped and tabixed as -p vcf",required=True)
-parser.add_argument("--skip",help="list of items to skip",required=True)
+parser = argparse.ArgumentParser(description="select infor from VCF")
+parser.add_argument("--vgr",help="vcf file, bgzipped and tabixed as -p vcf",required=True)
+parser.add_argument("--tag",help="tag to pull",required=True,action='append')
 
 args = parser.parse_args()
-resfi = args.res
-skipfi = args.skip
+vcffi = args.vgr
+taglst = args.tag
 
-newres = vgr.Writer(open('NEW.' + resfi + '.' + skipfi + ".txt","w"))
-res = vgr.Reader(open(resfi,'r'))
-skiplist = csv.DictReader(open(skipfi,"r"))
+vcf_full = vgr.Reader(open(vcffi,'r'))
 
-
-results = {}#stores the results lines;
-omiciain = 0
-recovered = 0
-oneoffed = 0
-skipct = 0
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
+def anyNone(rets):
+
+    size = len(rets)
+    none_ct = size  #set to size, reduce as nones go
+
+
+    for tagkey in rets:
+        checkfornone = re.match('.*?\[None\].*',str(rets[tagkey]))#LOGIC: if there is a none check for none will be NOT NONE??
+
+        try:
+
+            if checkfornone is  None:
+                none_ct = none_ct - 1 #decided to use as --, as it is more sensible.
+
+        except (AttributeError, IndexError) as e:
+            dn = open(os.devnull,'w')
+
+    final_return = None
+
+    if none_ct < size:##indicates that no NONE vals were found in entirety.
+        final_return = rets
+
+    return final_return
+
+
+def getTags(tags, varset):
+    retval = {}
+
+    for tagval in tags:
+
+        if tagval in varset:
+            #retval.append(tagval +  '=' + str(varset[tagval]))
+            retval[tagval] = varset[tagval]
+
+    #make a loop or def() that checks of at least one is not none.
+
+    return_final = anyNone(retval)
+    #print return_final
+    return return_final
+
+
+def makePLine(dct):
+    returnvals = []
+    for tags in dct.keys():
+        returnvals.append(str(tags) + "=" + str(dct[tags]))
+
+    return "\t".join(returnvals)
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
+for line in vcf_full:
+    good_tags = getTags(taglst,line.INFO)
+
+    if good_tags is not None:#might need to manage each tag individually
+        print line.CHROM + "\t" + str(line.POS) + "\t" +   makePLine(good_tags)
 
 
 
-#convert the skiplist to bed here, allow for readthrough.
 
-skipper = []# pybedtools.bedtool.BedTool()
-for skiprow in skiplist:
-    start = int(skiprow['pos']) - 1
-    stop = int(skiprow['pos']) + 1
-    if skiprow['stp'] is not None:
-		stop = int(skiprow['stp']) + 1
 
-    skipper.append(skiprow['chr'] + "\t" + str(start)  + "\t" + str(stop))
 
-#convert the omicia csv to annotated bed here:
-for region in skipper:
-    print region
-    region_in_vgr = res.fetch(region.split('\t')[0],int(region.split('\t')[1]),int(region.split('\t')[2]))
 
-    for vgr_record in region_in_vgr:
-        newres.write_record(vgr_record)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
