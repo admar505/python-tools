@@ -84,12 +84,12 @@ def returnWT(wtcall,variant,answer):##if I have a obvious WT allele, this just k
     wtrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     wtrecord.INFO['VAPOR_URL'] = answer['wturl']
     wtrecord.INFO['EFF_HGVS'] = answer['wthgvs']
-    wtrecord.INFO['RSID'] = answer['rsid']
+    wtrecord.INFO['RSID'] = answer['rsid'].split('-')[0]
     wtrecord.INFO['FBTotalDepth'] = variant.INFO['DP']
     wtrecord.INFO['QUAL'] = wtcall.retQUAL
     wtrecord.INFO['FBReferenceAlleleQ'] = variant.INFO['QR']
-    all_hgvs[str(answer['wthgvs'])] = str(answer['rsid'])
-    all_hgvs[str(variant.REF + variant.REF)] = str(answer['rsid'])
+    all_hgvs[str(answer['wthgvs'])] = str(answer['rsid'].split('-')[0])
+    all_hgvs[str(variant.REF + variant.REF)] = str(answer['rsid'].split('-')[0])
 
     newres.write_record(wtrecord)
 
@@ -191,14 +191,14 @@ def raiseFAIL(intendedcall,recover,reason,answer,types):##proto:callao,"REASON, 
     failrecord.INFO['EFF_PROT'] = 'NULL_PROT'
     failrecord.INFO['EFF_HGVS'] = str(answer['homohgvs']) + str(types)
     failrecord.INFO['VAPOR_URL'] = __get_lc__(recover,answer['homohgvs'],types)
-    failrecord.INFO['RSID'] = answer['rsid']#dont forget to trim this biotch
+    failrecord.INFO['RSID'] = answer['rsid'].split('-')[0]#dont forget to trim this biotch
     failrecord.INFO['FBTotalDepth'] = intendedcall.full.INFO['DP']
     failrecord.INFO['QUAL'] = intendedcall.full.QUAL
     failrecord.INFO['FBReferenceAlleleQ'] = intendedcall.full.INFO['QR']
     failrecord.INFO['FAIL_REASON'] = reason
 
-    all_hgvs[str("Unresolved")] = answer['rsid']
-    all_hgvs[str(answer['homohgvs']) + str(types)] = answer['rsid']
+    all_hgvs[str("Unresolved")] = answer['rsid'].split('-')[0]#
+    all_hgvs[str(answer['homohgvs']) + str(types)] = answer['rsid'].split('-')[0]#
 
     newres.write_record(failrecord)
 
@@ -340,13 +340,13 @@ def printVAR(callAO,var_fb,answer,truealt,trust_gl):
         newrecord.INFO['VAPOR_URL'] = het_homo_call[0]
         newrecord.INFO['EFF_HGVS'] = het_homo_call[1]
         newrecord.INFO['EFF_PROT'] = 'NULL_PROT'
-        newrecord.INFO['RSID'] = answer['wt']['rsid']
+        newrecord.INFO['RSID'] = answer['wt']['rsid'].split('-')[0]#
         newrecord.INFO['FBTotalDepth'] = var_fb.INFO['DP']
         newrecord.INFO['QUAL'] = callAO.retQUAL
         newrecord.INFO['FBReferenceAlleleQ'] = var_fb.INFO['QR']
 
-        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[2]] =  answer['wt']['rsid']
-        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[1]] =  answer['wt']['rsid']
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[2]] =  answer['wt']['rsid'].split('-')[0]#
+        all_hgvs[printHetOrHomo(callAO,answer,truealt,trust_gl)[1]] =  answer['wt']['rsid'].split('-')[0]#
 
         newres.write_record(newrecord)
 
