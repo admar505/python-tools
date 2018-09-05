@@ -380,7 +380,7 @@ def assignFinalGT(callAO,var_fb,answer):#ok, so, some logic, if the gt gl all wo
                                          #Also: ensure, with the rsid, that the call is valid.
     truealt = getGoodALT(callAO.defGT_Dict,callAO.WT,var_fb)
     asserted_gt = gtCallOfficial(callAO)
-    #print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +"  + str(answer) + " " + str(var_fb.POS) + " " + var_fb.REF
+    #print "POTENTIAL_CALL  " + asserted_gt + "  " + truealt + " +  +" +  str(answer) + " " + str(var_fb.POS) + " " + str(var_fb.QUAL)
 
     sumofballance = sumAB(var_fb)
     best_gtGL = getBestGL(callAO.assGT_GL)#this value stores what should be returned. test all against this value.
@@ -556,12 +556,15 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
 
     elif hgvslineb in hapmap.keys():
         hgvs_and_url['wthgvs'] = hgvslineb
-        hgvs_and_url['hgvslineb'] = hapmap[hgvslineb]
+        hgvs_and_url['wturl'] = hapmap[hgvslineb]
 
     return hgvs_and_url
 
 
 def printHap(pgxs_handle,vap_url,genesym):
+
+    #print str(pgxs_handle)    + "   ++   " + str(vap_url) + " ++  " + str(genesym)
+
 
     def __loadpgx__(pfi,genesym):
         pgxd = {}
@@ -590,6 +593,9 @@ def printHap(pgxs_handle,vap_url,genesym):
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
     pgxs_handle.seek(0)
+
+
+
 
     newrecord = vgr.model._Record(pgxs['chr'],pgxs['start'],"NULL","NULL",{})
     newrecord.INFO['FBGenoType'] = __gtonly__(vap_url['wthgvs'])
@@ -685,10 +691,6 @@ def addRes(addline):
 
 #####---------combo-value-meals--------####     #####----------------combo-menus--------####
 
-
-
-
-
 def printCombo(adder,gt,effhgvs,vapurl,rsid):#I feel like a failure in many ways, I never had a way of making the printer generic.
                 #I will work on this in the future.
 
@@ -747,7 +749,7 @@ def assignCombo(combo,hgvs_list,filename):#approach:break combo down in to the v
             captured = 1
 
     if captured == 0:
-        printCombo('chrN',__filenamer__(filename),"NOT_FOUND",url,"None")
+        printCombo('chrN',__filenamer__(filename),__filenamer__(filename),url,"None")
 
 
 #####----------------MAIN--------------####     #####----------------MAIN--------------####
@@ -785,6 +787,7 @@ if hapfi:
 #haplotype handling, contains methods for discerning diplotypes and hap|haplotypes.
 for gene_id in hapdat:
     typed = mapHaps(gene_id,hapdat)#I would like to send to printer from 'ere, or fail from 'ere
+
     hap_keys = typed.keys()
     vapfailurl = searchHaps('Unresovled','',recovery,pgx_trans,gene_id)#if more than two, send to raiseFail
 
