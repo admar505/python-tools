@@ -132,7 +132,17 @@ for loadr in loadfile:  #goals here:validate that line was added.
             varPrint(revline,"PA_NOT_LOADED")
 
     else:
-      print load.strip()
+        snpchk = check(ld[3],vapor)
+        checkpa = checkPA(snpchk,ld[3],ld[2],vapor)
+        if snpchk is False:
+
+            varPrint(load,"UUID_NOT_FOUND")
+        elif checkpa is False:
+            varPrint(load,"PA_NOT_LOADED")
+        else:
+            varPrint(load,"PA_ID_LOADED")
+
+
 
 
 
