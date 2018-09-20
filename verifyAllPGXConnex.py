@@ -107,6 +107,7 @@ for loadr in loadfile:  #goals here:validate that line was added.
     elif star is not None:
         revval = star.group(2) + "/" +  star.group(1) + star.group(3)
 
+
         forward = check(ld[3],vapor)
         rev = check(revval,vapor)
 
