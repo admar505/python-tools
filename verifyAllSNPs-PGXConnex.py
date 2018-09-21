@@ -7,12 +7,10 @@ import numpy
 from collections import defaultdict
 #exporter:https://vapor.veritasgenetics.com/?q=admin/structure/views/view/yt_default_search_solr/edit
 #but really:https://vapor.veritasgenetics.com/?q=yt-get-all-variant-links-export&eid=5&return-url=yt-get-all-variant-links-export
-parser = argparse.ArgumentParser(description='validation of the PGX load. takes the rsid and maps answer bed to it. NOTE: must be sorted so that the rsid declaring lines are at top, typically with sort -k 4 -t \',\' -V -r. also, preremove the "/" character from dels  ')
+parser = argparse.ArgumentParser(description='validation of the PGX load. takes the rsid and maps answer bed to it. NOTE: must be sorted so that the rsid declaring lines are at top, typically with sort -k 4 -t \',\' -V -r. also, standardize dels  ')
 parser.add_argument("--pgx", help="The preprepped upload file",required=True)
-parser.add_argument("--ans", help="The product answer bed file",required=True)
+parser.add_argument("--ans", help="The product answer bed file. NOTE: might need to make sure the rsid-ref-var format is clean, sometimes its flipped",required=True)
 parser.add_argument("--trns", help="The gene 2 transcript mapper ",required=True)
-
-
 args = parser.parse_args()
 
 mutfi = args.ans
@@ -34,14 +32,14 @@ def varPrint(hgvs,linedefs):#
 
     print printable
 
+
 def isItWT(a1,a2,t1,t2):#construct expected, and match to that
     isit = False        #t1 is always
 
     inc = [a1,a2]
     targ = [t1,t1]
 
-    print str(inc) + "\t" + str(targ)
-
+    #print str(inc) + "\t" + str(targ)
     if sorted(inc) == sorted(targ):
         isit = True
 
@@ -55,11 +53,11 @@ def isItHOM(a1,a2,t1,t2):#Determines if this rsid pair is right for this call
     inc = [a1,a2]
     targ = [t2,t2]
 
+    #print str(inc) + "\t" + str(targ)
     if sorted(inc) == sorted(targ):
         isit = True
 
     return isit
-
 
 
 def isItHet(a1,a2,t1,t2):#if it is het, makes it a shit ton easier
@@ -67,6 +65,7 @@ def isItHet(a1,a2,t1,t2):#if it is het, makes it a shit ton easier
 
     inc = [a1,a2]
     targ = [t1,t2]
+    #print str(inc) + "\t" + str(targ)
 
     if sorted(inc) == sorted(targ):
         hets = True
@@ -75,34 +74,43 @@ def isItHet(a1,a2,t1,t2):#if it is het, makes it a shit ton easier
 
 
 def varMapper(rss,mainln,ans,gns):#rss is the incoming parsed rsid
-    correct_hgvs = None
-    alleles = []
-    nmtrans = None
-
+    correct_hgvs = None         #returns the hgvs to make uuid
+    alleles = []                #contains incoming alleles.
+    nmtrans = None              #holds the transcript
 
     grab = re.search('([ATGC]{2,})\|\|(\w+)',mainln[3])
+    delgrab = re.search('(\w+)\/(\w+)\|\|(\w+)',mainln[3])
+
+    #print mainln[3]  + "\tTHE main line coming in."
 
     #add change for del type
-    if grab is not None:
-        nmtrans = grab.group(2)
-        alleles = list(grab.group(1))#contains incoming alleles.
-
-    else:
-        delgrab = re.search('(\w+)\/(\w+)\|\|(\w+)',mainln[3])
+    if delgrab is not None:#get the gt from the incoming lines
+        #!!#print str(delgrab.group(1))
         alleles.append(delgrab.group(1))
         alleles.append(delgrab.group(2))
         nmtrans = delgrab.group(3)
-        print str(alleles) + "\t" + str(nmtrans)
+        #!!#print str(alleles) + "\t" + str(nmtrans)
 
-    if re.search('NM_\d+',nmtrans ) is None:
-        nmtrans = gns[nmtrans]
+    elif grab is not None:
+        nmtrans = grab.group(2)
+        alleles = list(grab.group(1))
+    else:
+        print "unable to find the mapping of DATA:" + str(mainln)
+
+
+
+    if re.search('NM_\d+',nmtrans) is None:#if transcriptid is not there,
+        nmtrans = gns[nmtrans]              #look it up
 
     #next trick, assign the TWO allele vals to homo, or WT or HET
 
     for rsval in ans[rss]:#need to check both tho.
 
-        #print rsval +  " top of each rsvalue "
+        #print rsval +  " top of each rsvalue " + rss
         (rtoss,targ1,targ2) =  rsval.split('-')
+
+
+        #print alleles[0] + "\t" + str(targ1)
 
         #strategy: the isit loops check if the call is correct with TorF
         #these will also ensure that the call is correct, ie, that the allele is
@@ -157,7 +165,6 @@ for loadr in loadfile:  #goals here:validate that line was added.
                         #HOW TO access things NOT loaded??ok. plan for each line, if in hte lookup list,
                         # print last call as IN. if not, print OUT
     ld = load.split(',')
-
     rs = re.compile('(rs\d+)')
 
     if rs.search(ld[3]) is not None:
@@ -181,7 +188,7 @@ for loadr in loadfile:  #goals here:validate that line was added.
             (rsbas,ref,var) = rsset.split('-')
 
             if rsbas  not in rsids_encountered:
-                varmapped  = varMapper(rsid,ld,answer,genes)
+                varmapped  = varMapper(rsbas,ld,answer,genes)
 
                 if varmapped is not None:
                  #   print str(varmapped) +"\t" + str(ld) + "\t" +  rsid
