@@ -25,12 +25,12 @@ def getVal(arr,TAG,trn):
     value = None
     cols = arr.split('\t')
 
-  #  if cols[1] == 'NULL':
-  #      cols[1] = '1000'
+    if cols[1] == 'NULL':
+        cols[1] = '1000'
 
 
-  #  if cols[0] == 'chr2' and cols[1] == '234668879':
-  #      cols[1] = 234668919
+    if cols[0] == 'chr2' and cols[1] == '234668879':
+        cols[1] = '234668919'
 
     def __getNM__(ar):
 
