@@ -88,14 +88,14 @@ for oln in olds:
     olddat[getVal(oln,'location',transdat)] = getVal(oln,'EFF_HGVS',transdat)
     #print str(olddat)
 
-print "newcall\toldcall"
+print "position\tnewcall\toldcall"
 
 for nln in news:
     col = nln.split('\t')
     loc = col[0] + ":" + col[1]
     if loc in olddat:
         effnew = getVal(nln,'EFF_HGVS',transdat)
-        print effnew + "\t" + olddat[loc]
+        print loc +"\t" + effnew + "\t" + olddat[loc]
 
 
     else:
