@@ -68,9 +68,19 @@ def getVal(arr,TAG,trn):
         else:
             value = cols[4]
 
+    elif TAG == 'chrN':
+        getnm = re.search('(EFF_HGVS=\S+)',arr)
+
+        if getnm is not None:
+            value = getnm.group(1)
+
+        else:
+            value = cols[4]
+
     return value
 
-
+def callNotFound(new_input):
+    print "NEW_CALL_UNKNOWN\t" + new_input.strip()
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
@@ -83,23 +93,33 @@ for line in trnss:
 
 olddat = {}#stores the old calls. chr:pos
 
-
 for oln in olds:
     olddat[getVal(oln,'location',transdat)] = getVal(oln,'EFF_HGVS',transdat)
-    #print str(olddat)
+    olddat[getVal(oln,'chrN',transdat)] = getVal(oln,'chrN',transdat)
+    #print str(getVal(oln,'chrN',transdat))
+
 
 print "position\tnewcall\toldcall"
 
 for nln in news:
     col = nln.split('\t')
     loc = col[0] + ":" + col[1]
-    if loc in olddat:
+
+    if loc in olddat and col[0] != 'chrN':
         effnew = getVal(nln,'EFF_HGVS',transdat)
         print loc +"\t" + effnew + "\t" + olddat[loc]
 
+    elif col[0] == 'chrN':
+        effnew = getVal(nln,'chrN',transdat)
+
+        if effnew in olddat and effnew is not None:
+            print loc +"\t" + str(effnew) + "\t" + olddat[effnew]
+
+        else:
+            callNotFound(nln)
 
     else:
-        print "NEW Call NOT FOUND:" +  nln.strip()
+        callNotFound(nln)
 
 
 

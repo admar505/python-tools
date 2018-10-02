@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys,os,re,fileinput,argparse
-sys.path.append('/home/nucleo/lib/PyVGRes')
+sys.path.append('/home/diegoisi/lib/PyVGRes')
 import vgr
 import csv
 import random
