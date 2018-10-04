@@ -1,8 +1,9 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
+sys.path.append('/home/diegoisi/anaconda/lib/python2.7/site-packages')
 import vcf
-sys.path.append('/home/nucleo/lib/PyVGRes')
-sys.path.append('/home/nucleo/lib/AltObject')
+sys.path.append('/home/diegoisi/lib/PyVGRes')
+sys.path.append('/home/diegoisi/lib/AltObject')
 import vgr
 import altobject
 import loadaltdats
@@ -478,18 +479,17 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
     try:#
         hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype_inc)
 
-        if hid.group(1) == "TPMT":      #TPMT, detect if hid contains subtype, and allow
+        if str(hid.group(1)) == "TPMT":      #TPMT, detect if hid contains subtype, and allow
             haptype.append(hid.group(2))#
 
-            if hid.group(3).isalpha() is True and hid.group(3).isdigit() is True:
+            if hid.group(3).isalpha() is True or hid.group(3).isdigit() is True:
                 haptype.append(hid.group(3))
 
-            if hid.group(4).isalpha() is True and hid.group(4).isdigit() is True:
+            if hid.group(4).isalpha() is True or hid.group(4).isdigit() is True:
                 haptype.append(hid.group(4))
 
         else:
             haptype.append(hid.group(2))
-
             if hid.group(3).isdigit() is True:
                 haptype.append(hid.group(3))
 
@@ -498,6 +498,8 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
 
     except TypeError:#
         print "unable to parse " + str(haptype) + " correctly, please check output and code"
+
+    print str(haptype)
 
     return "".join(haptype)
 
