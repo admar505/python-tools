@@ -499,8 +499,6 @@ def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break 
     except TypeError:#
         print "unable to parse " + str(haptype) + " correctly, please check output and code"
 
-    print str(haptype)
-
     return "".join(haptype)
 
 
