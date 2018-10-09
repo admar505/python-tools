@@ -472,12 +472,18 @@ def answer_dict(full_ans):#create tree of rsid to answer.
 
 
 def hapFormat(haptype_inc):#BLAH, I think GEne specific regex. darn.well, break em out by bite, the send to recon
-                       #method, and return the
+                       #method, and return the type. THIS IS FOR HAPLotypes file.
 
     haptype = []
 
     try:#
-        hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,10}\)?)',haptype_inc)
+        hid = re.search('(\w+)(\*\w)(\w?)(\w?)(\(?[A-Za-z,]{0,11}\)?)',haptype_inc)
+        #create unresolved catchto pull that for sure
+        unres_catch = re.search('\*?(\w?Unresolved)',haptype_inc)
+
+        if unres_catch is not None:
+            haptype.append(unres_catch.group(1))
+
 
         if str(hid.group(1)) == "TPMT":      #TPMT, detect if hid contains subtype, and allow
             haptype.append(hid.group(2))#
@@ -593,9 +599,6 @@ def printHap(pgxs_handle,vap_url,genesym):
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
     pgxs_handle.seek(0)
-
-
-
 
     newrecord = vgr.model._Record(pgxs['chr'],pgxs['start'],"NULL","NULL",{})
     newrecord.INFO['FBGenoType'] = __gtonly__(vap_url['wthgvs'])
