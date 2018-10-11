@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description="select infor from VCF")
 parser.add_argument("--vcf",help="vcf file, bgzipped and tabixed as -p vcf",required=True)
 parser.add_argument("--list",help="lost to search through, in CAP format",required=True)
 parser.add_argument("--trans",help="allowed transcripts, format example NM_014946.3",required=True)
-parser.add_argument("--tag",help="allowed transcripts, format example NM_014946.3",required=True,action='append')
+parser.add_argument("--tag",help="VGR values to return, EFF_HGVS, etc for example",required=True,action='append')
 parser.add_argument("--id",help="sample id, so that the bams can be called correctly",required=True)
 parser.add_argument("--redo",help="USE if the temp files have all been generated, and the only thing needed is to repull tags.",default=False,action="store_true")
 
@@ -63,12 +63,10 @@ def recallVar(needline):
     vcfonevar = vcf.Reader(open(vcfoutname,'r'))
 
     for capvar in vcfonevar:
-
-        grandoutfile.write(needline['Gene_Name'] + "\t" + needline['HGNC_ID'] + "\t"+ needline['Trans'] +"\t"+ needline['Chr'] +"\t"+ str(needline['Pos']) +"\t"+  needline['Required'] +"\t"+ str(capvar.QUAL) +"\t"+ str(capvar.POS) +"\t"+ capvar.samples[0]['GT'] + "\n")
+        grandoutfile.write(str(needline['Gene_Name']) + "\t" + str(needline['HGNC_ID']) + "\t"+ str(needline['Trans']) +"\t"+ str(needline['Chr']) +"\t"+ str(needline['Pos']) +"\t"+  str(needline['Required']) +"\t"+ str(capvar.QUAL) +"\t"+ str(capvar.POS) +"\t"+ str(capvar.samples[0]['GT']) + "\n")
 
 def checkTags(complete,taggies):
     return_array = []
-
     for tag in taggies:
         try:
             return_array.append(complete[tag])
@@ -83,7 +81,7 @@ def mergeNWrite(vgrfile,caps,qval):
     for line in completefile:
         printarray = checkTags(line.INFO,tagarray)
 
-        grandoutfile.write(caps['Gene_Name'] + "\t" + caps['HGNC_ID'] + "\t"+ caps['Trans'] +"\t"+ caps['Chr'] +"\t"+ caps['Pos'] +"\t"+  caps['Required'] +"\t"+ str(qval) + "\t" + "\t".join(printarray) + "\n")
+        grandoutfile.write(str(caps['Gene_Name']) + "\t" + str(caps['HGNC_ID']) + "\t"+ str(caps['Trans']) +"\t"+ str(caps['Chr']) +"\t"+ str(caps['Pos']) +"\t"+  str(caps['Required']) +"\t"+ str(qval) + "\t" + "\t".join(printarray) + "\n")
         #+"\t"+ line.POS +"\t"+ line.INFO['EFF_HGVS'] + "\t"+ line.INFO['FBReferenceAlleleQ'] +"\t"+  line.INFO['FBGenoType'] +"\t"+ line.INFO['VAPOR_URL']
 
 
@@ -108,6 +106,9 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
         call(['/vbin/ensembl-tools-release-86/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' + rsid + '.VEP.vcf --dir /vbin/ensembl-tools-release-86/  --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
         sys.stdout.flush()
+
+
+        errout = open(rsid + '.stderrr',"w")
 
         complete = open(rsid + '.COMPLETE.txt',"w")
 
