@@ -127,8 +127,16 @@ def newHGVS(place,vgTransID,rsid, newtrans):
 
 
 def RSIDadder(hgv):
-    m = re.search('(\w+)>(\w+)',hgv)
-    rsidadder = "-" + m.group(1)  + "-" + m.group(2)
+    m = re.search('(\w+)([>delins]{1,3})(\w+)',hgv)#absolutely RETARDED, captures min not max
+
+    if m.group(2) == 'l':
+        rsidadder = "-" + "del-" + m.group(3)
+
+    elif m.group(2) == 's':
+        rsidadder = "-" + "ins-" + m.group(3)
+
+    else:
+        rsidadder = "-" + m.group(1) + "-" + m.group(3)
 
     return rsidadder
 
