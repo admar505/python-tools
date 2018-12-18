@@ -20,7 +20,7 @@ trans = open(transfi,'r')
 ##-----------defs--------##
 
 
-def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
+def varPrint(row1,pos,local,refalt):#HERE:expand to all vartypes, and print out.
                              #(het, homovar, wt+)
     #print pos[1]
     #adjust to account for del. Stupid CFTR.
@@ -50,9 +50,9 @@ def varPrint(row1,pos,local):#HERE:expand to all vartypes, and print out.
 
 
     npwt = np.group(1) + np.group(2) + "="
-    print row1[0] +","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[1] + "||"+ pos[0]
-    print row1[0] +","+ npwt + "," + pos[0] + "," +   local + "," + npwt + "||"+ pos[0]
-    print row1[0] +","+ pos[1] + ":0/1," + pos[0] + "," +   local + "," + pos[1] + ":0/1||"+ pos[0]
+    print row1[0] + refalt + ","+ pos[1] + "," + pos[0] + "," +   local + "," + pos[1] + "||"+ pos[0]
+    print row1[0] + refalt + ","+ npwt + "," + pos[0] + "," +   local + "," + npwt + "||"+ pos[0]
+    print row1[0] + refalt + ","+ pos[1] + ":0/1," + pos[0] + "," +   local + "," + pos[1] + ":0/1||"+ pos[0]
 
 
 
@@ -126,13 +126,30 @@ def newHGVS(place,vgTransID,rsid, newtrans):
     return newvar
 
 
+def RSIDadder(hgv):
+    m = re.search('(\w+)([>delins]{1,3})(\w+)',hgv)#absolutely RETARDED, captures min not max
+
+    if m.group(2) == 'l':
+        rsidadder = "-" + "del-" + m.group(3)
+
+    elif m.group(2) == 's':
+        rsidadder = "-" + "ins-" + m.group(3)
+
+    else:
+        rsidadder = "-" + m.group(1) + "-" + m.group(3)
+
+    return rsidadder
+
+
+
+
 def perf(ind):
     return "NULL"
 
 #------------main--------##
 goodtrans = {}
 for tr in trans:
-    m = re.match('(NM_\d+)\.(\d+)',tr)
+    m = re.match('(\w{2}_\d+)\.(\d+)',tr)
     goodtrans[m.group(1)] = m.group(2)
 
 for rsid in muts:
@@ -143,12 +160,14 @@ for rsid in muts:
     transhgvs = []#store NM ids
     althgvs = [] #store alternate, as in NR,XR ids
     failhgvs = ""#only use if no hgvs is available, ie, only if
+
     for ncbi in ncbi_ids.split('|'):
         #print ncbi
         if re.match('NC_',ncbi):
             m = re.match('NC_0{1,6}(\d+)\.(\d+):g.(\d+)(.*)',ncbi)
             storelocale[int(m.group(2))] = m.group(3)
             failhgvs = m.group(4)
+
             if len(storelocale) == 2:
                 storek =  storelocale.keys()
 
@@ -164,7 +183,7 @@ for rsid in muts:
     if transhgvs:
         for positions in transhgvs:##This is valid, as thare T>G and T>C or A type mutations.
             #perf(1)
-            varPrint(onerow,positions,localeprint)
+            varPrint(onerow,positions,localeprint,RSIDadder(failhgvs))
 
     elif althgvs:
         altID = []
@@ -173,11 +192,11 @@ for rsid in muts:
         if altID is not None:
             c = 0
             while c < len(altID):
-                varPrint(onerow,altID[c],localeprint)
+                varPrint(onerow,altID[c],localeprint,RSIDadder(failhgvs))
                 c += 1
 
     else:#NOW: this is working correctly here.)
-        varPrint(onerow,newHGVS(failhgvs,vgTransID,onerow[0],newtrans),localeprint)
+        varPrint(onerow,newHGVS(failhgvs,vgTransID,onerow[0],newtrans),localeprint,RSIDadder(failhgvs))
         vgTransID += 1
 
 

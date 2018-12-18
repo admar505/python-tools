@@ -72,7 +72,7 @@ for line in vcf_full:
     good_tags = getTags(taglst,line.INFO)
 
     if good_tags is not None:#might need to manage each tag individually
-        print line.CHROM + "\t" + str(line.POS) + "\t" +   makePLine(good_tags)
+        print line.CHROM + "\t" + str(line.POS) + "\t" + str(line.REF) + "\t" + str(line.ALT) + "\t" +   makePLine(good_tags)
 
 
 
