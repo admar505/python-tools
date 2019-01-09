@@ -80,22 +80,29 @@ def runReads(prefix):
 
     #prefix = int(numpy.random.uniform(1,threads))
 
-    out1 = open(idname + "." +  str(prefix) + ".R1.fastq",'w')
-    out2 = open(idname + "." +  str(prefix) +  ".R2.fastq",'w')
+    out1 = open(idname + "." + str(prefix) +  ".R1.fastq",'w')
+    out2 = open(idname + "." + str(prefix) +  ".R2.fastq",'w')
 
     c = 0
-    while c <  term:
+    while c <  loops:
+        numpy.random.seed(seed = None)
         startLeft = int(numpy.random.uniform(1,len(seq)))
 
         if startLeft < len(seq) - int(frags):
             c = c + 1
             rname = read_name(idname)
             reads = getSeqs(seq,rlen,startLeft)
-            #   ncheck
-            out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
-            out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
 
-        #c = c + 1
+            allnnn1 = re.findall('N',reads[0])
+            allnnn2 = re.findall('N',reads[1])
+
+            if len(allnnn1) < len(reads) and len(allnnn2) < len(reads):
+                #   ncheck
+                out1.write(rname + "/1\n" + str(reads[0]) + "\n+\n" + genQual(rlen) + "\n")
+                out2.write(rname + "/2\n" + str(reads[1]) + "\n+\n" + genQual(rlen) + "\n")
+
+    out1.close()
+    out2.close()
 
 def createReads(seqs,readlength,dpx,identifiername):#create reads,choose rand selections
     global idname
@@ -104,9 +111,12 @@ def createReads(seqs,readlength,dpx,identifiername):#create reads,choose rand se
     rlen = readlength
     global seq
     seq = seqs
+    global term
     term = calcCov(len(seq),rlen,dpx)
     #c = 0
     global loops
+
+
 
     loops = int(int(term)/int(args.threads))
 
@@ -116,10 +126,19 @@ def createReads(seqs,readlength,dpx,identifiername):#create reads,choose rand se
 
         resultsgetter = workers.map(runReads,range(1,args.threads))
 
+    #FILE handling, make in to one.
 
 
+    r1 = "full." + str(idname) + ".R1.fastq"
+    r2 = "full." + str(idname) + ".R2.fastq"
 
+    totf1 = open(r1,'w')
+    totf2 = open(r2,'w')
 
+    subprocess.call("cat " + idname + ".*" +    ".R1.fastq  ",shell=True,stdout = totf1)
+    subprocess.call("cat " + idname + ".*" +    ".R2.fastq  ",shell=True,stdout = totf2)
+    subprocess.call("rm "   + idname + ".*" +    ".R2.fastq ",shell=True)
+    subprocess.call("rm "   + idname + ".*" +    ".R1.fastq ",shell=True)
 
 
 #+++++++main++++++++++++
@@ -133,6 +152,10 @@ for mutations_line in mutations_lines:
     moperator2 = mutations_data[5].strip()
     malteration2 = mutations_data[6].strip()
     old_seq = fasta_dct[mchrom]#whatshould this be? the file handle?
+    snpfind = re.search('>',moperator)
+    if snpfind is not None:
+        mutations_data[3] = 'snp'
+
     new_id = args.output + "." +  "-".join(mutations_data[0:7]).strip()  +  ".fa"
     if(moperator == "del"):
 	#	if (malteration.isalpha()):
