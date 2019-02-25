@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
-sys.path.append('/home/diegoisi/anaconda/lib/python2.7/site-packages')
+sys.path.append('/home/nucleo/anaconda/lib/python2.7/site-packages')
 import vcf
-sys.path.append('/home/diegoisi/lib/PyVGRes')
-sys.path.append('/home/diegoisi/lib/AltObject')
+sys.path.append('/home/nucleo/lib/PyVGRes')
+sys.path.append('/home/nucleo/lib/AltObject')
 import vgr
 import altobject
 import loadaltdats
@@ -750,9 +750,9 @@ def assignCombo(combo,hgvs_list,filename):#approach:break combo down in to the v
         if combogood is True:
             printCombo('chrN',__gtmaker__(variants),variants,url,rsid)
             captured = 1
-
+    print captured
     if captured == 0:
-        printCombo('chrN',__filenamer__(filename),__filenamer__(filename),url,"None")
+        printCombo('chrN',__filenamer__(filename),__filenamer__(filename),"None","None")
 
 
 #####----------------MAIN--------------####     #####----------------MAIN--------------####
