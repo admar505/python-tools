@@ -31,12 +31,14 @@ for header in seen_title:
     if seen_title[header] > 1:
         dupes[header] = seen_title[header]
 
+
+
 fq.seek(0)
 
 print "ready to print...."
 
 for fq_rec in Bio.SeqIO.QualityIO.FastqGeneralIterator(fq):
 
-    if fq_rec[0] not in dupes.keys():
+    if fq_rec[0] not in dupes:
         outfq.write("@"+ str(fq_rec[0]) + "\n" + str(fq_rec[1]) +"\n+\n" + str(fq_rec[2]) +"\n")
 
