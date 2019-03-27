@@ -263,6 +263,9 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
     allowed_answer_line = None
 
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
+
+        print str(ans_alt) + "\t" + str(answer)  #DEBUG
+
         if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
                                                                     #and the realGT is Homo
 
@@ -274,10 +277,14 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
             for potential_call in  callao.full.ALT:
                 het_from_answer = [str(callao.full.REF),str(potential_call)]
 
+                print str(het_from_answer) + "\t"   + str(potential_call)  #DEBUG
+                print str(check_final_Het(the_real_gt,het_from_answer))  + "\t" +  str(answer['start']) #DEBUG
+
                 if (potential_call == ans_alt or re.search('del.*',ans_alt) is not None) and check_final_Het(the_real_gt,het_from_answer) is True:#here checkFinalGT
                 #if potential_call == ans_alt and check_final_Het(the_real_gt,sorted(het_from_answer)) is True:#here should be checkFinalGT
                     allowed_answer_line = answer['calls'][ans_alt]
                     #print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
+
 
     if allowed_answer_line is None:
         raiseFAIL(callao,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
