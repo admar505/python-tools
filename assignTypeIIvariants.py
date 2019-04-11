@@ -565,9 +565,6 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
 
 def printHap(pgxs_handle,vap_url,genesym):
 
-    #print str(pgxs_handle)    + "   ++   " + str(vap_url) + " ++  " + str(genesym)
-
-
     def __loadpgx__(pfi,genesym):
         pgxd = {}
         for pf in pfi:
@@ -577,11 +574,16 @@ def printHap(pgxs_handle,vap_url,genesym):
         return pgxd
 
     def __gtonly__(string):
-        gtwood =string.split('|')
+        gtwood = string.split('|')
         returngt = gtwood[0]
+
         if re.search('.\[.*',gtwood[0]) is not None:
             gttype = re.search('.(\[.*)',gtwood[0])
             returngt =  gttype.group(1)
+
+        elif re.search('Unresovled',gtwood[0]) is not None:#repairs the Unresovled issue.
+            returngt = "Unresolved"
+
 
         return returngt
 
@@ -589,8 +591,16 @@ def printHap(pgxs_handle,vap_url,genesym):
     def __fliphgvs__(wth):
 
         if re.match('.*?\|\|.*',wth):
+
+            def __uncatch__(text2chx):#this is intended to fix the Unresolved Unresovled
+                if re.match('Unresovled',text2chx):
+                    text2chx = "Unresolved"
+
+                return text2chx
+
             flp = re.search('(.*?)\|\|(.*)',wth)
-            wth = flp.group(2) + ":" + flp.group(1)
+            wth = flp.group(2) + ":" + __uncatch__(flp.group(1))
+
         return wth
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
