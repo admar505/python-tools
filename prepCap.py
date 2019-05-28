@@ -14,6 +14,7 @@ parser.add_argument("--trans",help="allowed transcripts, format example NM_01494
 parser.add_argument("--tag",help="VGR values to return, EFF_HGVS, etc for example",required=True,action='append')
 parser.add_argument("--id",help="sample id, so that the bams can be called correctly",required=True)
 parser.add_argument("--redo",help="USE if the temp files have all been generated, and the only thing needed is to repull tags.",default=False,action="store_true")
+parser.add_argument("--redomatcher",help="USE if the temp files are good, BUT, the matchpaths needs to be redone",default=False,action="store_true")
 
 args = parser.parse_args()
 vcffi = args.vcf
@@ -91,7 +92,8 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
     rsid = capln['Chr'] + "."  + capln['Pos']
 
-    if args.redo is not True:
+    if args.redo is not True and args.redomatcher is not True:
+        print "I am in this thing here kay"
         vcf_write = vcf.Writer(open(rsid + '.Merged.vcf','w'),vcf_4_header)
         vcf_write.write_record(vcfln)
         sys.stdout.flush()
@@ -110,7 +112,10 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
         errout = open(rsid + '.stderrr',"w")
 
+    if args.redomatcher is True or (args.redo is not True and args.redomatcher is not True):
+
         complete = open(rsid + '.COMPLETE.txt',"w")
+        errout = open(rsid + '.stderrr',"w")
 
         call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
 
