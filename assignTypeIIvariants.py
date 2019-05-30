@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import sys,os,re,fileinput,argparse
-sys.path.append('/home/nucleo/anaconda/lib/python2.7/site-packages')
+sys.path.append('/home/diegoisi/anaconda/lib/python2.7/site-packages')
 import vcf
-sys.path.append('/home/nucleo/lib/PyVGRes')
-sys.path.append('/home/nucleo/lib/AltObject')
+sys.path.append('/home/diegoisi/lib/PyVGRes')
+sys.path.append('/home/diegoisi/lib/AltObject')
 import vgr
 import altobject
 import loadaltdats
@@ -265,23 +265,19 @@ def choose_answer(homo,alt,callao,answer,trust_gl):#THIS is final check, needs t
     for ans_alt in  answer['calls']:#CALLS contains the ALT.
         if homo is True and check_final_Homo(the_real_gt) is True:  #if HOM, then both the alt matches alt
                                                                     #and the realGT is Homo
-
-            if alt == ans_alt:#here should be checkFinalGT
-
+            if (alt == ans_alt) or (re.search('del.*',ans_alt) is not None):
                 allowed_answer_line = answer['calls'][ans_alt]
 
         else:
+
             for potential_call in  callao.full.ALT:
                 het_from_answer = [str(callao.full.REF),str(potential_call)]
 
                 if (potential_call == ans_alt or re.search('del.*',ans_alt) is not None) and check_final_Het(the_real_gt,het_from_answer) is True:#here checkFinalGT
-                #if potential_call == ans_alt and check_final_Het(the_real_gt,sorted(het_from_answer)) is True:#here should be checkFinalGT
                     allowed_answer_line = answer['calls'][ans_alt]
-                    #print "captured HET  " + str(potential_call) + "\t" +  str( answer['calls'][ans_alt]['heturl'])
 
     if allowed_answer_line is None:
         raiseFAIL(callao,recovery,"UNKNOWN_GENOTYPE",answer['wt'],":LC")
-        #print "CAPTURED FAIL    "  + str(answer)
 
     else:
         return allowed_answer_line
@@ -569,9 +565,6 @@ def searchHaps(hapa,hapb,rec,pgxs_handle,genesym):
 
 def printHap(pgxs_handle,vap_url,genesym):
 
-    #print str(pgxs_handle)    + "   ++   " + str(vap_url) + " ++  " + str(genesym)
-
-
     def __loadpgx__(pfi,genesym):
         pgxd = {}
         for pf in pfi:
@@ -581,11 +574,16 @@ def printHap(pgxs_handle,vap_url,genesym):
         return pgxd
 
     def __gtonly__(string):
-        gtwood =string.split('|')
+        gtwood = string.split('|')
         returngt = gtwood[0]
+
         if re.search('.\[.*',gtwood[0]) is not None:
             gttype = re.search('.(\[.*)',gtwood[0])
             returngt =  gttype.group(1)
+
+        elif re.search('Unresovled',gtwood[0]) is not None:#repairs the Unresovled issue.
+            returngt = "Unresolved"
+
 
         return returngt
 
@@ -593,8 +591,16 @@ def printHap(pgxs_handle,vap_url,genesym):
     def __fliphgvs__(wth):
 
         if re.match('.*?\|\|.*',wth):
+
+            def __uncatch__(text2chx):#this is intended to fix the Unresolved Unresovled
+                if re.match('Unresovled',text2chx):
+                    text2chx = "Unresolved"
+
+                return text2chx
+
             flp = re.search('(.*?)\|\|(.*)',wth)
-            wth = flp.group(2) + ":" + flp.group(1)
+            wth = flp.group(2) + ":" + __uncatch__(flp.group(1))
+
         return wth
 
     pgxs = __loadpgx__(csv.DictReader(pgxs_handle,delimiter='\t'),genesym)
@@ -750,7 +756,7 @@ def assignCombo(combo,hgvs_list,filename):#approach:break combo down in to the v
         if combogood is True:
             printCombo('chrN',__gtmaker__(variants),variants,url,rsid)
             captured = 1
-    print captured
+
     if captured == 0:
         printCombo('chrN',__filenamer__(filename),__filenamer__(filename),"None","None")
 
