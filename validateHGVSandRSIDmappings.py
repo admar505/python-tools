@@ -4,6 +4,13 @@ import subprocess
 import re
 import csv
 import numpy
+import hgvs
+
+##This is version 2, will now do the lookup in HGVS lands, using local HGVS
+#    # after install    #    #
+#export HGVS_SEQREPO_DIR=/usr/local/share/seqrepo/2018-11-26
+#export UTA_DB_URL=postgresql://anonymous@localhost:15032/uta/uta_20170117
+##
 
 parser = argparse.ArgumentParser(description='given a list of hgvss\'/rsids from mutalyzer, see if they the same as the list from the genome  ')
 parser.add_argument("--mut", help="Batch output",required=True)
