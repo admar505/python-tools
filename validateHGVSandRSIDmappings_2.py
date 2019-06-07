@@ -64,11 +64,12 @@ for hg in vgr:
     isitgood = None
 
     varparse = hgvs.parser.Parser()
-    vartomap = varparse.parse_hgvs_variant(hg['hgvs'])
+
     try:
+        vartomap = varparse.parse_hgvs_variant(hg['hgvs'])
         mappedvar = varmapper.c_to_g(vartomap)
 
-    except hgvs.exceptions.HGVSInvalidIntervalError:
+    except (hgvs.exceptions.HGVSInvalidIntervalError,hgvs.exceptions.HGVSParseError, hgvs.exceptions.HGVSInvalidVariantError) as e:
 
         print("NO_MAPPING\t" + str(hg['chr']) + "\t" + str(hg['pos']) + "\t" +  str(hg['hgvs']) )
         mappedvar = None
@@ -90,10 +91,10 @@ for hg in vgr:
 
         if isitgood == True:
             print("MATCH_FOUND\t" + hg['hgvs'] + "\t" + hg['chr'] + "\t" + hg['pos']  + "\tchr" + m.group(1) + "\t" + storelocale[storek[0]])
-
+            mappedvar = None
         else:
-            print("INCORRECT_POSITION\t" + str(hg) + "\t" + str(mappedvar) )
-
+            print("INCORRECT_POSITION\t" + hg['hgvs'] + "\t" + hg['chr'] + "\t" + hg['pos']  + "\t" + str(mappedvar) )
+            mappedvar = None
 
 
 
