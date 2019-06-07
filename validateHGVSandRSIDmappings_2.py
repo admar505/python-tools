@@ -39,50 +39,60 @@ database = hgvs.dataproviders.uta.connect("postgresql://anonymous@localhost:1503
 
 ##-----------defs--------##
 
-def checkMatch(inc_hgvs,inc_chr,inc_pos,matchd):#newtranslated_pos,dictionary
+def checkMatch(inc_chr,inc_pos,mapd_chr,mapd_pos):#newtranslated_pos,dictionary
 
     found = False
 
-    if inc_hgvs in matchd:
-        chk_val = "chr" + inc_chr + ":" + inc_pos
+    inc_val = inc_chr + ":" + inc_pos
+    chk_val = "chr" + mapd_chr + ":" + mapd_pos
 
-        if chk_val == matchd[inc_hgvs]:
-            found =True
+    if chk_val == inc_val:
+    	found =True
 
     return found
-
-
 
 
 #------------main--------##
 
 #blah, turn the hgvs into a dict
 
-lookup = {}
-
+varmapper = hgvs.assemblymapper.AssemblyMapper(database, assembly_name='GRCh37', alt_aln_method='splign')
 
 for hg in vgr:
 
+    storelocale = {}
     isitgood = None
 
     varparse = hgvs.parser.Parser()
     vartomap = varparse.parse_hgvs_variant(hg['hgvs'])
+    try:
+        mappedvar = varmapper.c_to_g(vartomap)
 
-    varmapper = hgvs.assemblymapper.AssemblyMapper(database, assembly_name='GRCh37', alt_aln_method='splign')
+    except hgvs.exceptions.HGVSInvalidIntervalError:
 
-
-    mappedvar = varmapper.c_to_g(vartomap)
-
-    print(mappedvar)
-
-
+        print("NO_MAPPING\t" + str(hg['chr']) + "\t" + str(hg['pos']) + "\t" +  str(hg['hgvs']) )
+        mappedvar = None
 
 
-    #if isitgood == True:
-    #    print("MATCH_FOUND\t" + resvalues[0] + "\tchr" + m.group(1) + "\t" + storelocale[storek[0]])
+    if re.match('NC_',str(mappedvar)):
+        m = re.match('NC_0{1,6}(\d+)\.(\d+):g.(\d+)(.*)',str(mappedvar))
+        storelocale[int(m.group(2))] = m.group(3) #loads the version, so that it can be sorted on.
+        #print(m.group(3) + "\t" + m.group(2) + "\t" + m.group(1))
+        #print("match " + m.group(2) )
+        #print(str(len(storelocale.keys())) + "\t" +  str(storelocale.keys()))
 
-    #else:
-    #    print("NOT_FOUND or NOT_RETURNED\t" + resln )
+    if len(storelocale.keys()) == 1:
+        storek =  storelocale.keys()#this statement, will autosort??
+
+        isitgood = checkMatch(hg['chr'],hg['pos'],m.group(1),m.group(3))
+
+
+
+        if isitgood == True:
+            print("MATCH_FOUND\t" + hg['hgvs'] + "\t" + hg['chr'] + "\t" + hg['pos']  + "\tchr" + m.group(1) + "\t" + storelocale[storek[0]])
+
+        else:
+            print("INCORRECT_POSITION\t" + str(hg) + "\t" + str(mappedvar) )
 
 
 
