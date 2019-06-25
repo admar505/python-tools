@@ -69,7 +69,7 @@ for hg in vgr:
         vartomap = varparse.parse_hgvs_variant(hg['hgvs'])
         mappedvar = varmapper.c_to_g(vartomap)
 
-    except (hgvs.exceptions.HGVSDataNotAvailableError, hgvs.exceptions.HGVSInvalidIntervalError,hgvs.exceptions.HGVSParseError, hgvs.exceptions.HGVSInvalidVariantError) as e:
+    except (IndexError, hgvs.exceptions.HGVSDataNotAvailableError, hgvs.exceptions.HGVSInvalidIntervalError,hgvs.exceptions.HGVSParseError, hgvs.exceptions.HGVSInvalidVariantError) as e:
 
         print("NO_MAPPING\t" + str(hg['chr']) + "\t" + str(hg['pos']) + "\t" +  str(hg['hgvs']) )
         mappedvar = None
