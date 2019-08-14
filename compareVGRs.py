@@ -4,15 +4,14 @@ sys.path.append('/home/nucleo/lib/PyVGRes')
 import vgr
 import csv
 import random
-parser = argparse.ArgumentParser(description="select infor from VCF")
-parser.add_argument("--vgr",help="vcf file, bgzipped and tabixed as -p vcf",required=True)
+parser = argparse.ArgumentParser(description="select info from VGR, and compare multiple files based on the values")
+parser.add_argument("--vgr",help="vcf file, bgzipped and tabixed as -p vcf, use as tacos.",required=True,action='append')
 parser.add_argument("--tag",help="tag to pull",required=True,action='append')
 
 args = parser.parse_args()
 vcffi = args.vgr
 taglst = args.tag
 
-vcf_full = vgr.Reader(open(vcffi,'r'))
 
 #parse results in a map or dict, or what??
 
@@ -68,13 +67,28 @@ def makePLine(dct):
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
-for line in vcf_full:
-    good_tags = getTags(taglst,line.INFO)
+mapped_lines = {}#store results. primary key is the key of VGR.
 
-    if good_tags is not None:#might need to manage each tag individually
-        print line.CHROM + "\t" + str(line.POS) + "\t" + str(line.REF) + "\t" + str(line.ALT) + "\t" +   makePLine(good_tags)
+for vgrfi in args.vgr:
+    vgr_full = vgr.Reader(open(vgrfi,'r'))
 
+    file_name = str(vgrfi)
 
+    for line in vgr_full:
+        if str(line) in mapped_lines:
+
+            mapped_lines[str(line)] = int(mapped_lines[str(line)]) + 1
+
+        else:
+            mapped_lines[str(line)] = 1
+
+        good_tags = getTags(taglst,line.INFO)
+
+        #if good_tags is not None:#might need to manage each tag individually
+        #    print line.CHROM + "\t" + str(line.POS) + "\t" + str(line.REF) + "\t" + str(line.ALT) + "\t" +   makePLine(good_tags)
+
+for position in mapped_lines:
+    print(str(position) + "\t"  + str(mapped_lines[position]))
 
 
 
