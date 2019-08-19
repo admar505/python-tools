@@ -39,43 +39,90 @@ newvapor = csv.writer(open(csvfile, 'w'),  delimiter=',')
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 
-def getVal(desiredval,answer):
+def getVal(desiredval,answer):#the line being needed to map == desiredval, the full answerfile == answer
 
     variant_uuid = None
 
-    def __match_rs__(rs_targ):
-        #find rsid in answer:
+    def __match_rs__(rs_targ):#get correct rsid
+
         ansfi.seek(0)
 
-        def __matchalt__():
+        def __matchalt__(targ,ansl,nucl,full_answer,desval):#get the right hgvs nucleotide == desired nucleotides
+
+            def __split__(nucl):#decide if snp or del
+                if len(nucl) == 2:
+                    return(list(nucl))
+
+                else:
+                    alts = nucl.split("/")#here, I am getting Del worked out
+
+                    if 'D' in alts[0]:
+                        return(alts[0].lower(),alts[1].lower())
+
+                    elif 'D' in alts[1]:
+                        return(alts[0],alts[1].lower())
+
+                    else:
+                        return(alts[0],alts[1])
+
+            def __choosehomo_or_wt__(targ_refalt,ansl,full_answer):#targrefalt, which ansl is it?
+                                                                   #if ref matches targ[0] and targ[1] its WT+
+                def __getansnuc__(an):                             #if ref matches targ[0] and alt matches targ[1]
+                    annuc = an.split('-')                          #if ref matches none, its homovar
+                    return(annuc[1:])
+
+                if __getansnuc__(ansl)[0] != nucl[0] and  __getansnuc__(ansl)[1] == nucl[1]:
+                    return full_answer['homohgvs']
+
+                elif __getansnuc__(ansl)[0] == nucl[0] and  __getansnuc__(ansl)[1] == nucl[1]:
+                    return full_answer['hethgvs']
 
 
+                elif __getansnuc__(ansl)[0] == nucl[0] and  __getansnuc__(ansl)[0] == nucl[1]:
+                    return full_answer['wthgvs']
 
 
+            targ_refalt = __split__(nucl)#list containing the target ref  --   alt
+            correct_hgvs = __choosehomo_or_wt__(targ_refalt,ansl,full_answer)#get the correct hgvs in the ansl
 
-        for ansline in answer:
+            def __fixhgvs__(hgvs,dval,nuc,desval):#straight split and reverse??yes.
 
-            if rs_targ in ansline['rsid']:
+                try:
+                    hgvslist = hgvs.split(':')
+                    newhgvs = ':'.join(hgvslist[1:]) + "||" + hgvslist[0]
+
+                    return newhgvs
+
+                except AttributeError:
+                    print(str(dval) + "\t" + str(hgvs) + "\t" + str(nuc) + "\tUNABLE TO FIND RSID MAP" + "\t" + str(desval))
 
 
+            fixedhgvs = __fixhgvs__(correct_hgvs,targ,nucl,desval)
+            return(fixedhgvs)
+
+        #---main control 4or4 i__match__rs___   ----
+
+        for ansline in answer:#construct final returns two values as there are two matches, unfound because there is a mismatch,
+                              #NEXT:: make specific for the alt value needed for multi alts, and reverse alts
+            if rs_targ['rsID'] in ansline['rsid']:
+                correctcdot = __matchalt__(rs_targ,ansline['rsid'],desiredval['Diplotypes'],ansline,desiredval)
+                #print(str(correctcdot) + " should be ok for correct dot")
+                return correctcdot
+
+    if desiredval['rsID'] is not "":#match RSID to cdot, then to correct FULL HGVS.
+        #variant_uuid = __match_rs__(desiredval['rsID'])#change, there are multiple
+        variant_uuid = __match_rs__(desiredval)#change, there are multiple
 
 
-
-                print(desiredval)
-                print(ansline)
-
-
-
-    variant_uuid = __match_rs__(desiredval['rsID'])
+    else:#give justhe NM_ID for haplotypes here. also, set the NAT2. becareful of *N/*M appearing as *M/*N
+        #print(str(desiredval) + ' pass through')
+        variant_uuid = 'pass through'
 
 
     return variant_uuid
 
 
 
-
-def callNotFound(new_input):
-    print "NEW_CALL_UNKNOWN\t" + new_input.strip()
 
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
@@ -87,7 +134,9 @@ mapdat = {}
 #construct map for replacement table
 for mapln in maps:
 
-    getVal(mapln,answer)
+    print("INCOMING MAP LINE \t" + str(mapln))
+    valid_uuid = getVal(mapln,answer)
+    print(str(valid_uuid) + "\tASSIGNED UUID")
 
 
 
@@ -99,25 +148,6 @@ for mapln in maps:
 
 #print "position\tnewcall\toldcall"
 
-#for nln in news:
-#    col = nln.split('\t')
-#    loc = col[0] + ":" + col[1]
-#
-#    if loc in olddat and col[0] != 'chrN':
-#        effnew = getVal(nln,'EFF_HGVS',transdat)
-#        print loc +"\t" + effnew + "\t" + olddat[loc]
-#
-#    elif col[0] == 'chrN':
-#        effnew = getVal(nln,'chrN',transdat)
-#
-#        if effnew in olddat and effnew is not None:
-#            print loc +"\t" + str(effnew) + "\t" + olddat[effnew]
-
-#        else:
-#            callNotFound(nln)
-
-#    else:
-#        callNotFound(nln)
 
 
 
