@@ -175,7 +175,12 @@ def getVal(desiredval,answer):#the line being needed to map == desiredval, the f
 
 
 def printvar(met,vape,outfile):
+
+
+
     outfile.writerow([vape["Write Up ID"],vape['UUID'],vape["Drug Name"],met])
+
+    #print(vape['UUID'])
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
@@ -202,14 +207,42 @@ for vape in vapors:# OK, well, get the uuid, then, decide if it is NAT2, or not 
                         #HAP2 snps
 
     def __getUUID__(vp):
-        ruuid = vp['UUID'].split('+')[0]
-        return(ruuid)
+        if "c.1865" in vp['UUID']:
+            tmpid = vp['UUID'].split('+')
+            ruuid = '+'.join(tmpid[0:2])
+            return(ruuid)
+
+        else:
+            #print(vp['UUID'])
+            ruuid = vp['UUID'].split('+')[0]
+            #print(ruuid)
+            return(ruuid)
 
     vuuid = __getUUID__(vape)#
 
-    if 'NM_000015' in vuuid and "*" in vuuid:
+    if 'NM_000015' in vuuid and "*" in vuuid:#get the digits try forward and backwards.
+        g = re.search('(\*\d+)/(\*.+?)\|\|(.+)',vuuid)
 
-        print("GET THE NAT2 SHIT TOGETHER")
+        alsouuid = g.group(2) + "/" + g.group(1) + "||" + g.group(3)
+
+        try:
+            met_status = mapdat[alsouuid]#mapdat is the met status from the file.
+            printvar(met_status,vape,newvapor)
+
+        except KeyError:
+            met_status = mapdat[vuuid]#mapdat is the met status from the file.
+            printvar(met_status,vape,newvapor)
+
+
+    elif ":LC" in vuuid:
+        #newvuuid = re.sub(r':LC',"",vuuid)
+        #met_status = mapdat[newvuuid]#mapdat is the met status from the file.
+        printvar("This genotype could not be determined",vape,newvapor)
+
+    elif ":Novel" in vuuid:
+        #newvuuid = re.sub(r':Novel',"=",vuuid)
+        #met_status = mapdat[newvuuid]#mapdat is the met status from the file.
+        printvar("This genotype could not be determined",vape,newvapor)
 
     elif 'c.' in vuuid:
 
@@ -218,28 +251,12 @@ for vape in vapors:# OK, well, get the uuid, then, decide if it is NAT2, or not 
             printvar(met_status,vape,newvapor)
 
         except KeyError:
-            print("Unable to find Metabolizer Status for\t"+vuuid+"\t"+str(vape['Drug Name'])+"\t"+str(vape['Evidence'])+"\t"+str(vape['Recommendation'])+"\t"+str(vape['Implication'])+"\t"+str(vape['Severity'])+"\t"+str(vape['Archived Implication Field']))
+            print("Unable to find Metabolizer Status for\t\""+vuuid+"\"\t"+str(vape['Drug Name'])+"\t"+str(vape['Evidence'])+"\t"+str(vape['Recommendation'])+"\t"+str(vape['Implication'])+"\t"+str(vape['Severity'])+"\t"+str(vape['Archived Implication Field']))
+
+
 
     else:
-        print(the fuck is this )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        print("the fuck is this, just make sure met status in not empty ")
 
 
 
