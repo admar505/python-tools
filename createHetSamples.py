@@ -32,7 +32,6 @@ def correctGT(req_gt,bedline):
         fgt = re.search('rs\w+\-(\w+)\-(\w+)',rsid)
 
         if "hom" in allele:
-            print("captured")
             alt = fgt.group(2) + fgt.group(2)
 
         elif "wt" in allele:
