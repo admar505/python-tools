@@ -37,7 +37,7 @@ def getVal(arr,TAG,trn):
         returncall = None
         validnm = False
         geteff = re.search('EFF_HGVS=(\S+)',ar)
-        getnm = re.search('(NM_\d+)\:\S+',geteff.group(1))
+        getnm = re.search('([NVX][GMR]_\d+)\:\S+',geteff.group(1))
 
         if getnm is not None:
             returncall = getnm.group(1)
@@ -60,7 +60,7 @@ def getVal(arr,TAG,trn):
             value = cols[0] + ":" + cols[1]
 
     elif TAG == 'EFF_HGVS':
-        getnm = re.search('(EFF_HGVS=(NM_\d+\:\S+))',arr)
+        getnm = re.search('(EFF_HGVS=([NVX][MGR]_\d+\:\S+))',arr)
 
         if getnm is not None:
             value = getnm.group(2)
