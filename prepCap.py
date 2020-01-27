@@ -102,12 +102,20 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
         effout = open(rsid + '.efd.vcf',"w")
         errout = open(rsid + '.stderrr',"w")
 
+        zippedname = str(effout)
+
         call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout,stderr=errout)
         sys.stdout.flush()
         effout.close()
 
+        call(['bgzip  ' + rsid + '.efd.vcf'],shell=True)
+        call(['tabix -p vcf ' +  rsid + '.efd.vcf.gz'],shell=True)
+
         call(['/vbin/ensembl-tools-release-86/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' + rsid + '.VEP.vcf --dir /vbin/ensembl-tools-release-86/  --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
         sys.stdout.flush()
+
+        call(['bgzip  ' + rsid + '.VEP.vcf'] ,shell=True)
+        call(['tabix -p vcf  ' + rsid + '.VEP.vcf.gz'] ,shell=True)
 
 
         errout = open(rsid + '.stderrr',"w")
@@ -117,7 +125,12 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
         complete = open(rsid + '.COMPLETE.txt',"w")
         errout = open(rsid + '.stderrr',"w")
 
-        call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
+
+
+        #call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
+
+
+        call(['/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz   -eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  -gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ --vapor /ref/vapor-lookup/GNOMAD.bed.gz  --info DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality '],shell=True,stdout=complete,stderr=errout)
 
     mergeNWrite(rsid + '.COMPLETE.txt',capln,vcfln.QUAL)
 
