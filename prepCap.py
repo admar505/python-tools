@@ -132,8 +132,7 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
         #call(['/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  str(complete)  + '  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield \'unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/GNOMAD.bed.gz  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '],shell=True,stdout=complete,stderr=errout)
 
-        command ='/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield \'Sample_Y55T9BS:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
-        print(command)
+        command ='/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz --vcfield \'Sample1:VS;GT:GenoType;RBQ:ReferenceAlleleQ;RDF:RefAlleleCount;DP:TotalDepth\'  --vcfield \'Sample_Y55T9BS:FB;GT:GenoType;RO:RefAlleleCount;QR:ReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
 
         call([command],shell=True,stdout=complete,stderr=errout)
 
