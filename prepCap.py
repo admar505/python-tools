@@ -93,7 +93,7 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
     rsid = capln['Chr'] + "."  + capln['Pos']
 
     if args.redo is not True and args.redomatcher is not True:
-        print "I am in this thing here kay"
+        print "calling vars"
         vcf_write = vcf.Writer(open(rsid + '.Merged.vcf','w'),vcf_4_header)
         vcf_write.write_record(vcfln)
         sys.stdout.flush()
@@ -104,7 +104,7 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
         zippedname = str(effout)
 
-        call(['java -jar /vbin/snpEff/snpEff.jar eff -i vcf -csvStats -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout,stderr=errout)
+        call(['java -jar /vbin/snpEff/snpEff.jar eff  -hgvs hg19 ' + rsid + '.Merged.vcf'],shell=True,stdout=effout,stderr=errout)
         sys.stdout.flush()
         effout.close()
 
@@ -130,7 +130,12 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
         #call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
 
 
-        call(['/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz   -eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  -gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ --vapor /ref/vapor-lookup/GNOMAD.bed.gz  --info DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality '],shell=True,stdout=complete,stderr=errout)
+        #call(['/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  str(complete)  + '  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield \'unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/GNOMAD.bed.gz  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '],shell=True,stdout=complete,stderr=errout)
+
+        command ='/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield \'Sample_Y55T9BS:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
+        print(command)
+
+        call([command],shell=True,stdout=complete,stderr=errout)
 
     mergeNWrite(rsid + '.COMPLETE.txt',capln,vcfln.QUAL)
 
