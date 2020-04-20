@@ -26,18 +26,17 @@ chnk = args.chnk
 hmm_orig = open(hmmfi,"r")
 rct = 0
 
-print(hmmfi)
-
-
+####user-defs####
 
 def outname(filename,currentcount ):
 
     hmmnaming = hmmfi.split(".")
-    currentcount = currentcount + 1
-
     outfiname = '.'.join(hmmnaming[0:(len(hmmnaming) - 1)]) + "." +  str(currentcount) + ".hmm"
 
     return outfiname
+
+
+###main###
 
 ficount = 1
 
@@ -47,19 +46,20 @@ outfi = open(outname(hmmfi,rct),"w")
 
 for line in hmm_orig:
     line = line.strip()
-    #print(line)
+    #print(str(rct))
 
     #check if file needs to be updated
-    if rct >= chnk:
+    if int(rct) >= int(chnk):
+        rct = 0
         outfi.close()
-        outfi = open(outname(hmmfi,rct),"w")
+        outfi = open(outname(hmmfi,ficount),"w")
+        ficount = ficount + 1
 
 
-
-    if line == "//":
-
+    if line == "//":#increase count for records
         rct = rct + 1
-    outfi.write(line)
+
+    outfi.write(line  + "\n")
 
 
 
