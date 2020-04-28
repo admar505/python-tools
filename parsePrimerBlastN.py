@@ -8,9 +8,9 @@ import csv
 
 parser = argparse.ArgumentParser(description='calculate the best primer hit.')
 parser.add_argument("--pr", help="primer map, as id '\\t'  length ",required=True)
-parser.add_argument("--sp", help='species accession name map, may have to be adjusted for database.', required = True)
-
+#parser.add_argument("--sp", help='species accession name map, may have to be adjusted for database.', required = True)
 parser.add_argument("--bln", help="blastn, parsing the blast hits, from blastn format 6 or 7. add header plz.",required=True)
+
 #header example:
 #queryacc.ver   subjectacc.ver  %identity   alignmentlength mismatches  gapopens    q.start q.end   s.start s.end   evalue  bitscore
 
@@ -36,25 +36,31 @@ def getLongest(qry, prmp,st,sp):#$qryname, primer dict, start and $ stop on quer
 
 
 
-def addNew(best,blast,new,pmap):#besthit_dict, blastline if new is True, it will add to the hash, if False, it will just replace the values there.
-
-
-    if new == True:
+def addNew(best,blast,newqry,newsbjct,pmap):#besthit_dict, blastline if new is True, it will add to the hash, if False, it will just replace the values there.
+                                            #newqry: to add in only new query.
+                                            #newsubj:to add in only new sbjct.
+    if newqry == True:
         best[blast['queryacc.ver']] = {}
+
+
+    if newsbjct == True:
         best[blast['queryacc.ver']][blast['subjectacc.ver']] = {}
 
+
+    #if both subj and qry is already in, just add the new values.
     best[blast['queryacc.ver']][blast['subjectacc.ver']] = {"longesthit":getLongest(blast['queryacc.ver'],pmap,blast['q.start'],blast['q.end']), "gaps":int(blast['mismatches'] + blast['gapopens'])}
 
 
 def queryDict(queryd):
 
     for key in queryd:
-        print(queryd[key])
+        print(key + "+" +  str(queryd[key]))
 
 
 def Printer(line):
 
-    print(';'.join(line))
+    ct = len(line) - 1
+    print(str(ct) + "\t" + ';'.join(line))
 
 
 
@@ -69,6 +75,8 @@ def Collapser(bt):
         for qrres in bt[res]:
             prnstore.append( qrres +  ";" +  bt[res][qrres])
 
+
+        #print(str(res) + "\t"  + str(prnstore))
         Printer(prnstore)
 
 
@@ -82,7 +90,7 @@ def findPrimerMatches(bst):#will flip the value, and report the primer hits and 
             sbjhit[subject][qr] = str(bst[qr][subject]['longesthit']) + ":" + str(bst[qr][subject]['gaps'])
 
 
-
+    #queryDict(sbjhit)
     Collapser(sbjhit)
 
 
@@ -106,27 +114,34 @@ for blast in blncsv:
         ##maybe translate subject accesion to species, and dont care about anything less,
         #queryDict(best)
 
+        #print(best[blast['queryacc.ver']])
+
 
         if blast['subjectacc.ver'] in best[blast['queryacc.ver']]: #query subj value exist
 
-            #print(best[blast['queryacc.ver']] )
+            #print(blast['queryacc.ver'] + "\t" + str(best[blast['queryacc.ver']]) )
             #the alg:
             best_long = best[blast['queryacc.ver']][blast['subjectacc.ver']]['longesthit']
             new_long = getLongest(blast['queryacc.ver'],pmap,blast['q.start'],blast['q.end'])
             best_gap = best[blast['queryacc.ver']][blast['subjectacc.ver']]['gaps']
             new_gap = int(blast['mismatches'] + blast['gapopens'])
 
+
+            #print(blast['subjectacc.ver']  +"\t"+ blast['queryacc.ver'])
+
+
             if new_long > best_long and best_gap <= new_gap:
-                addNew(best,blast,False,pmap)
+                addNew(best,blast,False,False,pmap)#newqry, newsbjct are bools
 
                 #I may add a condition.
 
-
+        else:#ok, try new logic for adding only the query,
+             # I think I might be resetting if I load in new query if I load both
+            addNew(best,blast,False,True,pmap)#newqry, newsbjct are bools
 
 
     else:#adding new query, if no query add all in.
-
-        addNew(best,blast,True,pmap)
+        addNew(best,blast,True,True,pmap)#newqry, newsbjct are bools
 
 
 findPrimerMatches(best)
@@ -134,7 +149,7 @@ findPrimerMatches(best)
 #print out blast, but before I think I can collect, for each subject, the queries it gets.
 
 
-
+#queryDict(best)
 
 
 
