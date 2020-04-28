@@ -63,8 +63,6 @@ def Printer(line):
     print(str(ct) + "\t" + ';'.join(line))
 
 
-
-
 def Collapser(bt):
 
     for res in bt:
@@ -84,13 +82,23 @@ def findPrimerMatches(bst):#will flip the value, and report the primer hits and 
 
     sbjhit = {}
 
+    #hmmm, run through, and collect all subjects? ZZ
+
     for qr in bst:
+        #how to flip??#oh, subject needs to go in once, once only. so check and see if it needs to be added.
+
         for subject in bst[qr]:
-            sbjhit[subject] = {}
+            #print(subject + "\t" + qr)
+
+            if subject not in  sbjhit:
+                sbjhit[subject] = {}
+
+            sbjhit[subject][qr] = {}
             sbjhit[subject][qr] = str(bst[qr][subject]['longesthit']) + ":" + str(bst[qr][subject]['gaps'])
 
 
-    #queryDict(sbjhit)
+
+    queryDict(sbjhit)
     Collapser(sbjhit)
 
 
@@ -149,7 +157,7 @@ findPrimerMatches(best)
 #print out blast, but before I think I can collect, for each subject, the queries it gets.
 
 
-#queryDict(best)
+queryDict(best)
 
 
 
