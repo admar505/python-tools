@@ -31,7 +31,7 @@ pmapfi = open(args.pr,"r")
 def getLongest(qry, prmp,st,sp):#$qryname, primer dict, start and $ stop on query, calculate proportion of match
 
     length = float((int(sp) - int(st))/prmp[qry])
-
+    #print(str(length) + "\t" + str(sp) +"\t" + str(st))
     return float(length)
 
 
@@ -48,7 +48,12 @@ def addNew(best,blast,newqry,newsbjct,pmap):#besthit_dict, blastline if new is T
 
 
     #if both subj and qry is already in, just add the new values.
-    best[blast['queryacc.ver']][blast['subjectacc.ver']] = {"longesthit":getLongest(blast['queryacc.ver'],pmap,blast['q.start'],blast['q.end']), "gaps":int(blast['mismatches'] + blast['gapopens'])}
+    lhit = getLongest(blast['queryacc.ver'],pmap,blast['q.start'],blast['q.end'])
+    gap = int(blast['mismatches']) + int(blast['gapopens'])
+
+    best[blast['queryacc.ver']][blast['subjectacc.ver']] = {"longesthit":lhit, "gaps":gap}
+
+    print(blast['subjectacc.ver'] + "\t" +str(lhit)  + "\t" + str(gap))
 
 
 def queryDict(queryd):
@@ -132,13 +137,13 @@ for blast in blncsv:
             best_long = best[blast['queryacc.ver']][blast['subjectacc.ver']]['longesthit']
             new_long = getLongest(blast['queryacc.ver'],pmap,blast['q.start'],blast['q.end'])
             best_gap = best[blast['queryacc.ver']][blast['subjectacc.ver']]['gaps']
-            new_gap = int(blast['mismatches'] + blast['gapopens'])
+            new_gap = int(blast['mismatches']) + int(blast['gapopens'])
 
 
-            #print(blast['subjectacc.ver']  +"\t"+ blast['queryacc.ver'])
+            print(blast['subjectacc.ver']  +"\t"+ blast['queryacc.ver'] + "\t" + str(new_long) +"\t "+ str(new_gap))
 
 
-            if new_long > best_long and best_gap <= new_gap:
+            if new_long >= best_long and best_gap >  new_gap:
                 addNew(best,blast,False,False,pmap)#newqry, newsbjct are bools
 
                 #I may add a condition.
