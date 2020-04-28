@@ -53,7 +53,7 @@ def addNew(best,blast,newqry,newsbjct,pmap):#besthit_dict, blastline if new is T
 
     best[blast['queryacc.ver']][blast['subjectacc.ver']] = {"longesthit":lhit, "gaps":gap}
 
-    print(blast['subjectacc.ver'] + "\t" +str(lhit)  + "\t" + str(gap))
+    #print(blast['subjectacc.ver'] + "\t" +str(lhit)  + "\t" + str(gap))
 
 
 def queryDict(queryd):
@@ -103,7 +103,7 @@ def findPrimerMatches(bst):#will flip the value, and report the primer hits and 
 
 
 
-    queryDict(sbjhit)
+    #queryDict(sbjhit)
     Collapser(sbjhit)
 
 
@@ -140,7 +140,7 @@ for blast in blncsv:
             new_gap = int(blast['mismatches']) + int(blast['gapopens'])
 
 
-            print(blast['subjectacc.ver']  +"\t"+ blast['queryacc.ver'] + "\t" + str(new_long) +"\t "+ str(new_gap))
+            #print(blast['subjectacc.ver']  +"\t"+ blast['queryacc.ver'] + "\t" + str(new_long) +"\t "+ str(new_gap))
 
 
             if new_long >= best_long and best_gap >  new_gap:
@@ -162,7 +162,7 @@ findPrimerMatches(best)
 #print out blast, but before I think I can collect, for each subject, the queries it gets.
 
 
-queryDict(best)
+#queryDict(best)
 
 
 
