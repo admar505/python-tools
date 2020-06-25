@@ -5,7 +5,7 @@ import string
 import re
 import sys
 
-parser = argparse.ArgumentParser(description='split cdhit files, and include the representative for sync in each file.')
+parser = argparse.ArgumentParser(description='split cdhit files, and include the representative for sync in each file.\n also, this is part of a pipeline -\n\n run cdhit--> this script --> CSA --> combine each cluster--> muscle --hmm')
 parser.add_argument("--fa", help="full fasta file",required=True)
 parser.add_argument("--cdh", help="cdhit cluster file",required=True)
 parser.add_argument("--rps", help="cdhit representative fileo ",required=True)
@@ -21,10 +21,9 @@ repfi = open(p.rps,'r')
 def fastaFormat(seq):
 
     n = 60
-    retseq = [line[i:i+n] for i in range(0, len(line), n)]
+    retseq = [seq[i:i+n] for i in range(0, len(seq), n)]
 
-return(retseq)
-
+    return(retseq)
 
 
 #                                       ####==MAIN==####
@@ -62,13 +61,28 @@ for rln in repfi:
 clsID = None
 
 defct = 0#number of defs seen so far....
-filect = 0#
-startflag = 1
+filect = 0#filenumber
+startflag = 1 #to start writing or stop or whatever
 
 #shucks: I have to parse the clusters twice? to find the representative per cluster.
 
+preID = None #this is for predeclaring seed.
+
+for preln in cdfi:
+
+    if ">C" in preln:
+
+        g = re.search('>(\S+)\s+(\w+)',preln)
+        preID = str(g.group(1)) + "_" + str(g.group(2))
+
+    else:
+        d = re.search('^\d+\s+\d+nt\,\s+>(.+?)\.{3}\s+',preln)
+        if d.group(1) in  reps:
+
+            reps2cls[preID] = d.group(1)
 
 
+cdfi.seek(0)
 
 
 for cln in cdfi:
@@ -81,29 +95,36 @@ for cln in cdfi:
         filect = 0
         defct = 0
 
+        startflag = 1
+
     elif  defct < p.cnt and startflag == 0:#start parsing the files.
 
         d = re.search('^\d+\s+\d+nt\,\s+>(.+?)\.{3}\s+',cln)
 
-        if d.group(1) in reps:
-            reps2cls[clsID] = d.group(1)
+        if d.group(1) in reps:              #I DONT THINK I WOUND qup using this, this is the
+            reps2cls[clsID] = d.group(1)    #assignment of cluster seed
 
-        sequence = formatFasta()
+        #write actual sequence
+        #protect adding the rep into the file twice though
+        #
 
-        outhandle.write()
+        if d.group(1) not in reps:
+            sequence = fastaFormat(fasta[d.group(1)])
+            outhandle.write(">"  + str(d.group(1)) + "\n" + str("\n".join(sequence)) + "\n")
 
+        #dial the number of records per file:
+        defct = defct + 1
 
     else:#start newfile
+        defct = 1
+        startflag = 0
+        filect = filect + 1 # dials it forward
+        outname = clsID + "_" + str(filect) +  ".fa"
+        outhandle  = open(outname,'w')
 
-        startflag = 0;
-        filect = filect + 1
-        outhandle = clsID + "_" + str(filect) +  ".fa"
-        open(outhandle,'a')
-        firstseq = formatFasta()
-        outhandle.write()
-
-
-
+        #write the member sync here
+        firstseq = fastaFormat(fasta[reps2cls[clsID]])
+        outhandle.write(">" +  str(reps2cls[clsID])  + "\n" + str("\n".join(firstseq)) + "\n")
 
 #####
 #
