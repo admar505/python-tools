@@ -94,6 +94,8 @@ for line in hmm_orig:
         rct = rct + 1
     #added to allow accession ids or name checks.
         
+        filelines.append(line)
+
         if names is not None:
             if acccheck(names,filelines) is True:
                 ficount = recprint(outfi,filelines,ficount)
