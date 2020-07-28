@@ -11,8 +11,8 @@ parser.add_argument("--name",help="if used, will output file only if it has this
 args = parser.parse_args()
 hmmfi = args.hmm
 chnk = args.chnk
+names = None
 names = args.name
-
 
 
 #psuedo
@@ -44,24 +44,23 @@ def acccheck(names2find,filelines):
     found = False
 
     for names in names2find:
-        if names in filelines:
+        if str(names) in str(filelines):
             found = True
-
 
     return found
 
 
-def recprint(outfi,filelines):
+def recprint(outfi,filelines,ficount):
     
 
-        outfi.close()
+    outfi.close()
 
-        outfi = open(outname(hmmfi,ficount),"w")    #start new OUT
-        ficount = ficount + 1
+    outfi = open(outname(hmmfi,ficount),"w")    #start new OUT
+    ficount = ficount + 1
 
-        outfi.write(filelines + "\n")        
-
-
+    outfi.write('\n'.join(filelines) + "\n")        
+        
+    return(ficount)    
 
 ###main###
 
@@ -71,7 +70,7 @@ def recprint(outfi,filelines):
 #####initializers.
 
 ficount = 1
-outfi = open(outname(hmmfi,rct),"w") #initialize with one.
+outfi = open(outname(hmmfi,ficount),"w") #initialize with one.
 filelines = []                       #this will hold the files. and dump as needed.
 accession = None                     
 
@@ -86,32 +85,28 @@ for line in hmm_orig:
         rct = 0                 #RESET current file count
        
 
-        recprint()
-
+        #ficount = recprint(outfi,filelines,ficount)    #synchronize current file count number to avoid collisions.
 
         filelines = []          #clear holder
-       
-
-
-
-        filelines.append(line  + "\n")
+        filelines.append(line)
 
     elif line == "//":#increase count for records
         rct = rct + 1
-        accession = None
     #added to allow accession ids or name checks.
         
         if names is not None:
-           
-            if accessioncheck() is True:
-                printrec
-        else #this means we are NOT in a name control issue
+            if acccheck(names,filelines) is True:
+                ficount = recprint(outfi,filelines,ficount)
+                
 
+        else:
+            ficount =  recprint(outfi,filelines,ficount)
+            #filelines.append(line)   # I THINK I JUST CONTINUE< change this maybe.
+                #this means we are NOT in a name control issue
 
+    else:
 
-    if:#just read normal
-
-        filelines.append(line + "\n")
+        filelines.append(line)
 
 
 
