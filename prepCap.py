@@ -111,6 +111,7 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
         call(['bgzip  ' + rsid + '.efd.vcf'],shell=True)
         call(['tabix -p vcf ' +  rsid + '.efd.vcf.gz'],shell=True)
 
+
         call(['/vbin/ensembl-tools-release-86/scripts/variant_effect_predictor/variant_effect_predictor.pl --force_overwrite --vcf -i ' + rsid + '.Merged.vcf -o ' + rsid + '.VEP.vcf --dir /vbin/ensembl-tools-release-86/  --everything --species homo_sapiens --cache --refseq --offline --assembly GRCh37 --fasta /vbin/ref/hg19.nochr.fa'],shell=True)
         sys.stdout.flush()
 
@@ -127,12 +128,13 @@ def kickAnnotations(vcfln,capln,vcf_4_header):
 
 
 
+
         #call(['/vbin/Perl/matchPathsAndMergeCallers.2.pl  --evs /ref/EVS_AF.vcf -p /ref/FULL.GENOME.lookUP.txt -eff ' + rsid + '.efd.vcf -vep ' + rsid + '.VEP.vcf -trn '+ trans + '  -exac /ref/ExAC.r0.3.1.sites.af.vcf  -hgmd /ref/Homo_sapiens.HGMD.hg19.chr.vcf'],shell=True,stdout=complete,stderr=errout)
 
 
-        #call(['/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  str(complete)  + '  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz   --vcfield \'unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/GNOMAD.bed.gz  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '],shell=True,stdout=complete,stderr=errout)
+        command =  '/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz  --vcfield \'Sample1:VS;GT:GenoType;RBQ:ReferenceAlleleQ;RDF:RefAlleleCount;DP:TotalDepth\'   --vcfield \'unknown:FB;GT:FBGenoType;RO:FBRefAlleleCount;QR:FBReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
 
-        command ='/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz --vcfield \'Sample1:VS;GT:GenoType;RBQ:ReferenceAlleleQ;RDF:RefAlleleCount;DP:TotalDepth\'  --vcfield \'Sample_Y55T9BS:FB;GT:GenoType;RO:RefAlleleCount;QR:ReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
+        #command ='/vbin/goinfo-scrips/matchPathsAndMergeCallers.py  --frq /ref/EVS_AF.vcf.gz  --frq  /ref/ExAC.r0.3.1.sites.af.vcf.gz --output  ' +  rsid  + '.COMPLETE.txt  --eff ' + rsid + '.efd.vcf.gz --vep ' + rsid + '.VEP.vcf.gz  --gfrq /ref/vapor-lookup/GNOMAD.bed.gz --vcfield \'Sample1:VS;GT:GenoType;RBQ:ReferenceAlleleQ;RDF:RefAlleleCount;DP:TotalDepth\'  --vcfield \'Sample_Y55T9BS:FB;GT:GenoType;RO:RefAlleleCount;QR:ReferenceAlleleQ\' --vapor /ref/vapor-lookup/vapor_2_hgvs_table.txt  --info \'DP:FBTotalDepth;AB:FB_AlleleBalance;RUN:FB_RepeatCount;MQM:FB_ALTMappingQuality;MQMR:FB_REFMappingQuality\' '
 
         call([command],shell=True,stdout=complete,stderr=errout)
 
