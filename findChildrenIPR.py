@@ -13,47 +13,70 @@ iprfi = args.ipr
 taglst = args.tag
 
 ipr_full = gzip.open(iprfi,'r')
-
 iprtree = ET.parse(ipr_full)
+
+##extra iprs I wanna re-search through.send through a second time.
+newtags = []
 
 
 #parse results in a map or dict, or what??
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
-def anyNone(rets):
 
-    size = len(rets)
-    none_ct = size  #set to size, reduce as nones go
+def iprCheck(doesthishaveipr):
 
-
-def getChildren(rootelement):
-    print(rootelement.attrib['id'])
-    for child in rootelement.findall('./channel/item'):
-        print(child)
-        #print(child.attrib['db_xref'])
+    if "INTERPRO" in doesthishaveipr.attrib['db']:
+        #print(str(doesthishaveipr) + "DEF::IPRCHECK::INSIDE")
+        newtags.append(str(doesthishaveipr.attrib['dbkey']))
 
 
-    return None
+    
+def getTags(parentIPR,dbxrefele):#$name of IPR (to print),  the dbxrefallele 
+
+    dbs = ['TIGRFAMS','BLOCKS','CATH','CAZY','EC','CATHGENE3D','KEGG','PANDIT','PANTHER','PFAM','PRINTS','PRODOM','PROSITE','SCOP','TIGRFAMs','TIGRFAMS','SMART','INTERPRO']
+
+    if dbxrefele.attrib['db'] in dbs:
+        print(parentIPR  + "\t" + dbxrefele.attrib['db'] + "\t"  + dbxrefele.attrib['dbkey'])
+
+        iprCheck(dbxrefele)
+
+
+
+
+def childPrint(nameofIPR,node):
+
+    for subnode in node.iter("db_xref"):
+        getTags(nameofIPR,subnode)
+
+
+def getChildren(iprname,rootelement):
+
+    for child in rootelement:
+        childPrint(iprname,child)        
+  
+
+def getParent(parentelem,iprs):
+
+    try:
+        if parentelem.attrib['id'] in iprs:
+            #print(str(iprs) + "     the crazy stringer printer of iprs, did it add?")
+            getChildren(parentelem.attrib['id'],parentelem)
+
+
+    except KeyError:
+        next
 
 
 #####--------------------------------MAIN-------------------------------------------######
 
 for element in iprtree.getroot():
-    try:
-
-        if element.attrib['id'] in taglst:
-
-            print(element.attrib['id'])
-            getChildren(element)
+    getParent(element,taglst)
 
 
-    except KeyError:
-        
-        next
+#redo thesearch through the new collected IPR.
 
-        #print("unknown root")
-
-
+for additional in iprtree.getroot():
+    getParent(additional,newtags)
 
 
 
