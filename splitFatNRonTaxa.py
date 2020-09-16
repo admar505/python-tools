@@ -122,16 +122,24 @@ for protinfo in prot2idfi:#NOTE:, this all says 'prot' but it doesnt really matt
     if id2use is not None:
         saveGIs(ids2use,gis2pull,cols[3],cols[1])## 
         
-
 prot2idfi.close()
 
 fastafile = SeqIO.index(args.fasta, "fasta")#fasta indexed, try and reduce size.
 
 for fastaout in gis2pull:
-    writeme = open(fastaout,"w")
     
+    print(str(fastaout))
+
+    fasta_file_out = open(str(fastaout),"w")
+    
+    
+    print(str(len(gis2pull)))
+
     for record in gis2pull[fastaout]:
-        writeme.write(fastafile.['gi:'+ str(record)])
+        
+        print(fastafile['gi:'+ str(record)])
+
+        #fasta_file_out.write(fastafile['gi:'+ str(record)])
 
 
 
