@@ -31,50 +31,57 @@ combined = args.combine
 
 #parse results in a map or dict, or what??
 
-#-------------------------------------here by DEFSgONS!!----------------------------------*
+#-------------------------------------here by DEFSgoONS!!----------------------------------*
+
+def get_gi(name):
+    parts = name.split("|")
+    i = parts.index("gi")
+    assert i != -1
+
+    return parts[i+1]
+
+
 def saveGIs(filename_key,gidict,giid,accessionid):##$the filename for output, $(the dict of gis to get), $(gi_id),$(accession of the sequence.)
 
     if filename_key in gidict:
-        gidict[filename] = {gi:giid, acc:accessionid}
-
+        gidict[filename_key][giid.strip()] = giid.strip()
+        
     else:
-        gidict[filename] = {}
-        gidict[filename] = {gi:giid, acc:accessionid}
+        gidict[filename_key] = {}
+        gidict[filename_key][giid.strip()] = giid.strip()
 
 
 def loadLeaves(leaf,t2g):## leaves from the object, mapping object.
-
-
+    
     for lf in leaf:
-
         t2g[lf] = lf
+        
+        #print(str(t2g) + "\t|\t|\t" + str(t2g[lf]))
 
-def findGI(taxid, t2l): ##  taxid from gi2taxalist, iand then taxamap to check for leaf node ids. 
+def findGI(prottaxid, t2l): ##  taxid from prot2taxa, iand then taxamap to check for leaf node ids. 
                         ##  RETURN:     the parent file it belongs to, ie, the key if the leafnode is found.
-
     foundID = None
-
+    
     for taxakey in t2l:
-        if taxid in t2l[taxakey]:
-
+        #print(str(t2l[taxakey])  +  "\t" + "\transacker\t" + prottaxid) 
+        
+        if str(prottaxid) in str(t2l[taxakey]):
+            #print("<-----  \t\t\t\t\tIN   \t----->")
             foundID = taxakey
 
     return foundID
     
-
-
 
 ##___________________________________MAIN________________________________________________##
 
 #construct the tree to search through
 #
 
-
 ncbi = ntt.NcbiTaxonomyTree(nodes_filename=args.nodes, names_filename=args.names)
 
 
 #for each taxa, get stuff, redirect to file
-tax2leaves = {}#dict of taxids to gi ids 
+tax2leaves = {}#dict of taxids to  
 combined_done = False
 
 for taxon in taxids:
@@ -86,7 +93,7 @@ for taxon in taxids:
 
     if combined == True and combined_done == False:
         filename = ".".join(taxids) + ".fasta"  ##  was using as a file, was gonna do that first, but now use as a 
-        tax2leaves[filename] = {}                  ### key and then can pull and create a file.
+        tax2leaves[filename] = {}               ### key and then can pull and create a file.
         
         combined_done = True
 
@@ -97,21 +104,18 @@ for taxon in taxids:
         filename = taxon + ".fasta"
         tax2leaves[filename] = {} 
     
-    
         leaves = ncbi.getLeaves(int(taxon))
         loadLeaves(leaves,tax2leaves[filename])
     
 
-
-    
+print("Taxonomy tree scan completed, loading the prot2taxa for GI collection.....")
 
 
 #
 #Do this differently, I have to stream this and pull as I go along.
 #
-#
 
-gis2pull = [] #this is the dict to hold the gis to pull, per file.
+gis2pull = {} #this is the dict to hold the gis to pull, per file.
 
 for protinfo in prot2idfi:#NOTE:, this all says 'prot' but it doesnt really matter.
 
@@ -120,28 +124,29 @@ for protinfo in prot2idfi:#NOTE:, this all says 'prot' but it doesnt really matt
                                         ##  will return the file/taxa to associate with, or None
 
     if id2use is not None:
-        saveGIs(ids2use,gis2pull,cols[3],cols[1])## 
+        saveGIs(id2use,gis2pull,cols[3],cols[1])## 
         
 prot2idfi.close()
 
-fastafile = SeqIO.index(args.fasta, "fasta")#fasta indexed, try and reduce size.
+print("GIs collected, preparing fasta for search.....")
+
+
+
+
+fastafile = SeqIO.index_db('local.idx', args.fasta, "fasta",  key_function= get_gi) #args.fasta, 'fasta', key_function = 'k')#fasta indexed, try and reduce size.
+#print(fastafile.keys())
 
 for fastaout in gis2pull:
-    
-    print(str(fastaout))
-
     fasta_file_out = open(str(fastaout),"w")
-    
-    
-    print(str(len(gis2pull)))
+   
 
     for record in gis2pull[fastaout]:
-        
-        print(fastafile['gi:'+ str(record)])
+        try:
 
-        #fasta_file_out.write(fastafile['gi:'+ str(record)])
+            SeqIO.write(fastafile[record],fasta_file_out,'fasta')
 
-
+        except KeyError:
+            print("Warning:: GI " + str(record) + " not found. ")
 
 
 
