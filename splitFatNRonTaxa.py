@@ -51,8 +51,10 @@ def saveGIs(filename_key,gidict,giid,accessionid):##$the filename for output, $(
         gidict[filename_key][giid.strip()] = giid.strip()
 
 
-def loadLeaves(leaf,t2g):## leaves from the object, mapping object.
+def loadLeaves(calledroot,leaf,t2g):##$TaxID asked for, $Leaves from the object, $Dictionary of taxonids
     
+    t2g[calledroot] = calledroot
+
     for lf in leaf:
         t2g[lf] = lf
         
@@ -81,31 +83,40 @@ ncbi = ntt.NcbiTaxonomyTree(nodes_filename=args.nodes, names_filename=args.names
 
 
 #for each taxa, get stuff, redirect to file
-tax2leaves = {}#dict of taxids to  
+tax2leaves = {}#dict of taxids to leaves. 
 combined_done = False
 
 for taxon in taxids:
-    taxa_name = ncbi.getName([int(taxon)])
+    taxa_name = ncbi.getName([int(taxon)])##this is kind of throwaway
 
     ##from here, get I think subtaxa, all the way down?
 
-    fileddname = ""#just set emptyfilename
+    filename = ""#just set emptyfilename
 
-    if combined == True and combined_done == False:
+    if bool(combined) == True:
         filename = ".".join(taxids) + ".fasta"  ##  was using as a file, was gonna do that first, but now use as a 
-        tax2leaves[filename] = {}               ### key and then can pull and create a file.
+                                                ### key and then can pull and create a file.
+        if combined_done == False:      #This! will only work if, and only if,
+            tax2leaves[filename] = {}   #it has not been done before.
+            combined_done = True
         
-        combined_done = True
 
         leaves = ncbi.getLeaves(int(taxon))
-        loadLeaves(leaves,tax2gis[filename])
+        loadLeaves(taxon,leaves,tax2leaves[filename])
 
-    else:
+    #elif combined_done = True and combined = True: #the filename has been declared, just run it.
+
+        
+     #   leaves = ncbi.getLeaves(int(taxon))
+       # loadLeaves(leaves,tax2gis[filename])
+      #  
+
+    else:#only if non combined.
         filename = taxon + ".fasta"
         tax2leaves[filename] = {} 
     
         leaves = ncbi.getLeaves(int(taxon))
-        loadLeaves(leaves,tax2leaves[filename])
+        loadLeaves(taxon,leaves,tax2leaves[filename])
     
 
 print("Taxonomy tree scan completed, loading the prot2taxa for GI collection.....")
