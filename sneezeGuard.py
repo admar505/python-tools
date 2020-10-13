@@ -27,7 +27,7 @@ def merMaker(size,sequence,seqdct):
         seq = str(sequence.seq)
 
         subseq = seq[int(offset):int(int(offset) + int(size))]
-        seqdct[subseq] = sequence.id + " " + sequence.name + "%" + str(offset)
+        seqdct[subseq] = sequence.id + " " + sequence.description
            
         offset = offset +1
         
@@ -62,6 +62,6 @@ queries = makeSet(args.mer,qr_fi)
 
 for ck_mer in queries:
     if ck_mer in database.keys():
-        print(ck_mer + "\tfrom " + queries[ck_mer]  +" in the database " + database[ck_mer])
+        print(ck_mer + "\tFROM\t" + queries[ck_mer]  +"\tIN DATABASE\t" + database[ck_mer])
 
 
