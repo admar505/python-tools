@@ -18,17 +18,33 @@ db_fi = args.db
 
 ######++++++++++++++++defs+++++++++++++=#####
 
+def merMaker(size,sequence,seqdct):
+    
+    offset = 0 
+
+    while offset  <= len(sequence.seq) - args.mer:
+        
+        seq = str(sequence.seq)
+
+        subseq = seq[int(offset):int(int(offset) + int(size))]
+        seqdct[subseq] = sequence.id + " " + sequence.name + "%" + str(offset)
+           
+        offset = offset +1
+        
+
 
 
 
 def makeSet(size,fasta):
+    seq_dct = {}
 
     with open(fasta,'r') as fasta_handle:
         for sequence in SeqIO.parse(fasta_handle, "fasta"):
+        
+           merMaker(size,sequence,seq_dct) 
+            
 
-            print(sequence.name)
-
-
+    return(seq_dct)
 
 
 
@@ -40,11 +56,12 @@ queries = {}#
 
 ###-----------------MAinely-----------#####
 
-database = makeSet(args.mer,qr_fi)
-queries = makeSet(args.mer,db_fi)
+database = makeSet(args.mer,db_fi)
+queries = makeSet(args.mer,qr_fi)
 
 
-
-
+for ck_mer in queries:
+    if ck_mer in database.keys():
+        print(ck_mer + "\tfrom " + queries[ck_mer]  +" in the database " + database[ck_mer])
 
 
