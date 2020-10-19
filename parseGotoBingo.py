@@ -60,10 +60,10 @@ def Printer(go,dsc,ais,part,out):
 
 obofi = open(args.ann,'r')
 
-bioproc.write("(type=Biological Process)(curator=Invaio)")
-cellcomp.write("(type=Biological Process)(curator=Invaio)")
-ext.write("(type=Biological Process)(curator=Invaio)")
-molfunc.write("(type=Biological Process)(curator=Invaio)")
+bioproc.write("(type=Biological Process)(curator=Invaio)\n")
+cellcomp.write("(type=Biological Process)(curator=Invaio)\n")
+ext.write("(type=Biological Process)(curator=Invaio)\n")
+molfunc.write("(type=Biological Process)(curator=Invaio)\n")
 
 isa = {}
 partof = {}
