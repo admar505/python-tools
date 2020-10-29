@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys,os,re,fileinput,argparse
 sys.path.append('/home/nucleo/lib/NCBI_taxonomy_tree')
 import ncbiTaxonomyTree as ntt
@@ -15,6 +15,7 @@ parser.add_argument("--taxid",help="tag to pull",required=True,action='append')
 parser.add_argument("--prot2id",help="the prot.accession2taxid.gz ",required=True)
 parser.add_argument("--combine",help="if used, all fastas will be in same file. default is to put each in to seperate files",default=False)
 parser.add_argument("--fasta",help="fasta file",required=True)
+parser.add_argument("--acc",help="if present, will use accessions, and not genbank ids. Default is GIs",default=False,action='store_true')
 
 
 
@@ -27,13 +28,15 @@ prot2idfi = gzip.open(args.prot2id,"r")
 
 taxids = args.taxid
 combined = args.combine
-
+use_acc = args.acc
 
 #parse results in a map or dict, or what??
+
 
 #-------------------------------------here by DEFSgoONS!!----------------------------------*
 
 def get_gi(name):
+
     parts = name.split("|")
     i = parts.index("gi")
     assert i != -1
@@ -41,20 +44,36 @@ def get_gi(name):
     return parts[i+1]
 
 
-def saveGIs(filename_key,gidict,giid,accessionid):##$the filename for output, $(the dict of gis to get), $(gi_id),$(accession of the sequence.)
+def get_acc(name):
 
+    parts = name.split(" ")
+       
+    return parts[0]
+    
+
+def saveGIs(filename_key,gidict,giid,accessionid,acc_or_id):##$the filename for output, $(the dict of gis to get), $(gi_id),$(accession of the sequence.)
+
+    #print(filename_key)
     if filename_key in gidict:
-        gidict[filename_key][giid.strip()] = giid.strip()
-        
+        if acc_or_id is False:
+            gidict[filename_key][giid.strip()] = giid.strip()
+        else:
+            gidict[filename_key][accessionid.strip()] = accessionid.strip()
+
     else:
-        gidict[filename_key] = {}
-        gidict[filename_key][giid.strip()] = giid.strip()
+        if acc_or_id is False:
+            gidict[filename_key] = {}
+            gidict[filename_key][giid.strip()] = giid.strip()
+
+        else:
+            gidict[filename_key] = {}
+            gidict[filename_key][accessionid.strip()] = accessionid.strip()
 
 
 def loadLeaves(calledroot,leaf,t2g):##$TaxID asked for, $Leaves from the object, $Dictionary of taxonids
     
     t2g[calledroot] = calledroot
-
+    
     for lf in leaf:
         t2g[lf] = lf
         
@@ -129,36 +148,43 @@ print("Taxonomy tree scan completed, loading the prot2taxa for GI collection....
 gis2pull = {} #this is the dict to hold the gis to pull, per file.
 
 for protinfo in prot2idfi:#NOTE:, this all says 'prot' but it doesnt really matter.
-
-    cols = protinfo.split("\t")#see if the taxid col 3, or zero start col 2 is in the wanted list.
+    
+    cols = protinfo.decode().split("\t")#see if the taxid col 3, or zero start col 2 is in the wanted list.
     id2use = findGI(cols[2],tax2leaves) ##  if the GI has the leaf node in the tax2leaves dict, then this
                                         ##  will return the file/taxa to associate with, or None
-
     if id2use is not None:
-        saveGIs(id2use,gis2pull,cols[3],cols[1])## 
+        saveGIs(id2use,gis2pull,cols[3],cols[1],use_acc)## 
         
 prot2idfi.close()
 
-print("GIs collected, preparing fasta for search.....")
+if use_acc is True:
+    print("ACCs collected, preparing fasta for search.....")
+
+else:
+    print("GIs collected, preparing fasta for search.....")
 
 
+fastafile = None
 
+if args.acc == True:
+    fastafile = SeqIO.index_db('local.acc.idx', args.fasta, "fasta",  key_function= get_acc) 
 
-fastafile = SeqIO.index_db('local.idx', args.fasta, "fasta",  key_function= get_gi) #args.fasta, 'fasta', key_function = 'k')#fasta indexed, try and reduce size.
-#print(fastafile.keys())
-
+else:
+    fastafile = SeqIO.index_db('local.gi.idx', args.fasta, "fasta",  key_function= get_gi) #args.fasta, 'fasta', key_function = 'k')#fasta indexed, try and reduce size.
+                                                                                        #print(fastafile.keys())
 for fastaout in gis2pull:
     fasta_file_out = open(str(fastaout),"w")
    
 
     for record in gis2pull[fastaout]:
         try:
-
             SeqIO.write(fastafile[record],fasta_file_out,'fasta')
 
         except KeyError:
-            print("Warning:: GI " + str(record) + " not found. ")
+            if use_acc is False:
+                print("Warning:: GI " + str(record) + " not found. ")
 
-
+            else:
+                print("Warning:: Accession  " + str(record) + " not found. ")
 
 
