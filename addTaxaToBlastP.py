@@ -143,11 +143,18 @@ for blline in blastfi:
 
             tax1 = getTaxID(gi1,gi,taxa,acc,gioracc)
             tax2 = getTaxID(gi2,gi,taxa,acc,gioracc)
+            
+            try:
 
+                name1 = ncbi.getName([int(tax1)])
+                name2 = ncbi.getName([int(tax2)])
+        
+            except TypeError:
 
+                print(str(gi1) + "\t" +  str(name1) +  "\t" + str(gi2) + "\t"  + str(name2) + "\t" + "\t".join(bols[2:int(len(bols))]).strip())
                         
          
-            print(str(gi1) + "\t" + str(tax1) + "\t" + str(gi2) + "\t" + str(tax2) + "\t" + "\t".join(bols[2:int(len(bols))]).strip())
+            print(str(gi1) + "\t" +  str(name1) +  "\t" + str(gi2) + "\t"  + str(name2) + "\t" + "\t".join(bols[2:int(len(bols))]).strip())
             
 
 
