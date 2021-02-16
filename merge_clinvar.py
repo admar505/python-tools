@@ -113,6 +113,10 @@ for testkey in hgmd:
 
 
 """
+removehgmd = {}#this is to remove the data after the sew on to the hgmd. it has to be done in phases, so that 
+               #the keys can be used multiple times.
+
+
 for var in varsumfi:#more about the VARSUM file.
 
     retrievalkey = var['Chromosome'] +"-"+ var['Start'] + "-" + var['Stop'] + "-" + var['ReferenceAlleleVCF'] + "-" + var['AlternateAlleleVCF']
@@ -121,7 +125,7 @@ for var in varsumfi:#more about the VARSUM file.
 
     try:
         hgmdinfo = hgmd[retrievalkey]
-
+        removehgmd[retrievalkey] = retrievalkey # delete these records prior to print.
 
     except KeyError as e:
         hgmdinfo = ".\t.\t."
@@ -135,8 +139,19 @@ for var in varsumfi:#more about the VARSUM file.
 
 
 
+##Now, fill in the items which did not have a match in the clinvar files.
 
-    
+for cleanup in hgmd:
+
+    if cleanup not in removehgmd:
+        
+
+
+        chrinf = cleanup.split("-")
+        ind = "\t".join(chrinf)
+        nullind = ind.replace("NULL",".") 
+
+        varsum_final.write(nullind + "\t.\t.\t.\t.\t.\t.\t.\t.\t"+ hgmd[cleanup] + "\n")
 
 
 
