@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 import sys,os,re,fileinput,argparse
-sys.path.append('/home/ec2-user/lib/PyVGRes')
+sys.path.append('/home/nucleo/lib/PyVGRes')
 import vgr
 import csv
 import random
 parser = argparse.ArgumentParser(description="select infor from VCF")
-parser.add_argument("--full",help="full results file, I think. best if Beee-gzipped and tabixed.")
-parser.add_argument("--res",help="the final files, with VGR format.",required=True,action='append')
+parser.add_argument("--prev",help="the prev result file, VGR format.",required=True)
 parser.add_argument("--primary",help="the final current new result file. with VGR format.",required=True)
 parser.add_argument("--clinvarnew",help="the clinvar with header, will be csv",required=True)
 parser.add_argument("--clinvarold",help="the clinvar with header. This is the old file, only one allowed at this time, will be csv",required=True)
@@ -19,19 +18,18 @@ args = parser.parse_args()
 ###<---file - parts-->###
 
 
-fullfi = args.full          #large full size results file.
-reslst = args.res           #all results files
+prevfi = args.prev          #all results files
 primefi = args.primary      #the primary result file
 clinnew = args.clinvarnew   #the latest clinvar file
 clinold = args.clinvarold   #the older clinvar files
 
-vcf_full = vgr.Reader(open(vcffi,'r'))
 
 
-newclin = csv.
+newclin = open(clinnew,'r')
+oldclin = open(clinold,'r')
 
-
-
+allres = vgr.Reader(open(prevfi,'r')) 
+prime = vgr.Reader(open(primefi,'r')) 
 
 
 
@@ -87,13 +85,47 @@ def makePLine(dct):
     return "\t".join(returnvals)
 
 
+def ClinSeek(clnvr,index):
+    
+    clnvr.seek(0)
+
+    csv.DictReader(open(clnvr,'r'),delimiter='\t')
+    
+def getposses(rec_ln):##just make returnable lines
+    retln = str(rec_ln.POS) + "\t" +  str(rec_ln.ALT)
+    return(retln) 
+
+
+def getOld(index,sample):#purpose, find the closest if not exact is what I am thinking.
+                         #also, second is within the section of the edit, I am mainly thinking offset for the shift in indels.
+    getres = []##list of positions found, one per                     
+    #find locale, if not null, return infos.
+    matchedlines = sample.fetch(index.CHROM,int(index.POS) - 1, int(index.POS) + 1)
+     
+    for line in matchedlines:
+        if line.POS is None: 
+            print("POSITION IS NONE")
+        else: 
+            getres.append(line)
+    
+
+
+    return(getres)
+
+
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
-for line in vcf_full:
-    good_tags = getTags(taglst,line.INFO)
+indexfoundinold = {}##if we foulnd this index in the old file, then record it here, we will go through the list and declare what lines were not found.
 
-    if good_tags is not None:#might need to manage each tag individually
-        print line.CHROM + "\t" + str(line.POS) + "\t" + str(line.REF) + "\t" + str(line.ALT) + "\t" +   makePLine(good_tags)
+for line in prime:
+    
+    oldinfo  = getOld(line,allres)
+    for info in oldinfo:
+        prln = getposses(info)
+        mainln = getposses(line)
+
+        
+        print(str(line.CHROM) +"\t" + str(line.REF) + "\t" + str(mainln) + "\t" + str(prln))
 
 
 
