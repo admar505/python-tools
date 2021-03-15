@@ -15,15 +15,16 @@ batchname = args.batch
 qc_handle = open(args.qc,'r')
 qcfile = csv.DictReader(qc_handle,delimiter="\t")
 
-
+##newer version, for version 2 of novogene qual metrics.
 
 #<---userdefs--->##
 
 def getflowcell(filedict):
 
     firstline = next(filedict)
-    flowcell = firstline["Lane"].split('_')[0]
+    #flowcell = firstline["Lane"].split('_')[0]
 
+    flowcell = firstline["Lane"]
     return flowcell
 
 def qcwrite(out,qin):
@@ -35,7 +36,8 @@ def qcwrite(out,qin):
         return(lanenum)
 
     for q in qin:#each line, write to the file and stuff
-        lanes = getlane(q['Lane'])
+        #lanes = getlane(q['Lane'])
+        lanes = 1
         out.writerow({'Sample Name':q['Sample name'],'% >= Q30 bases':q['Q30(%)'], 'Lane':lanes})
 
 def clustwrite(cout,qin):
