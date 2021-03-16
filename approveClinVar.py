@@ -34,6 +34,7 @@ prime = vgr.Reader(open(primefi,'r'))
 
 
 #parse results in a map or dict, or what??
+csv.field_size_limit(sys.maxsize)
 
 #-------------------------------------here by DEFSgONS!!----------------------------------*
 def anyNone(rets):
@@ -87,27 +88,56 @@ def makePLine(dct):
 
 def ClinSeek(clnvr,index):
     
-    clnvr.seek(0)
+    clnvr.seek(0)#sadly, I have to always reset to zero.
 
-    csv.DictReader(open(clnvr,'r'),delimiter='\t')
+    def positiongather(chrom,start,stop,files):
+        foundat = []
+        for line in files:
+            if str(line["#Chr"]) == str(chrom) and int(line['Start']) >= int(start) and int(line['End']) <= int(stop):
+                foundat.append(line['Alt'] + "\t" + line['CLNSIG'] + "\t"+ line['hgmdVC'])
+
+        return(foundout)
+
+
+    cln = csv.DictReader(clnvr,delimiter='\t')
+
+
+    chrom =  str(index.CHROM).split('r')[2:]
+    getcln = positiongather(chrom,int(index.POS) -1, int(index.POS) +1,cln)
     
+    return(getcln)
+
+def measureindel(samp):#pull the ref and alt and return int(size of both) added? not sure yet.
+    alt = len(samp.ALT)
+    ref = len(samp.REF)
+   
+    return(int(alt) + int(ref)) 
+
 def getposses(rec_ln):##just make returnable lines
     retln = str(rec_ln.POS) + "\t" +  str(rec_ln.ALT)
     return(retln) 
 
 
-def getOld(index,sample):#purpose, find the closest if not exact is what I am thinking.
+def getOld(index,sample):##$newsample, $oldsample   purpose, find the closest if not exact is what I am thinking.
                          #also, second is within the section of the edit, I am mainly thinking offset for the shift in indels.
     getres = []##list of positions found, one per                     
     #find locale, if not null, return infos.
     matchedlines = sample.fetch(index.CHROM,int(index.POS) - 1, int(index.POS) + 1)
-     
-    for line in matchedlines:
-        if line.POS is None: 
-            print("POSITION IS NONE")
-        else: 
-            getres.append(line)
     
+    for line in matchedlines:
+        getres.append(line)
+        
+    #check if it worked at all at all.
+
+    if str(getres) == "[]":##OK here we go. check if it is in the interval of the indel
+
+        newwidths = measureindel(index)
+        rescues = sample.fetch(index.CHROM,(int(index.POS) - newwidths), (int(index.POS) + newwidths))
+    
+        for rescue in rescues:
+            getres.append(rescue)
+            print("EXCEPT fail loop")
+        
 
 
     return(getres)
@@ -119,13 +149,22 @@ indexfoundinold = {}##if we foulnd this index in the old file, then record it he
 
 for line in prime:
     
-    oldinfo  = getOld(line,allres)
-    for info in oldinfo:
-        prln = getposses(info)
-        mainln = getposses(line)
+    oldinfo = getOld(line,allres)
+    newpath = ClinSeek(newclin,line) 
+    oldpath = ClinSeek(oldclin,line)
+    print(newpath)
 
-        
-        print(str(line.CHROM) +"\t" + str(line.REF) + "\t" + str(mainln) + "\t" + str(prln))
+    if str(oldinfo) == "[]":
+        print(str(line.CHROM) +"\t" + str(line.REF) + "\tNO OLD MATCH\t")
+
+    else:
+
+        for info in oldinfo:
+            prln = getposses(info)
+            mainln = getposses(line)
+
+             
+            print(str(line.CHROM) +"\t" + str(line.REF) + "\t" + str(mainln) + "\t" + str(prln))
 
 
 
