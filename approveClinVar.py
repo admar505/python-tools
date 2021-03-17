@@ -2,11 +2,13 @@
 import sys,os,re,fileinput,argparse
 sys.path.append('/home/nucleo/lib/PyVGRes')
 import vgr
+import vcf
 import csv
 import random
 parser = argparse.ArgumentParser(description="select infor from VCF")
 parser.add_argument("--prev",help="the prev result file, VGR format.",required=True)
 parser.add_argument("--primary",help="the final current new result file. with VGR format.",required=True)
+parser.add_argument("--acmg",help="the final current new result file. with VGR format.",required=True)
 parser.add_argument("--clinvarnew",help="the clinvar with header, will be csv",required=True)
 parser.add_argument("--clinvarold",help="the clinvar with header. This is the old file, only one allowed at this time, will be csv",required=True)
 
@@ -22,7 +24,7 @@ prevfi = args.prev          #all results files
 primefi = args.primary      #the primary result file
 clinnew = args.clinvarnew   #the latest clinvar file
 clinold = args.clinvarold   #the older clinvar files
-
+acmgfi = args.acmg
 
 
 newclin = open(clinnew,'r')
@@ -30,7 +32,7 @@ oldclin = open(clinold,'r')
 
 allres = vgr.Reader(open(prevfi,'r')) 
 prime = vgr.Reader(open(primefi,'r')) 
-
+acmg = open(acmgfi,'r')
 
 
 #parse results in a map or dict, or what??
@@ -93,17 +95,17 @@ def ClinSeek(clnvr,index):
     def positiongather(chrom,start,stop,files):
         foundat = []
         for line in files:
-            if str(line["#Chr"]) == str(chrom) and int(line['Start']) >= int(start) and int(line['End']) <= int(stop):
-                foundat.append(line['Alt'] + "\t" + line['CLNSIG'] + "\t"+ line['hgmdVC'])
+            if str(line['#Chr']) == str(chrom) and int(line['Start']) >= int(start) and int(line['End']) <= int(stop):
+                foundat.append(line['Alt'] + ":" + line['CLNSIG'] + ":" + line['hgmdVC'] + ":" + line['Start'] + ":" + line['End'])
 
-        return(foundout)
-
-
-    cln = csv.DictReader(clnvr,delimiter='\t')
+        return(foundat)
 
 
-    chrom =  str(index.CHROM).split('r')[2:]
-    getcln = positiongather(chrom,int(index.POS) -1, int(index.POS) +1,cln)
+    cln = csv.DictReader(clnvr,delimiter='\t')  #get the file
+
+
+    chrom =  str(index.CHROM).split('r')[1:]    #get the tacos
+    getcln = positiongather(chrom[0],int(index.POS) - 2, int(index.POS) +2,cln)
     
     return(getcln)
 
@@ -136,26 +138,63 @@ def getOld(index,sample):##$newsample, $oldsample   purpose, find the closest if
     
         for rescue in rescues:
             getres.append(rescue)
-            print("EXCEPT fail loop")
         
 
 
     return(getres)
 
+def dummyfill(vals):
+
+    valret = "."
+    if vals:
+      valret = vals
+
+    return(valret)
+
+def acmgGet(indxr,acmgf):
+
+    getallacmg = []
+    acmgf.seek(0)#sadly, I have to always reset to zero.
+    acmgprepped = csv.DictReader(acmgf,delimiter='\t',fieldnames=["#Chr","Start","End","ref","Alt","type",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."])  #get the file
+
+    def __positiongather__(chrom,start,stop,files):
+        foundat = []
+        for line in files:
+           
+            if str(line['#Chr']) == str(chrom) and int(line['Start']) >= int(start) and int(line['End']) <= int(stop):
+                foundat.append(line['Alt'] + ":" +  line['Start'] + ":" + line['End'])
+
+        return(foundat)
+
+
+
+
+
+    tmpacmg = __positiongather__(indxr.CHROM,int(indxr.POS) -1, int(indxr.POS) +1,acmgprepped)
+    for each in tmpacmg:
+        getallacmg.append(each)
+
+    return(','.join(getallacmg))
+
+
 
 #####----------------MAIN--------------####      #####----------------MAIN--------------####
 
 indexfoundinold = {}##if we foulnd this index in the old file, then record it here, we will go through the list and declare what lines were not found.
-
+print("chrom\tref\tpos\tnew_alt\told_pos\told_alt\tNEW_Clinvar:ALT:clinpath:HGMD:CLNSTART:CLNSTOP\tNEW_Clinvar:ALT:clinpath:HGMD:CLNSTART:CLNSTOP\tACMG\tQUAL")
 for line in prime:
     
     oldinfo = getOld(line,allres)
-    newpath = ClinSeek(newclin,line) 
-    oldpath = ClinSeek(oldclin,line)
-    print(newpath)
+    newpath = dummyfill(ClinSeek(newclin,line)) 
+    oldpath = dummyfill(ClinSeek(oldclin,line))
+    acmgvals = dummyfill(acmgGet(line,acmg))
+    
+    foundkey = line.CHROM + ":" + line.POS    
+
 
     if str(oldinfo) == "[]":
-        print(str(line.CHROM) +"\t" + str(line.REF) + "\tNO OLD MATCH\t")
+        prl = getposses(line) 
+        print(str(line.CHROM) +"\t" + str(line.REF) +"\t"+ str(prl) + "\tNO OLD\tMATCH\t" + ','.join((newpath))  + "\t" + ','.join((oldpath)) + "\t" +str(acmgvals) + "\t" + str(line.INFO['QUAL']))
 
     else:
 
@@ -163,28 +202,25 @@ for line in prime:
             prln = getposses(info)
             mainln = getposses(line)
 
-             
-            print(str(line.CHROM) +"\t" + str(line.REF) + "\t" + str(mainln) + "\t" + str(prln))
+            indexfoundinold[str(foundkey)] = foundkey
+            
+            print(str(line.CHROM) +"\t" + str(line.REF) + "\t" + str(mainln) + "\t" + str(prln) +"\t"+  ','.join((newpath))  + "\t" + ','.join((oldpath)) + "\t" + str(acmgvals) +"\t" + str(line.INFO['QUAL']))
 
 
+print("BELOW\t are missing in the new run,\tthat were in old") 
+
+oldres = vgr.Reader(open(prevfi,'r')) 
 
 
+for clnup in oldres:#send this through, pick up what didnt catch, I think it is almost exactly like prev so may hafta figure elegant way.
+    
+    checkey = clnup.CHROM + ":" + clnup.POS
 
+    if str(checkey) not in indexfoundinold:
 
+        cnewpath = dummyfill(ClinSeek(newclin,clnup)) 
+        coldpath = dummyfill(ClinSeek(oldclin,clnup))
+        cacmgvals = dummyfill(acmgGet(line,acmg))
+        
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        print(str(clnup.CHROM) +"\t" + str(clnup.REF) + "\t" +str(clnup.POS)+ "\tMISSED IN\tNEW\t"+  ','.join((cnewpath))  + "\t" + ','.join((coldpath)) + "\t" + str(cacmgvals) +"\t"+ str(clnup.INFO['QUAL']))
