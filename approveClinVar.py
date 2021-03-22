@@ -232,4 +232,4 @@ for clnup in oldres:#send this through, pick up what didnt catch, I think it is 
         cacmgvals = dummyfill(acmgGet(line,acmg))
         
 
-        print(str(clnup.CHROM) +"\t" + str(clnup.REF) + "\t" +str(clnup.POS)+ "\tMISSED\tIN\tNEW\t"+  ','.join((cnewpath))  + "\t" + ','.join((coldpath)) + "\t" + str(cacmgvals) +"\t"+ str(clnup.INFO['QUAL']))
+        print(str(clnup.CHROM) +"\t" + str(clnup.REF) + "\t" +str(clnup.POS)+ "\t" + str(clnup.ALT) + "\tMISSED IN\tNEW\t"+  ','.join((cnewpath))  + "\t" + ','.join((coldpath)) + "\t" + str(cacmgvals) +"\t"+ str(clnup.INFO['QUAL']))
