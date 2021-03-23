@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description="Merges the files to input for ANNO
 parser.add_argument("--varsum",help="Variant summary file from clinvar.",required=True)
 parser.add_argument("--hgmd",help="HGMD file from download.",required=True)
 parser.add_argument("--named",help="the date name prefix, for output files.",required=True)
-#parser.add_argument("--combo",help="combination types",action='append',required=False)
+parser.add_argument("--conflicts",help="download from NCBI/clinvar, ",required=True)
 #parser.add_argument("--ABthreshold",help="this is a value at which to trust allele ballance, default is 15",default=0.15)
 #parser.add_argument("--lc",help="If no genotype can be found, then this is the list of novel or low coverage pages")
 
@@ -34,6 +34,7 @@ hgmdfi = csv.DictReader(open(args.hgmd,'r'), delimiter=',')#keeps file handle pe
 hgmd = {} #store HGMD lines here.
 
 varsumfi = csv.DictReader(open(args.varsum,'r'),delimiter='\t')
+conflictfi = csv.DictReader(open(args.conflicts,'r'),delimiter='\t')#make a DICT FOR THESE. really much better
 
 varsum_out_name = "hg19_clinvar_" + args.named + ".txt"
 varsum_final = open(varsum_out_name,"w")
@@ -100,26 +101,53 @@ def fixStrand(hgmdln):
     return(keyh) 
     
 
+def resolveConflicts(diamond,idvar):#$$hashmap of ids to variation, $$current ID
+    sig_string = None#initialize as a None so. None.
+    load = False 
+    bucket = {}##store for uniquifieing and ordering
+
+
+    if idvar in diamond:##calling it diamonds as it is NOT CONFLICT FREE
+        load = True
+        for sig1 in diamond[idvar]:
+            bucket[sig1] = sig1
+            bucket[diamond[idvar][sig1]] = diamond[idvar][sig1] ##note, that diamond[idvar][sig1] SHOULD be SIG2 
+   
+
+    if load is True:
+        sig_string = " ".join(sorted(bucket.keys()))
+
+    return(sig_string)
 
 
 #---------------main------------------#
+
+conflicts = {}##NCBI_Variation_ID = {Submitter1_LastEval} = Submitter2_LastEval
+
+for varid in conflictfi:
+
+    if str(varid['NCBI_Variation_ID']) in conflicts:
+        conflicts[varid['NCBI_Variation_ID']][varid['Submitter1_ClinSig']] = varid['Submitter2_ClinSig']
+    
+    else:
+        conflicts[varid['NCBI_Variation_ID']] = {} 
+        conflicts[varid['NCBI_Variation_ID']][varid['Submitter1_ClinSig']] = varid['Submitter2_ClinSig']
+
 
 for hln in hgmdfi:#HGMD is going in.
 
     key = fixStrand(hln)
     hgmd[key] = hln['hgmd_accession'] + "\t"  + hln['variant_class'] + "\t"  + hln['primary_pubmed']
 
+
+#JUST A HEADER, dont freakout.
 varsum_final.write("#Chr\tStart\tEnd\tRef\tAlt\tCLNSIG\tCLNDBN\tCLNACC\tCLNDSDB\tCLNDSDBID\tReview\tGuidelines\tVariationID\thgmdID\thgmdVC\thgmdPUBMED\n")
 bigsum_final.write("#Chr\tStart\tEnd\tRef\tAlt\tCLNSIG\tCLNDBN\tCLNACC\tCLNDSDB\tCLNDSDBID\tReview\tGuidelines\trsID\tVariationID\n")
 
 
-"""
-for testkey in hgmd:
-
-    print( testkey )
 
 
-"""
+
 removehgmd = {}#this is to remove the data after the sew on to the hgmd. it has to be done in phases, so that 
                #the keys can be used multiple times.
 
@@ -142,14 +170,20 @@ for var in varsumfi:#more about the VARSUM file.
     
     RCVaccession = var['RCVaccession'].translate(str.maketrans({'|':';'}))
     clnDBN = var['RCVaccession'].translate(str.maketrans({'|':';'}))
+    clinsig = resolveConflicts(conflicts,var['VariationID'])
 
+
+    if clinsig is None:
+        sigs = var['ClinicalSignificance'] 
+        clinsig = sigs.replace(",","") 
+         
 
     varsum_final.write(var['Chromosome'] +"\t"+ var['Start'] + "\t" + var['Stop'] + "\t" + var['ReferenceAlleleVCF'] + "\t" + var['AlternateAlleleVCF']\
-             + "\t" + var['ClinicalSignificance'] + "\t" + clnDBN + "\t" + RCVaccession + "\t" + clnDBS + "\t" + var['ReviewStatus']\
+             + "\t" + clinsig + "\t" + clnDBN + "\t" + RCVaccession + "\t" + clnDBS + "\t" + var['ReviewStatus']\
              + "\t" + changeguidelinetodot + "\t" + var['#AlleleID'] + "\t" + hgmdinfo  +  "\n")
 
     bigsum_final.write(var['Chromosome'] +"\t"+ var['Start'] + "\t" + var['Stop'] + "\t" + var['ReferenceAlleleVCF'] + "\t" + var['AlternateAlleleVCF']\
-             + "\t" + var['ClinicalSignificance'] + "\t" + clnDBN + "\t" + RCVaccession + "\t" + clnDBS + "\t" + var['ReviewStatus']\
+             + "\t" + clinsig + "\t" + clnDBN + "\t" + RCVaccession + "\t" + clnDBS + "\t" + var['ReviewStatus']\
              + "\t" + changeguidelinetodot + "\t" + var['RS# (dbSNP)'] + "\t" +  var['#AlleleID']  +  "\n")
 
 ##Now, fill in the items which did not have a match in the clinvar files.
