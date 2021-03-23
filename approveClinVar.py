@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys,os,re,fileinput,argparse
-sys.path.append('/home/nucleo/lib/PyVGRes')
+sys.path.append('/home/ec2-user/lib/PyVGRes')
 import vgr
 import vcf
 import csv
@@ -124,24 +124,33 @@ def getOld(index,sample):##$newsample, $oldsample   purpose, find the closest if
                          #also, second is within the section of the edit, I am mainly thinking offset for the shift in indels.
     getres = []##list of positions found, one per                     
     #find locale, if not null, return infos.
-    matchedlines = sample.fetch(index.CHROM,int(index.POS) - 1, int(index.POS) + 1)
+    try:
+        matchedlines = sample.fetch(index.CHROM,int(index.POS) - 1, int(index.POS) + 1)
     
-    for line in matchedlines:
-        getres.append(line)
+        for line in matchedlines:
+            getres.append(line)
+
+    except ValueError:
+        next 
+
         
+
     #check if it worked at all at all.
 
-    if str(getres) == "[]":##OK here we go. check if it is in the interval of the indel
-
-        newwidths = measureindel(index)
-        rescues = sample.fetch(index.CHROM,(int(index.POS) - newwidths), (int(index.POS) + newwidths))
+    if str(getres) == "[]":##OK here we go. IF the above didnt catch, then check if it is in the interval of the indel
+        try:
+            newwidths = measureindel(index)
+            rescues = sample.fetch(index.CHROM,(int(index.POS) - newwidths), (int(index.POS) + newwidths))
     
-        for rescue in rescues:
-            getres.append(rescue)
-        
+            for rescue in rescues:
+                getres.append(rescue)
 
+        except ValueError:
+            
+            next
 
     return(getres)
+
 
 def dummyfill(vals):
 
@@ -223,4 +232,4 @@ for clnup in oldres:#send this through, pick up what didnt catch, I think it is 
         cacmgvals = dummyfill(acmgGet(line,acmg))
         
 
-        print(str(clnup.CHROM) +"\t" + str(clnup.REF) + "\t" +str(clnup.POS)+ "\tMISSED IN\tNEW\t"+  ','.join((cnewpath))  + "\t" + ','.join((coldpath)) + "\t" + str(cacmgvals) +"\t"+ str(clnup.INFO['QUAL']))
+        print(str(clnup.CHROM) +"\t" + str(clnup.REF) + "\t" +str(clnup.POS)+ "\t" + str(clnup.ALT) + "\tMISSED IN\tNEW\t"+  ','.join((cnewpath))  + "\t" + ','.join((coldpath)) + "\t" + str(cacmgvals) +"\t"+ str(clnup.INFO['QUAL']))
